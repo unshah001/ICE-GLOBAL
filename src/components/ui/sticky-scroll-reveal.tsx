@@ -9,13 +9,19 @@ interface StickyScrollProps {
     description: string;
     content?: React.ReactNode;
     image?: string;
+    id?: string;
+    href?: string;
   }[];
   contentClassName?: string;
+  showStepLabels?: boolean;
+  onItemSelect?: (item: StickyScrollProps["content"][number], index: number) => void;
 }
 
 export const StickyScrollReveal = ({
   content,
   contentClassName,
+  showStepLabels = true,
+  onItemSelect,
 }: StickyScrollProps) => {
   const [activeCard, setActiveCard] = React.useState(0);
   const containerRef = React.useRef<HTMLDivElement | null>(null);
@@ -61,12 +67,13 @@ export const StickyScrollReveal = ({
               return (
                 <motion.article
                   key={item.title + index}
-                  className="relative pl-10"
+                  className={`relative pl-10 ${onItemSelect ? "cursor-pointer" : ""}`}
                   initial={{ opacity: 0, y: 40 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ amount: 0.3, once: false }}
                   transition={{ duration: 0.4, ease: "easeOut" }}
                   onViewportEnter={() => setActiveCard(index)}
+                  onClick={() => onItemSelect?.(item, index)}
                 >
                   {/* Node / dot */}
                   <div className="absolute left-0 top-1.5">
@@ -122,7 +129,9 @@ export const StickyScrollReveal = ({
                     </motion.p>
 
                     {/* Optional subtle "step" label */}
-                    <div className="mt-3 flex items-center gap-2">
+                <div className="mt-3 flex items-center gap-2">
+                  {showStepLabels && (
+                    <>
                       <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-1 text-[11px] font-medium uppercase tracking-wide text-primary">
                         Step {index + 1}
                       </span>
@@ -135,11 +144,13 @@ export const StickyScrollReveal = ({
                           Currently viewing
                         </motion.span>
                       )}
-                    </div>
-                  </motion.div>
-                </motion.article>
-              );
-            })}
+                    </>
+                  )}
+                </div>
+              </motion.div>
+            </motion.article>
+          );
+        })}
           </div>
         </div>
 

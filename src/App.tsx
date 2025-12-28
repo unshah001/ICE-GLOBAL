@@ -27,6 +27,9 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminGallery from "./pages/AdminGallery";
 import Brands from "./pages/Brands";
 import AdminBrands from "./pages/AdminBrands";
+import Sellers from "./pages/Sellers";
+import SellerDetail from "./pages/SellerDetail";
+import AdminSellers from "./pages/AdminSellers";
 
 const queryClient = new QueryClient();
 
@@ -76,10 +79,20 @@ const App = () => (
               </AdminGuard>
             }
           />
+          <Route
+            path="/admin/sellers"
+            element={
+              <AdminGuard>
+                <AdminSellers />
+              </AdminGuard>
+            }
+          />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/partner" element={<Partner />} />
           <Route path="/sponsor" element={<Sponsor />} />
           <Route path="/brands" element={<Brands />} />
+          <Route path="/sellers" element={<Sellers />} />
+          <Route path="/sellers/:id" element={<SellerDetail />} />
           <Route path="/brand-guidelines" element={<BrandGuidelines />} />
           <Route path="/testimonials" element={<TestimonialsPage />} />
           <Route path="/feedback" element={<Feedback />} />

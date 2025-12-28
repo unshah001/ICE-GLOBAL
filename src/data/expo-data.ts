@@ -283,6 +283,7 @@ export const galleryImages = [
 export const navItems = [
   { name: "Home", href: "/" },
   { name: "Gallery", href: "/gallery" },
+  { name: "Sellers", href: "/sellers" },
   { name: "About", href: "/about" },
   { name: "Contact", href: "/contact" },
 ];
