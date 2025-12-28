@@ -14,6 +14,8 @@ const payloadSchema = z.object({
   eyebrow: z.string().default(""),
   title: z.string().default(""),
   description: z.string().default(""),
+  ctaLabel: z.string().optional(),
+  ctaHref: z.string().optional(),
   arches: z.array(archSchema),
 });
 
@@ -21,16 +23,18 @@ export default async function archesRoutes(app: FastifyInstance) {
   app.get("/arches", async () => {
     const db = await getDb();
     const col = db.collection("arches");
-    const stored = await col.findOne<{ eyebrow: string; title: string; description: string; arches: any[] }>({
+    const stored = await col.findOne<{ eyebrow: string; title: string; description: string; ctaLabel?: string; ctaHref?: string; arches: any[] }>({
       key: "default",
     });
     if (!stored) {
-      return { eyebrow: "", title: "", description: "", arches: [] };
+      return { eyebrow: "", title: "", description: "", ctaLabel: "", ctaHref: "", arches: [] };
     }
     return {
       eyebrow: stored.eyebrow ?? "",
       title: stored.title ?? "",
       description: stored.description ?? "",
+      ctaLabel: stored.ctaLabel ?? "",
+      ctaHref: stored.ctaHref ?? "",
       arches: stored.arches ?? [],
     };
   });
@@ -53,6 +57,8 @@ export default async function archesRoutes(app: FastifyInstance) {
             eyebrow: parse.data.eyebrow,
             title: parse.data.title,
             description: parse.data.description,
+            ctaLabel: parse.data.ctaLabel,
+            ctaHref: parse.data.ctaHref,
             arches: parse.data.arches,
           },
         },
@@ -67,7 +73,7 @@ export default async function archesRoutes(app: FastifyInstance) {
     "/arches/restore",
     { preHandler: [app.authenticate] },
     async () => {
-      const empty = { eyebrow: "", title: "", description: "", arches: [] as any[] };
+      const empty = { eyebrow: "", title: "", description: "", ctaLabel: "", ctaHref: "", arches: [] as any[] };
       const db = await getDb();
       const col = db.collection("arches");
       await col.updateOne({ key: "default" }, { $set: empty }, { upsert: true });

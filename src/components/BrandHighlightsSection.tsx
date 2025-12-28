@@ -8,6 +8,8 @@ interface BrandHighlightsSectionProps {
   title?: string;
   eyebrow?: string;
   description?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
   brands?: typeof brandHighlights;
 }
 
@@ -15,6 +17,8 @@ const BrandHighlightsSection = ({
   eyebrow = "Our Partners",
   title = "Trusted by Industry Leaders",
   description = "From startups to Fortune 500 companies, our expo has been the launchpad for brands that shape the future.",
+  ctaLabel = "View all partner brands",
+  ctaHref = "/brands",
   brands = brandHighlights,
 }: BrandHighlightsSectionProps) => {
   return (
@@ -84,10 +88,10 @@ const BrandHighlightsSection = ({
           className="text-center mt-12"
         >
           <Link
-            to="/gallery"
+            to={ctaHref}
             className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors font-medium"
           >
-            View all partner brands
+            {ctaLabel}
             <ArrowRight className="w-4 h-4" />
           </Link>
         </motion.div>

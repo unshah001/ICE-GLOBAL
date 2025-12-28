@@ -18,6 +18,8 @@ export type BrandsData = {
   eyebrow: string;
   title: string;
   description: string;
+  ctaLabel?: string;
+  ctaHref?: string;
   brands: BrandItem[];
 };
 
@@ -96,6 +98,24 @@ const BrandEditor = ({
                   onChange={(e) => updateField("description", e.target.value)}
                   placeholder="Logos and stories from partners..."
                 />
+              </div>
+              <div className="grid md:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">CTA label</label>
+                  <Input
+                    value={data.ctaLabel || ""}
+                    onChange={(e) => updateField("ctaLabel", e.target.value)}
+                    placeholder="View all partner brands"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">CTA href</label>
+                  <Input
+                    value={data.ctaHref || ""}
+                    onChange={(e) => updateField("ctaHref", e.target.value)}
+                    placeholder="/brands"
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>

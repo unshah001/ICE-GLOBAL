@@ -23,7 +23,7 @@ type Brand = {
   updatedAt?: Date;
 };
 
-const brands: Brand[] = [
+export const brands: Brand[] = [
   {
     slug: "techvision-labs",
     name: "TechVision Labs",

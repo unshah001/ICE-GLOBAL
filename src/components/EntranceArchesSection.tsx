@@ -8,6 +8,8 @@ interface EntranceArchesSectionProps {
   title: string;
   description?: string;
   arches: EntranceArch[];
+  ctaLabel?: string;
+  ctaHref?: string;
   className?: string;
 }
 
@@ -16,6 +18,8 @@ const EntranceArchesSection = ({
   title,
   description,
   arches,
+  ctaLabel = "View all arches",
+  ctaHref = "/gallery",
   className,
 }: EntranceArchesSectionProps) => {
   return (
@@ -93,6 +97,18 @@ const EntranceArchesSection = ({
             </motion.a>
           ))}
         </div>
+
+        {ctaLabel && (
+          <div className="text-center pt-4">
+            <a
+              href={ctaHref}
+              className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors font-medium"
+            >
+              {ctaLabel}
+              <ArrowUpRight className="w-4 h-4" />
+            </a>
+          </div>
+        )}
       </div>
     </section>
   );

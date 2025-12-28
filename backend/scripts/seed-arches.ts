@@ -5,6 +5,8 @@ const defaultArches = {
   eyebrow: "Review the moment",
   title: "Mega Entrance Arches across 10 cities",
   description: "Three decades of arches engineered for arrivals—kinetic light tunnels, climate-smart canopies, and city-inspired silhouettes.",
+  ctaLabel: "View entrance arches",
+  ctaHref: "/gallery#arches",
   arches: [
     {
       city: "Mumbai",

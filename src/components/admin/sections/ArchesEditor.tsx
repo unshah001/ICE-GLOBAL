@@ -16,6 +16,8 @@ export type ArchesData = {
   eyebrow: string;
   title: string;
   description: string;
+  ctaLabel?: string;
+  ctaHref?: string;
   arches: ArchItem[];
 };
 
@@ -94,6 +96,24 @@ const ArchesEditor = ({
                   onChange={(e) => updateField("description", e.target.value)}
                   placeholder="Three decades of arches engineered for arrivals..."
                 />
+              </div>
+              <div className="grid md:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">CTA label</label>
+                  <Input
+                    value={data.ctaLabel || ""}
+                    onChange={(e) => updateField("ctaLabel", e.target.value)}
+                    placeholder="View entrance arches"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">CTA href</label>
+                  <Input
+                    value={data.ctaHref || ""}
+                    onChange={(e) => updateField("ctaHref", e.target.value)}
+                    placeholder="/gallery#arches"
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>

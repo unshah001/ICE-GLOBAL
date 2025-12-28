@@ -53,6 +53,8 @@ type BrandsResponse = {
   eyebrow: string;
   title: string;
   description: string;
+  ctaLabel?: string;
+  ctaHref?: string;
   brands: BrandItem[];
 };
 type CelebItem = {
@@ -107,6 +109,8 @@ type ArchesResponse = {
   eyebrow: string;
   title: string;
   description: string;
+  ctaLabel?: string;
+  ctaHref?: string;
   arches: ArchItem[];
 };
 type StallImage = { src: string; href?: string };
@@ -251,6 +255,8 @@ const AdminDashboard = () => {
     eyebrow: "",
     title: "",
     description: "",
+    ctaLabel: "",
+    ctaHref: "",
     brands: [],
   });
   const [celebsData, setCelebsData] = useState<CelebResponse>({
@@ -287,6 +293,8 @@ const AdminDashboard = () => {
     eyebrow: "",
     title: "",
     description: "",
+    ctaLabel: "",
+    ctaHref: "",
     arches: [],
   });
   const [stallsData, setStallsData] = useState<StallsResponse>({
@@ -402,6 +410,8 @@ const AdminDashboard = () => {
           eyebrow: data.eyebrow || "",
           title: data.title || "",
           description: data.description || "",
+          ctaLabel: data.ctaLabel || "",
+          ctaHref: data.ctaHref || "",
           brands: data.brands || [],
         });
       } catch (err: any) {
@@ -483,6 +493,8 @@ const AdminDashboard = () => {
           eyebrow: data.eyebrow || "",
           title: data.title || "",
           description: data.description || "",
+          ctaLabel: data.ctaLabel || "",
+          ctaHref: data.ctaHref || "",
           arches: data.arches || [],
         });
       } catch (err: any) {
@@ -1158,6 +1170,8 @@ const AdminDashboard = () => {
         eyebrow: data.eyebrow || "",
         title: data.title || "",
         description: data.description || "",
+        ctaLabel: data.ctaLabel || "",
+        ctaHref: data.ctaHref || "",
         brands: data.brands || [],
       });
       setSuccess("Restored brand highlights");
@@ -2181,6 +2195,8 @@ const AdminDashboard = () => {
         eyebrow: data.eyebrow || "",
         title: data.title || "",
         description: data.description || "",
+        ctaLabel: data.ctaLabel || "",
+        ctaHref: data.ctaHref || "",
         arches: data.arches || [],
       });
       setSuccess("Restored entrance arches");

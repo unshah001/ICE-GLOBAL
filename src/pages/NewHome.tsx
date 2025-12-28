@@ -57,6 +57,8 @@ type BrandsResponse = {
   eyebrow: string;
   title: string;
   description: string;
+  ctaLabel?: string;
+  ctaHref?: string;
   brands: BrandItem[];
 };
 type CelebItem = {
@@ -217,6 +219,8 @@ const NewHome = () => {
     eyebrow: "Trustworthy Leaders",
     title: "Brands that trust ICE Exhibitions",
     description: "Logos and stories from partners who have built standout moments on our platform.",
+    ctaLabel: "View all partner brands",
+    ctaHref: "/brands",
     brands: fallbackBrands,
   });
   const [celebsData, setCelebsData] = useState<CelebResponse>({
@@ -382,6 +386,8 @@ const NewHome = () => {
           eyebrow: data.eyebrow || "Trustworthy Leaders",
           title: data.title || "Brands that trust ICE Exhibitions",
           description: data.description || "Logos and stories from partners who have built standout moments on our platform.",
+          ctaLabel: data.ctaLabel || "View all partner brands",
+          ctaHref: data.ctaHref || "/brands",
           brands: data.brands?.length ? data.brands : fallbackBrands,
         });
       } catch {
@@ -673,6 +679,8 @@ const NewHome = () => {
         eyebrow={brandsData.eyebrow}
         title={brandsData.title}
         description={brandsData.description}
+        ctaLabel={brandsData.ctaLabel}
+        ctaHref={brandsData.ctaHref}
         brands={brandsData.brands}
       />
 

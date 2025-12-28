@@ -34,6 +34,8 @@ const brandsSchema = z.object({
   eyebrow: z.string().default(""),
   title: z.string().default(""),
   description: z.string().default(""),
+  ctaLabel: z.string().optional(),
+  ctaHref: z.string().optional(),
   brands: z.array(brandSchema),
 });
 
@@ -65,16 +67,25 @@ export default async function brandsRoutes(app: FastifyInstance) {
   app.get("/brands/highlights", async () => {
     const db = await getDb();
     const col = db.collection("brands_highlights");
-    const stored = await col.findOne<{ eyebrow: string; title: string; description: string; brands: z.infer<typeof brandSchema>[] }>({
+    const stored = await col.findOne<{
+      eyebrow: string;
+      title: string;
+      description: string;
+      ctaLabel?: string;
+      ctaHref?: string;
+      brands: z.infer<typeof brandSchema>[];
+    }>({
       key: "default",
     });
     if (!stored) {
-      return { eyebrow: "", title: "", description: "", brands: [] };
+      return { eyebrow: "", title: "", description: "", ctaLabel: "", ctaHref: "", brands: [] };
     }
     return {
       eyebrow: stored.eyebrow ?? "",
       title: stored.title ?? "",
       description: stored.description ?? "",
+      ctaLabel: stored.ctaLabel ?? "",
+      ctaHref: stored.ctaHref ?? "",
       brands: stored.brands ?? [],
     };
   });
@@ -209,6 +220,8 @@ export default async function brandsRoutes(app: FastifyInstance) {
             eyebrow: parse.data.eyebrow,
             title: parse.data.title,
             description: parse.data.description,
+            ctaLabel: parse.data.ctaLabel,
+            ctaHref: parse.data.ctaHref,
             brands: parse.data.brands,
           },
         },
