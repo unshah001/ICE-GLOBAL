@@ -9,6 +9,7 @@ export const adminNav = [
 export const adminNavLinks = [
   { name: "Dashboard", href: "/admin" },
   { name: "Gallery", href: "/admin/gallery" },
+  { name: "Brands", href: "/admin/brands" },
   { name: "Content", href: "/admin#content" },
   { name: "Users", href: "/admin#users" },
   { name: "Settings", href: "/admin#settings" },

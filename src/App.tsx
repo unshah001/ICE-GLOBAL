@@ -25,6 +25,8 @@ import AdminLogin from "./pages/AdminLogin";
 import AdminGuard from "./components/auth/AdminGuard";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminGallery from "./pages/AdminGallery";
+import Brands from "./pages/Brands";
+import AdminBrands from "./pages/AdminBrands";
 
 const queryClient = new QueryClient();
 
@@ -66,9 +68,18 @@ const App = () => (
               </AdminGuard>
             }
           />
+          <Route
+            path="/admin/brands"
+            element={
+              <AdminGuard>
+                <AdminBrands />
+              </AdminGuard>
+            }
+          />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/partner" element={<Partner />} />
           <Route path="/sponsor" element={<Sponsor />} />
+          <Route path="/brands" element={<Brands />} />
           <Route path="/brand-guidelines" element={<BrandGuidelines />} />
           <Route path="/testimonials" element={<TestimonialsPage />} />
           <Route path="/feedback" element={<Feedback />} />

@@ -1,0 +1,221 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { FloatingNavbar } from "@/components/ui/floating-navbar";
+import { BackgroundBeams } from "@/components/ui/background-effects";
+import Footer from "@/components/Footer";
+import { navItems, brandHighlights } from "@/data/expo-data";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { ArrowRight, Building2, Search } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+type BrandsResponse = {
+  data: typeof brandHighlights;
+  filters?: { categories: string[] };
+  cursor?: { next: string | null; limit: number };
+};
+
+const PAGE_LIMIT = 24;
+
+const Brands = () => {
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState<string>("All");
+  const [items, setItems] = useState(brandHighlights);
+  const [categories, setCategories] = useState<string[]>(["All", ...Array.from(new Set(brandHighlights.map((b) => b.category)))]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const base = import.meta.env.VITE_API_BASE_URL || "";
+    const load = async (reset = true) => {
+      setIsLoading(true);
+      setError("");
+      try {
+        const params = new URLSearchParams();
+        params.set("limit", String(PAGE_LIMIT));
+        if (!reset && cursor) params.set("cursor", cursor);
+        if (category !== "All") params.set("category", category);
+        if (query.trim()) params.set("search", query.trim());
+        const res = await fetch(`${base}/brands?${params.toString()}`);
+        if (!res.ok) throw new Error("Failed to load brands");
+        const data = (await res.json()) as BrandsResponse;
+        const nextItems = data.data || [];
+        if (reset) {
+          setItems(nextItems.length ? nextItems : brandHighlights);
+        } else {
+          setItems((prev) => [...prev, ...nextItems]);
+        }
+        setCategories(["All", ...(data.filters?.categories || categories.slice(1))]);
+        setCursor(data.cursor?.next ?? null);
+        setHasMore(Boolean(data.cursor?.next));
+      } catch (err: any) {
+        setError(err.message || "Unable to load brands");
+        setItems(brandHighlights);
+        setCategories(["All", ...Array.from(new Set(brandHighlights.map((b) => b.category)))]);
+        setCursor(null);
+        setHasMore(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    load(true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [category, query]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && hasMore && !isLoading) {
+          const base = import.meta.env.VITE_API_BASE_URL || "";
+          const fetchMore = async () => {
+            setIsLoading(true);
+            try {
+              const params = new URLSearchParams();
+              params.set("limit", String(PAGE_LIMIT));
+              if (cursor) params.set("cursor", cursor);
+              if (category !== "All") params.set("category", category);
+              if (query.trim()) params.set("search", query.trim());
+              const res = await fetch(`${base}/brands?${params.toString()}`);
+              if (!res.ok) throw new Error("Failed to load brands");
+              const data = (await res.json()) as BrandsResponse;
+              const nextItems = data.data || [];
+              setItems((prev) => [...prev, ...nextItems]);
+              setCursor(data.cursor?.next ?? null);
+              setHasMore(Boolean(data.cursor?.next));
+            } catch (err: any) {
+              setError(err.message || "Unable to load brands");
+              setHasMore(false);
+            } finally {
+              setIsLoading(false);
+            }
+          };
+          fetchMore();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+
+    if (loadMoreRef.current) observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [category, query, cursor, hasMore, isLoading]);
+
+  const filtered = useMemo(() => {
+    return items.filter((brand) => {
+      const matchesCategory = category === "All" || brand.category === category;
+      const matchesQuery =
+        brand.name.toLowerCase().includes(query.toLowerCase()) ||
+        brand.relationship.toLowerCase().includes(query.toLowerCase()) ||
+        brand.category.toLowerCase().includes(query.toLowerCase());
+      return matchesCategory && matchesQuery;
+    });
+  }, [items, category, query]);
+
+  return (
+    <main className="min-h-screen bg-background">
+      <FloatingNavbar navItems={[...navItems, { name: "Brands", href: "/brands" }]} />
+
+      <section className="relative pt-28 pb-16 md:pt-36 md:pb-20 overflow-hidden">
+        <BackgroundBeams className="z-0" />
+        <div className="container-custom relative z-10">
+          <div className="text-center max-w-3xl mx-auto space-y-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold uppercase tracking-[0.2em]">
+              <Building2 className="w-4 h-4" />
+              Partner Brands
+            </div>
+            <h1 className="text-4xl md:text-5xl font-display font-bold">Brands that trust ICE Exhibitions</h1>
+            <p className="text-muted-foreground">
+              Explore our partner roster—long-term collaborators, headline sponsors, and innovators who shaped the expo experience.
+            </p>
+          </div>
+
+          <div className="mt-8 grid gap-3 md:grid-cols-[2fr,1fr] items-center">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search brands by name, relationship, or category..."
+                className="pl-9"
+              />
+            </div>
+            <div className="flex items-center justify-end gap-2">
+              <Select value={category} onValueChange={(v) => setCategory(v)}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          {error && <p className="mt-2 text-sm text-destructive text-center">{error}</p>}
+        </div>
+      </section>
+
+      <section className="pb-16">
+        <div className="container-custom">
+          {filtered.length === 0 ? (
+            <div className="text-center text-muted-foreground py-16">No brands matched your filters.</div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {filtered.map((brand, idx) => (
+                <motion.div
+                  key={brand.slug}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: Math.min(idx * 0.04, 0.3) }}
+                  viewport={{ once: true }}
+                  className="group rounded-2xl border border-border/70 bg-card/80 overflow-hidden shadow-lg shadow-primary/5"
+                >
+                  <Link to={`/brands/${brand.slug}`} className="block h-full">
+                    <div className="relative h-48 overflow-hidden">
+                      <img
+                        src={brand.image}
+                        alt={brand.name}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent" />
+                      <div className="absolute top-4 left-4 w-12 h-12 rounded-xl bg-primary/20 backdrop-blur-sm flex items-center justify-center font-display font-bold text-primary text-lg">
+                        {brand.logo}
+                      </div>
+                    </div>
+                    <div className="p-4 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary">{brand.category}</Badge>
+                        <Badge variant="outline">{brand.relationship}</Badge>
+                      </div>
+                      <h3 className="text-xl font-display font-semibold">{brand.name}</h3>
+                      <div className="inline-flex items-center gap-2 text-primary text-sm font-medium">
+                        View story
+                        <ArrowRight className="w-4 h-4" />
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+          )}
+          <div ref={loadMoreRef} className="mt-12 text-center">
+            {isLoading && (
+              <div className="text-sm text-muted-foreground">Loading more brands...</div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <Footer />
+    </main>
+  );
+};
+
+export default Brands;

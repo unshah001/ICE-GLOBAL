@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { FloatingNavbar } from "@/components/ui/floating-navbar";
 import { BackgroundBeams } from "@/components/ui/background-effects";
@@ -89,8 +89,11 @@ const Gallery = () => {
     ...Array.from(new Set(fallbackGalleryItems.map((item) => item.year))).sort((a, b) => Number(b) - Number(a)),
   ]);
   const [categories, setCategories] = useState<string[]>(["All", ...new Set(fallbackGalleryItems.map((item) => item.category))]);
+  const [tags, setTags] = useState<string[]>(["All"]);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const [fallbackMode, setFallbackMode] = useState(false);
+  const searchParams = useSearchParams()[0];
 
   const base = import.meta.env.VITE_API_BASE_URL || "";
 
@@ -102,6 +105,7 @@ const Gallery = () => {
       params.set("pageSize", String(ITEMS_PER_PAGE));
       if (selectedYear) params.set("year", selectedYear);
       if (selectedCategory) params.set("category", selectedCategory);
+      if (selectedTag) params.set("tag", selectedTag);
       if (searchQuery.trim()) params.set("search", searchQuery.trim());
 
       try {
@@ -120,6 +124,7 @@ const Gallery = () => {
         setTotal(data.pagination?.total ?? nextItems.length);
         setYears(["All Years", ...(data.filters?.years || [])]);
         setCategories(["All", ...(data.filters?.categories || [])]);
+        setTags(["All", ...(data.filters?.tags || [])]);
       } catch {
         if (reset) {
           setItems(fallbackGalleryItems.slice(0, ITEMS_PER_PAGE));
@@ -130,25 +135,34 @@ const Gallery = () => {
             ...Array.from(new Set(fallbackGalleryItems.map((item) => item.year))).sort((a, b) => Number(b) - Number(a)),
           ]);
           setCategories(["All", ...new Set(fallbackGalleryItems.map((item) => item.category))]);
+          setTags(["All"]);
           setFallbackMode(true);
         }
       } finally {
         setIsFetching(false);
       }
     },
-    [base, selectedYear, selectedCategory, searchQuery]
+    [base, selectedYear, selectedCategory, selectedTag, searchQuery]
   );
 
   useEffect(() => {
+    const initialYear = searchParams.get("year");
+    const initialCategory = searchParams.get("category");
+    const initialTag = searchParams.get("tag");
+    const initialSearch = searchParams.get("search");
+    if (initialYear) setSelectedYear(initialYear === "All Years" ? null : initialYear);
+    if (initialCategory) setSelectedCategory(initialCategory === "All" ? null : initialCategory);
+    if (initialTag) setSelectedTag(initialTag === "All" ? null : initialTag);
+    if (initialSearch) setSearchQuery(initialSearch);
     fetchPage(1, true);
-  }, [fetchPage]);
+  }, [fetchPage, searchParams]);
 
   useEffect(() => {
     const handle = setTimeout(() => {
       fetchPage(1, true);
     }, 200);
     return () => clearTimeout(handle);
-  }, [selectedYear, selectedCategory, searchQuery, fetchPage]);
+  }, [selectedYear, selectedCategory, selectedTag, searchQuery, fetchPage]);
 
   const hasMore = page < totalPages;
 
@@ -233,7 +247,7 @@ const Gallery = () => {
                 </div>
               </div>
 
-              <div className="grid gap-3 md:grid-cols-[1.5fr,1fr,1fr] lg:grid-cols-[2fr,1fr,1fr] items-center">
+              <div className="grid gap-3 md:grid-cols-[1.5fr,1fr,1fr,1fr] lg:grid-cols-[2fr,1fr,1fr,1fr] items-center">
                 {/* Search */}
                 <div className="relative w-full">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -287,6 +301,23 @@ const Gallery = () => {
                     ))}
                   </SelectContent>
                 </Select>
+
+                {/* Tag */}
+                <Select
+                  value={selectedTag ?? "All"}
+                  onValueChange={(v) => setSelectedTag(v === "All" ? null : v)}
+                >
+                  <SelectTrigger className="w-full rounded-xl bg-background/70 border-border text-foreground">
+                    <SelectValue placeholder="Tag" />
+                  </SelectTrigger>
+                  <SelectContent align="start" className="border-border bg-card max-h-64">
+                    {tags.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {t}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
@@ -306,6 +337,7 @@ const Gallery = () => {
                 onClick={() => {
                   setSelectedYear(null);
                   setSelectedCategory(null);
+                  setSelectedTag(null);
                   setSearchQuery("");
                 }}
                 className="mt-4"
