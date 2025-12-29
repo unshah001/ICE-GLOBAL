@@ -2,14 +2,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FloatingNavbar } from "@/components/ui/floating-navbar";
-import { BackgroundBeams } from "@/components/ui/background-effects";
 import Footer from "@/components/Footer";
 import { navItems, brandHighlights } from "@/data/expo-data";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Building2, Search } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import BrandsHero from "./BrandsHero";
 
 type BrandsResponse = {
   data: typeof brandHighlights;
@@ -118,49 +116,14 @@ const Brands = () => {
   return (
     <main className="min-h-screen bg-background">
       <FloatingNavbar navItems={[...navItems, { name: "Brands", href: "/brands" }]} />
-
-      <section className="relative pt-28 pb-16 md:pt-36 md:pb-20 overflow-hidden">
-        <BackgroundBeams className="z-0" />
-        <div className="container-custom relative z-10">
-          <div className="text-center max-w-3xl mx-auto space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold uppercase tracking-[0.2em]">
-              <Building2 className="w-4 h-4" />
-              Partner Brands
-            </div>
-            <h1 className="text-4xl md:text-5xl font-display font-bold">Brands that trust ICE Exhibitions</h1>
-            <p className="text-muted-foreground">
-              Explore our partner roster—long-term collaborators, headline sponsors, and innovators who shaped the expo experience.
-            </p>
-          </div>
-
-          <div className="mt-8 grid gap-3 md:grid-cols-[2fr,1fr] items-center">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search brands by name, relationship, or category..."
-                className="pl-9"
-              />
-            </div>
-            <div className="flex items-center justify-end gap-2">
-              <Select value={category} onValueChange={(v) => setCategory(v)}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          {error && <p className="mt-2 text-sm text-destructive text-center">{error}</p>}
-        </div>
-      </section>
+      <BrandsHero
+        query={query}
+        category={category}
+        categories={categories}
+        onQueryChange={setQuery}
+        onCategoryChange={setCategory}
+      />
+      {error && <p className="mt-2 text-sm text-destructive text-center">{error}</p>}
 
       <section className="pb-16">
         <div className="container-custom">

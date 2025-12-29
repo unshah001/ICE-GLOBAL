@@ -38,11 +38,20 @@ type BrandsResponse = {
 
 const AdminBrands = () => {
   const navItems = adminNavLinks;
-  const sections: AdminSectionLink[] = [{ id: "brands", label: "Brands" }];
+  const sections: AdminSectionLink[] = [
+    { id: "brands-hero", label: "Hero" },
+    { id: "brands", label: "Brands" },
+  ];
 
   const [items, setItems] = useState<BrandItem[]>([]);
+  const [heroBadge, setHeroBadge] = useState("Partner Brands");
+  const [heroTitle, setHeroTitle] = useState("Brands that trust ICE Exhibitions");
+  const [heroSubheading, setHeroSubheading] = useState(
+    "Explore our partner roster—long-term collaborators, headline sponsors, and innovators who shaped the expo experience."
+  );
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [heroSaving, setHeroSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [page, setPage] = useState(1);
@@ -80,6 +89,7 @@ const AdminBrands = () => {
 
   useEffect(() => {
     loadBrands(1, { category, search });
+    loadHero();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageSize]);
 
@@ -187,6 +197,59 @@ const AdminBrands = () => {
     return null;
   };
 
+  const loadHero = async () => {
+    const base = import.meta.env.VITE_API_BASE_URL || "";
+    try {
+      const res = await fetch(`${base}/brands/hero`);
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setHeroBadge(data.badge || heroBadge);
+      setHeroTitle(data.title || heroTitle);
+      setHeroSubheading(data.subheading || heroSubheading);
+    } catch {
+      // keep defaults
+    }
+  };
+
+  const saveHero = async () => {
+    setHeroSaving(true);
+    setError("");
+    setSuccess("");
+    try {
+      const base = import.meta.env.VITE_API_BASE_URL || "";
+      const token = await getAccessToken(base);
+      if (!token) {
+        setHeroSaving(false);
+        setError("Not authenticated.");
+        return;
+      }
+      const attempt = async (authToken: string) =>
+        fetch(`${base}/brands/hero`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+          },
+          body: JSON.stringify({ badge: heroBadge, title: heroTitle, subheading: heroSubheading }),
+        });
+      let res = await attempt(token);
+      if (res.status === 401) {
+        const refreshed = await refreshAccessToken(base);
+        if (!refreshed) throw new Error("Session expired. Please login again.");
+        res = await attempt(refreshed);
+      }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || "Save failed");
+      }
+      setSuccess("Brands hero updated");
+    } catch (err: any) {
+      setError(err.message || "Unable to save hero");
+    } finally {
+      setHeroSaving(false);
+    }
+  };
+
   const getAccessToken = async (base: string) => {
     const token = localStorage.getItem("admin_access_token");
     if (token) return token;
@@ -274,6 +337,32 @@ const AdminBrands = () => {
           <span>{success}</span>
         </div>
       )}
+
+      <div id="brands-hero" className="rounded-xl border border-border/60 bg-card/70 p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Hero</p>
+            <h3 className="text-lg font-semibold">Brands hero text</h3>
+          </div>
+          <Button size="sm" onClick={saveHero} disabled={heroSaving}>
+            {heroSaving ? "Saving..." : "Save hero"}
+          </Button>
+        </div>
+        <div className="grid md:grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs text-muted-foreground">Badge</label>
+            <Input value={heroBadge} onChange={(e) => setHeroBadge(e.target.value)} />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">Title</label>
+            <Input value={heroTitle} onChange={(e) => setHeroTitle(e.target.value)} />
+          </div>
+          <div className="md:col-span-2">
+            <label className="text-xs text-muted-foreground">Subheading</label>
+            <Input value={heroSubheading} onChange={(e) => setHeroSubheading(e.target.value)} />
+          </div>
+        </div>
+      </div>
 
       <div className="rounded-xl border border-border/60 bg-card/70 p-4 flex flex-col gap-3">
         <div className="flex flex-col md:flex-row gap-3 items-start md:items-center">

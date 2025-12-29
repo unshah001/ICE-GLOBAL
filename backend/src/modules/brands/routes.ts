@@ -39,6 +39,16 @@ const brandsSchema = z.object({
   brands: z.array(brandSchema),
 });
 
+const brandsHeroSchema = z.object({
+  badge: z.string().default("Partner Brands"),
+  title: z.string().default("Brands that trust ICE Exhibitions"),
+  subheading: z
+    .string()
+    .default(
+      "Explore our partner roster—long-term collaborators, headline sponsors, and innovators who shaped the expo experience."
+    ),
+});
+
 const listQuerySchema = z.object({
   page: z
     .string()
@@ -88,6 +98,21 @@ export default async function brandsRoutes(app: FastifyInstance) {
       ctaHref: stored.ctaHref ?? "",
       brands: stored.brands ?? [],
     };
+  });
+
+  app.get("/brands/hero", async () => {
+    const db = await getDb();
+    const col = db.collection<{ badge: string; title: string; subheading: string }>("brands_hero");
+    const stored = await col.findOne({ key: "default" });
+    if (!stored) {
+      return {
+        badge: "Partner Brands",
+        title: "Brands that trust ICE Exhibitions",
+        subheading:
+          "Explore our partner roster—long-term collaborators, headline sponsors, and innovators who shaped the expo experience.",
+      };
+    }
+    return { badge: stored.badge, title: stored.title, subheading: stored.subheading };
   });
 
   app.get("/brands", async (request) => {
@@ -229,6 +254,23 @@ export default async function brandsRoutes(app: FastifyInstance) {
       );
       request.log.info("brands.update success");
       return parse.data;
+    }
+  );
+
+  app.put(
+    "/brands/hero",
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const parsed = brandsHeroSchema.safeParse(request.body);
+      if (!parsed.success) {
+        request.log.warn({ issues: parsed.error.issues }, "brands.hero validation failed");
+        return reply.code(400).send({ message: "Invalid hero payload" });
+      }
+      const db = await getDb();
+      const col = db.collection("brands_hero");
+      await col.updateOne({ key: "default" }, { $set: { key: "default", ...parsed.data } }, { upsert: true });
+      request.log.info("brands.hero updated");
+      return parsed.data;
     }
   );
 
