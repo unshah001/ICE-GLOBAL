@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Index from "./pages/Index";
 import Gallery from "./pages/Gallery";
 import GalleryDetail from "./pages/GalleryDetail";
+import Me from "./pages/Me";
 import BrandDetail from "./pages/BrandDetail";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
@@ -81,6 +82,8 @@ import AdminFoundersEditor from "./pages/AdminFoundersEditor";
 import AdminCofoundersEditor from "./pages/AdminCofoundersEditor";
 import AdminCounts from "./pages/AdminCounts";
 import AdminDualCta from "./pages/AdminDualCta";
+import AdminProfileConfig from "./pages/AdminProfileConfig";
+import AdminUsers from "./pages/AdminUsers";
 import ThemeLoader from "./components/ThemeLoader";
 
 const queryClient = new QueryClient();
@@ -261,6 +264,14 @@ const App = () => (
             }
           />
           <Route
+            path="/admin/profile-config"
+            element={
+              <AdminGuard>
+                <AdminProfileConfig />
+              </AdminGuard>
+            }
+          />
+          <Route
             path="/admin/templates"
             element={
               <AdminGuard>
@@ -273,6 +284,14 @@ const App = () => (
             element={
               <AdminGuard>
                 <AdminNotifications />
+              </AdminGuard>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <AdminGuard>
+                <AdminUsers />
               </AdminGuard>
             }
           />
@@ -492,7 +511,8 @@ const App = () => (
           <Route path="/cookies" element={<Cookies />} />
           <Route path="/test" element={<TestPage />} />
           <Route path="/gallery" element={<Gallery />} />
-          <Route path="/gallery/:id" element={<GalleryDetail />} />
+      <Route path="/gallery/:id" element={<GalleryDetail />} />
+      <Route path="/me" element={<Me />} />
           <Route path="/brands/:slug" element={<BrandDetail />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

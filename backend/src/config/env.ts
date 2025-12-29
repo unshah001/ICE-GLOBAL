@@ -31,4 +31,5 @@ export const env = {
   smtpUser: required(process.env.SMTP_USER, "SMTP_USER"),
   smtpPass: required(process.env.SMTP_PASS, "SMTP_PASS"),
   emailFrom: process.env.EMAIL_FROM ?? process.env.SMTP_FROM ?? process.env.SMTP_USER ?? "no-reply@example.com",
+  userAccessTtl: process.env.USER_ACCESS_TTL || "30d",
 };

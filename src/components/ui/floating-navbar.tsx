@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogIn, UserCircle2 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { navItems as defaultNavItems } from "@/data/expo-data";
 
@@ -39,6 +39,9 @@ export const FloatingNavbar = ({ navItems = defaultNavItems, className }: Floati
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [items, setItems] = useState<NavItem[]>(navItems ?? defaultNavItems);
   const [branding, setBranding] = useState<Branding | null>(null);
+  const [showMe, setShowMe] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [showLogin, setShowLogin] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -66,6 +69,26 @@ export const FloatingNavbar = ({ navItems = defaultNavItems, className }: Floati
       }
     };
     loadNav();
+    const syncAuth = () => {
+      const token = localStorage.getItem("user_access_token");
+      const email = localStorage.getItem("user_email");
+      setShowMe(!!token);
+      setUserEmail(email);
+      setShowLogin(!token);
+    };
+    syncAuth();
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "user_access_token" || e.key === "user_email") {
+        syncAuth();
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+    const handleAuthChange = () => syncAuth();
+    window.addEventListener("auth-change", handleAuthChange as any);
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("auth-change", handleAuthChange as any);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -154,6 +177,38 @@ export const FloatingNavbar = ({ navItems = defaultNavItems, className }: Floati
                 {item.name}
               </Link>
             ))}
+            {!showMe && showLogin && (
+              <Link
+                to="/me"
+                className={cn(
+                  "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300",
+                  location.pathname === "/me"
+                    ? "text-primary bg-primary/10"
+                    : "text-muted-foreground hover:text-foreground hover:bg-card"
+                )}
+              >
+                <span className="inline-flex items-center gap-2">
+                  <LogIn className="w-4 h-4" />
+                  Login
+                </span>
+              </Link>
+            )}
+            {showMe && (
+              <Link
+                to="/me"
+                className={cn(
+                  "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300",
+                  location.pathname === "/me"
+                    ? "text-primary bg-primary/10"
+                    : "text-muted-foreground hover:text-foreground hover:bg-card"
+                )}
+              >
+                <span className="inline-flex items-center gap-2">
+                  <UserCircle2 className="w-4 h-4" />
+                  Me
+                </span>
+              </Link>
+            )}
           </div>
 
           <div className="hidden md:flex items-center gap-3" />
@@ -181,11 +236,11 @@ export const FloatingNavbar = ({ navItems = defaultNavItems, className }: Floati
             className="fixed inset-0 z-40 bg-background/95 backdrop-blur-xl pt-24 px-6"
           >
             <div className="flex flex-col gap-4">
-              {items.map((item, index) => (
-                <motion.div
-                  key={item.name}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
+            {items.map((item, index) => (
+              <motion.div
+                key={item.name}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
                 >
                   <Link
@@ -202,6 +257,48 @@ export const FloatingNavbar = ({ navItems = defaultNavItems, className }: Floati
                   </Link>
                 </motion.div>
               ))}
+              {showMe && (
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: items.length * 0.1 }}
+                >
+                  <Link
+                    to="/me"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={cn(
+                      "block py-4 text-2xl font-display font-semibold transition-colors",
+                      location.pathname === "/me" ? "text-primary" : "text-foreground hover:text-primary"
+                    )}
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <UserCircle2 className="w-5 h-5" />
+                      Me
+                    </span>
+                  </Link>
+                </motion.div>
+              )}
+              {!showMe && showLogin && (
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: items.length * 0.1 }}
+                >
+                  <Link
+                    to="/me"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={cn(
+                      "block py-4 text-2xl font-display font-semibold transition-colors",
+                      location.pathname === "/me" ? "text-primary" : "text-foreground hover:text-primary"
+                    )}
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <LogIn className="w-5 h-5" />
+                      Login
+                    </span>
+                  </Link>
+                </motion.div>
+              )}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}

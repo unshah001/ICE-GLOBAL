@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { getDb } from "../../db/mongo";
+import { getRedis } from "../../db/redis";
 
 const gallerySectionSchema = z.object({
   heading: z.string().min(1),
@@ -58,8 +59,30 @@ const galleryQuerySchema = z.object({
 });
 
 type GalleryItem = z.infer<typeof galleryItemSchema>;
+type GalleryComment = z.infer<typeof galleryCommentSchema>;
 
 export default async function galleryRoutes(app: FastifyInstance) {
+  const sanitizeComments = (comments?: GalleryComment[]) =>
+    (comments ?? []).map((c) => ({ id: c.id, message: c.message, date: c.date }));
+
+  const sanitizeItem = (item: GalleryItem) => {
+    const { comments, ...rest } = item;
+    return {
+      ...rest,
+      comments: [], // comments are served via /gallery/:id/comments
+    };
+  };
+
+  const commentsQuerySchema = z.object({
+    limit: z
+      .string()
+      .regex(/^\d+$/)
+      .transform((v) => Number(v))
+      .catch(10)
+      .optional(),
+    cursor: z.string().optional(), // base64 of { date: string; id: string }
+  });
+
   app.get("/gallery", async (request) => {
     const db = await getDb();
     const col = db.collection<GalleryItem>("gallery");
@@ -93,12 +116,13 @@ export default async function galleryRoutes(app: FastifyInstance) {
 
     const total = await col.countDocuments(filter);
     const totalPages = Math.max(Math.ceil(total / pageSize), 1);
-    const data = await col
+    const raw = await col
       .find(filter)
       .sort({ createdAt: -1 })
       .skip((page - 1) * pageSize)
       .limit(pageSize)
       .toArray();
+    const data = raw.map(sanitizeItem);
 
     const distinctYears = await col.distinct("year");
     const distinctCategories = await col.distinct("category");
@@ -147,7 +171,93 @@ export default async function galleryRoutes(app: FastifyInstance) {
     if (!item) {
       return reply.code(404).send({ message: "Gallery item not found" });
     }
-    return item;
+    try {
+      const redis = getRedis();
+      const buffer = await redis.hget("gallery:like-buffer", id);
+      if (buffer) {
+        return sanitizeItem({ ...item, likes: item.likes + Number(buffer) });
+      }
+    } catch {
+      // ignore redis errors
+    }
+    return sanitizeItem(item);
+  });
+
+  app.get("/gallery/:id/comments", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const db = await getDb();
+    const col = db.collection<GalleryItem>("gallery");
+
+    const parsed = commentsQuerySchema.safeParse(request.query);
+    if (!parsed.success) {
+      return reply.code(400).send({ message: "Invalid query" });
+    }
+
+    const limit = Math.min(Math.max(parsed.data.limit ?? 10, 1), 50);
+    let cursorDate: Date | null = null;
+    let cursorId: string | null = null;
+    if (parsed.data.cursor) {
+      try {
+        const decoded = JSON.parse(Buffer.from(parsed.data.cursor, "base64").toString("utf8"));
+        cursorDate = decoded.date ? new Date(decoded.date) : null;
+        cursorId = decoded.id ?? null;
+      } catch {
+        // ignore malformed cursor
+      }
+    }
+
+    const pipeline: any[] = [
+      { $match: { id } },
+      { $unwind: "$comments" },
+      {
+        $addFields: {
+          "comments.dateObj": { $toDate: "$comments.date" },
+        },
+      },
+    ];
+
+    if (cursorDate && cursorId) {
+      pipeline.push({
+        $match: {
+          $expr: {
+            $or: [
+              { $lt: ["$comments.dateObj", cursorDate] },
+              {
+                $and: [
+                  { $eq: ["$comments.dateObj", cursorDate] },
+                  { $lt: ["$comments.id", cursorId] },
+                ],
+              },
+            ],
+          },
+        },
+      });
+    }
+
+    pipeline.push(
+      { $sort: { "comments.dateObj": -1, "comments.id": -1 } },
+      { $limit: limit },
+      {
+        $project: {
+          _id: 0,
+          id: "$comments.id",
+          message: "$comments.message",
+          date: "$comments.date",
+          author: "$comments.author",
+        },
+      }
+    );
+
+    const docs = await col.aggregate<GalleryComment>(pipeline).toArray();
+    const sanitized = sanitizeComments(docs);
+
+    let next: string | null = null;
+    if (sanitized.length === limit) {
+      const last = sanitized[sanitized.length - 1];
+      next = Buffer.from(JSON.stringify({ date: last.date, id: last.id })).toString("base64");
+    }
+
+    return { data: sanitized, cursor: { next, limit } };
   });
 
   app.put(
@@ -182,6 +292,87 @@ export default async function galleryRoutes(app: FastifyInstance) {
 
       request.log.info("gallery.bulk replaced");
       return { message: "Gallery items saved", count: parsed.data.items.length };
+    }
+  );
+
+  app.post(
+    "/gallery/:id/like",
+    { preHandler: [app.authenticateUser] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const user = request.user as { sub: string };
+      const db = await getDb();
+      const col = db.collection<GalleryItem>("gallery");
+      const existing = await col.findOne({ id }, { projection: { likes: 1 } });
+      if (!existing) return reply.code(404).send({ message: "Gallery item not found" });
+
+      const redis = getRedis();
+      const likedKey = `gallery:liked:${id}`;
+      const bufferKey = "gallery:like-buffer";
+
+      // prevent duplicate likes in the window
+      const already = await redis.sismember(likedKey, user.sub);
+      if (already) {
+        const bufferVal = await redis.hget(bufferKey, id);
+        const total = existing.likes + (bufferVal ? Number(bufferVal) : 0);
+        return { likes: total };
+      }
+
+      await redis.sadd(likedKey, user.sub);
+      await redis.expire(likedKey, 60 * 60 * 24 * 30);
+
+      const bufferCount = await redis.hincrby(bufferKey, id, 1);
+      let likesTotal = existing.likes + bufferCount;
+
+      // Flush to Mongo when buffer reaches threshold
+      if (bufferCount >= 10) {
+        await redis.hdel(bufferKey, id);
+        await col.updateOne({ id }, { $inc: { likes: bufferCount } });
+        likesTotal = existing.likes + bufferCount;
+      }
+
+      return { likes: likesTotal };
+    }
+  );
+
+  app.post(
+    "/gallery/:id/comment",
+    { preHandler: [app.authenticateUser] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const user = request.user as { sub: string };
+      const parsed = galleryCommentSchema.safeParse(request.body);
+      if (!parsed.success) return reply.code(400).send({ message: "Invalid comment" });
+      const comment: GalleryComment = { ...parsed.data, author: user.sub };
+      const db = await getDb();
+      const col = db.collection<GalleryItem>("gallery");
+      const now = new Date();
+      // Ensure doc exists first (no conflicting ops on the same path).
+      await col.updateOne(
+        { id },
+        {
+          $setOnInsert: {
+            id,
+            title: id,
+            year: "",
+            category: "",
+            brand: "",
+            image: "",
+            excerpt: "",
+            article: [],
+            likes: 0,
+            tags: [],
+            comments: [],
+            createdAt: now,
+          },
+          $set: { updatedAt: now },
+        },
+        { upsert: true }
+      );
+      await col.updateOne({ id }, { $push: { comments: comment }, $set: { updatedAt: now } });
+      const updated = await col.findOne({ id }, { projection: { comments: 1 } });
+      if (!updated) return reply.code(500).send({ message: "Unable to save comment" });
+      return { comments: sanitizeComments(updated.comments) };
     }
   );
 

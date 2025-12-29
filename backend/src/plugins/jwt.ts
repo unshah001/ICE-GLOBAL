@@ -8,14 +8,29 @@ export default fp(async (app) => {
     sign: { expiresIn: "15m" },
   });
 
-  app.decorate(
-    "authenticate",
-    async (request: any, reply: any) => {
-      try {
-        await request.jwtVerify();
-      } catch (err) {
-        reply.send(err);
+  const authenticateAdmin = async (request: any, reply: any) => {
+    try {
+      const payload = await request.jwtVerify();
+      if (payload.role !== "admin") {
+        return reply.code(403).send({ message: "Admin access required" });
       }
+    } catch (err) {
+      reply.send(err);
     }
-  );
+  };
+
+  const authenticateUser = async (request: any, reply: any) => {
+    try {
+      const payload = await request.jwtVerify();
+      if (payload.role !== "user") {
+        return reply.code(403).send({ message: "User session required" });
+      }
+    } catch (err) {
+      reply.send(err);
+    }
+  };
+
+  app.decorate("authenticate", authenticateAdmin);
+  app.decorate("authenticateAdmin", authenticateAdmin);
+  app.decorate("authenticateUser", authenticateUser);
 });
