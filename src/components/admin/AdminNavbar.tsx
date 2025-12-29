@@ -1,5 +1,4 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -58,7 +57,6 @@ const AdminNavbar = ({}: AdminNavbarProps) => {
             <Search className="w-4 h-4" />
             Quick search
           </Button>
-          <ThemeSwitcher />
         </div>
       </div>
       <CommandDialog open={open} onOpenChange={setOpen}>

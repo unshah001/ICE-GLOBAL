@@ -2,27 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Palette } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
-
-const themeOptions = [
-  { id: "theme-cosmic", label: "Cosmic", swatch: "linear-gradient(135deg, #7f5af0, #2cb1ff)" },
-  { id: "theme-sand", label: "Sand", swatch: "linear-gradient(135deg, #f4e6d2, #f7c59f)" },
-  { id: "theme-emerald", label: "Emerald", swatch: "linear-gradient(135deg, #1dbf73, #35c9a7)" },
-  { id: "theme-royal", label: "Royal", swatch: "linear-gradient(135deg, #7c5cff, #4ea9ff)" },
-  { id: "theme-mono", label: "Mono", swatch: "linear-gradient(135deg, #111, #555)" },
-  { id: "theme-ocean", label: "Ocean", swatch: "linear-gradient(135deg, #4db6ff, #2dd4bf)" },
-  { id: "theme-sunset", label: "Sunset", swatch: "linear-gradient(135deg, #ff8a4c, #f565c7)" },
-  { id: "theme-antique", label: "Antique", swatch: "linear-gradient(135deg, #f0e6d2, #c89d73)" },
-  { id: "theme-ice", label: "Ice", swatch: "linear-gradient(135deg, #e7f1ff, #9bd8ff)" },
-  { id: "theme-ember", label: "Ember", swatch: "linear-gradient(135deg, #ff9d4a, #f25f5c)" },
-  { id: "theme-blush", label: "Blush", swatch: "linear-gradient(135deg, #f9d7d7, #f9b4c6)" },
-  { id: "theme-mint", label: "Mint", swatch: "linear-gradient(135deg, #dcf7ec, #9be6c7)" },
-  { id: "theme-sky", label: "Sky", swatch: "linear-gradient(135deg, #e7f5ff, #a7d8ff)" },
-];
+import { themeOptions } from "@/data/themes";
 
 const STORAGE_KEY = "expo-theme";
 
 export const ThemeSwitcher = ({ className }: { className?: string }) => {
-  const [current, setCurrent] = useState<string>("theme-cosmic");
+  const [current, setCurrent] = useState<string>("theme-minimal");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -45,7 +30,7 @@ export const ThemeSwitcher = ({ className }: { className?: string }) => {
   return (
     <div
       className={cn(
-        "inline-flex items-center gap-2 rounded-xl border border-border/60 bg-card/70 px-3 py-2 shadow-sm",
+        "inline-flex items-center gap-2 rounded-xl border border-border/50 bg-card/70 px-3 py-2 shadow-none",
         className,
       )}
     >

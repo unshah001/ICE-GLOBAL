@@ -61,6 +61,8 @@ import AdminBranding from "./pages/AdminBranding";
 import AdminLeads from "./pages/AdminLeads";
 import AdminProfile from "./pages/AdminProfile";
 import AdminTemplates from "./pages/AdminTemplates";
+import AdminTheme from "./pages/AdminTheme";
+import ThemeLoader from "./components/ThemeLoader";
 
 const queryClient = new QueryClient();
 
@@ -79,6 +81,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <ThemeLoader />
       <BrowserRouter>
         <ScrollToTop />
         <Routes>
@@ -243,6 +246,14 @@ const App = () => (
             element={
               <AdminGuard>
                 <AdminTemplates />
+              </AdminGuard>
+            }
+          />
+          <Route
+            path="/admin/theme"
+            element={
+              <AdminGuard>
+                <AdminTheme />
               </AdminGuard>
             }
           />

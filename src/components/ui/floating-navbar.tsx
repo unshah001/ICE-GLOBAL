@@ -5,8 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Menu, X } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-import { Button } from "./button";
-import { ThemeSwitcher } from "../ThemeSwitcher";
 import { navItems as defaultNavItems } from "@/data/expo-data";
 
 interface NavItem {
@@ -158,9 +156,7 @@ export const FloatingNavbar = ({ navItems = defaultNavItems, className }: Floati
             ))}
           </div>
 
-          <div className="hidden md:flex items-center gap-3">
-            <ThemeSwitcher />
-          </div>
+          <div className="hidden md:flex items-center gap-3" />
 
           {/* Mobile Menu Toggle */}
           <button

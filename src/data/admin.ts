@@ -32,6 +32,7 @@ export const adminNavLinks = [
   { name: "Leads", href: "/admin/leads" },
   { name: "Profile", href: "/admin/profile" },
   { name: "Templates", href: "/admin/templates" },
+  { name: "Theme", href: "/admin/theme" },
   { name: "Content", href: "/admin#content" },
   { name: "Users", href: "/admin#users" },
   { name: "Settings", href: "/admin#settings" },
@@ -87,6 +88,7 @@ export const adminNavGroups = [
   { label: "Forms", items: [{ name: "Form Builder", href: "/admin/forms" }] },
   { label: "Leads", items: [{ name: "Leads", href: "/admin/leads" }] },
   { label: "Templates", items: [{ name: "Templates", href: "/admin/templates" }] },
+  { label: "Appearance", items: [{ name: "Theme", href: "/admin/theme" }] },
   { label: "Profile", items: [{ name: "Profile", href: "/admin/profile" }] },
   { label: "Session", items: [{ name: "Logout", href: "/admin/login" }] },
 ];
