@@ -7,6 +7,7 @@ import { Menu, X } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "./button";
 import { ThemeSwitcher } from "../ThemeSwitcher";
+import { navItems as defaultNavItems } from "@/data/expo-data";
 
 interface NavItem {
   name: string;
@@ -18,7 +19,7 @@ interface FloatingNavbarProps {
   className?: string;
 }
 
-export const FloatingNavbar = ({ navItems, className }: FloatingNavbarProps) => {
+export const FloatingNavbar = ({ navItems = defaultNavItems, className }: FloatingNavbarProps) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
@@ -38,14 +39,14 @@ export const FloatingNavbar = ({ navItems, className }: FloatingNavbarProps) => 
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5 }}
         className={cn(
-          "fixed top-4 inset-x-4 md:inset-x-auto md:left-1/2 md:-translate-x-1/2 z-50 px-4 md:px-6 py-3 rounded-2xl transition-all duration-300",
+          "fixed top-0 inset-x-0 z-50 px-4 md:px-6 py-3 transition-all duration-300",
           isScrolled
-            ? "bg-card/80 backdrop-blur-xl border border-border shadow-xl"
+            ? "bg-card/90 backdrop-blur-xl border-b border-border shadow-xl"
             : "bg-transparent",
           className
         )}
       >
-        <div className="flex items-center justify-between gap-4 md:gap-8 max-w-5xl mx-auto">
+        <div className="flex items-center justify-between gap-4 md:gap-8 max-w-6xl mx-auto w-full">
           {/* Logo */}
           <Link
             to="/"

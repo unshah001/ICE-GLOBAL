@@ -30,7 +30,10 @@
     "seed:counts": "tsx scripts/seed-counts.ts",
     "seed:dual-cta": "tsx scripts/seed-dual-cta.ts",
     "seed:footer": "tsx scripts/seed-footer.ts",
-    "seed:founders:list": "tsx scripts/seed-founders-list.ts"
+    "seed:founders:list": "tsx scripts/seed-founders-list.ts",
+    "seed:cofounders:list": "tsx scripts/seed-cofounders-list.ts",
+    "seed:teams": "tsx scripts/seed-teams.ts",
+    "seed:teams:list": "tsx scripts/seed-teams-list.ts"
   },
   "dependencies": {
     "@fastify/cors": "^9.0.1",

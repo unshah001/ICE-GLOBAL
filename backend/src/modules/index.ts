@@ -17,6 +17,7 @@ import buyerMosaicRoutes from "./buyer-mosaic/routes";
 import vvipRoutes from "./vvip/routes";
 import foundersRoutes from "./founders/routes";
 import cofoundersRoutes from "./cofounders/routes";
+import teamsRoutes from "./teams/routes";
 import countsRoutes from "./counts/routes";
 import dualCtaRoutes from "./dual-cta/routes";
 import footerRoutes from "./footer/routes";
@@ -40,6 +41,7 @@ export default async function registerRoutes(app: FastifyInstance) {
   await app.register(vvipRoutes);
   await app.register(foundersRoutes);
   await app.register(cofoundersRoutes);
+  await app.register(teamsRoutes);
   await app.register(countsRoutes);
   await app.register(dualCtaRoutes);
   await app.register(footerRoutes);

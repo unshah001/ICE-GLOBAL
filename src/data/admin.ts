@@ -12,6 +12,7 @@ export const adminNavLinks = [
   { name: "Brands", href: "/admin/brands" },
   { name: "Founders", href: "/admin/founders" },
   { name: "Co-Founders", href: "/admin/cofounders" },
+  { name: "Team", href: "/admin/teams" },
   { name: "Buyers", href: "/admin/buyers" },
   { name: "Sellers", href: "/admin/sellers" },
   { name: "Content", href: "/admin#content" },

@@ -75,6 +75,11 @@ const LazyImage = ({ src, alt, className }: { src: string; alt: string; classNam
 
 const Gallery = () => {
   const [items, setItems] = useState<GalleryItem[]>(fallbackGalleryItems.slice(0, ITEMS_PER_PAGE));
+  const [hero, setHero] = useState<{ heading: string; accent: string; subheading: string }>({
+    heading: "Legacy",
+    accent: "Gallery",
+    subheading: "Browse curated moments from our past expos. Filter by year, category, or search for specific brands.",
+  });
   const [selectedYear, setSelectedYear] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -158,6 +163,27 @@ const Gallery = () => {
   }, [fetchPage, searchParams]);
 
   useEffect(() => {
+    const loadHero = async () => {
+      try {
+        const res = await fetch(`${base}/gallery/hero`);
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        setHero({
+          heading: data.heading || "Legacy",
+          accent: data.accent || "Gallery",
+          subheading:
+            data.subheading ||
+            "Browse curated moments from our past expos. Filter by year, category, or search for specific brands.",
+        });
+      } catch {
+        // fallback text
+      }
+    };
+    loadHero();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     const handle = setTimeout(() => {
       fetchPage(1, true);
     }, 200);
@@ -219,11 +245,13 @@ const Gallery = () => {
             className="text-center max-w-3xl mx-auto"
           >
             <h1 className="text-4xl md:text-6xl font-bold font-display text-foreground mb-6">
-              Legacy <span className="text-gradient">Gallery</span>
+              {hero.heading}{" "}
+              <span className="text-gradient">
+                {hero.accent}
+              </span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground">
-              Browse curated moments from our past expos. Filter by year, category, 
-              or search for specific brands.
+              {hero.subheading}
             </p>
           </motion.div>
         </div>

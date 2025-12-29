@@ -32,6 +32,12 @@ const bulkGallerySchema = z.object({
   items: z.array(galleryItemSchema),
 });
 
+const galleryHeroSchema = z.object({
+  heading: z.string().default("Legacy"),
+  accent: z.string().default("Gallery"),
+  subheading: z.string().default("Browse curated moments from our past expos. Filter by year, category, or search for specific brands."),
+});
+
 const galleryQuerySchema = z.object({
   page: z
     .string()
@@ -115,6 +121,24 @@ export default async function galleryRoutes(app: FastifyInstance) {
     };
   });
 
+  app.get("/gallery/hero", async () => {
+    const db = await getDb();
+    const col = db.collection<{ key: string; heading: string; subheading: string }>("gallery_hero");
+    const stored = await col.findOne({ key: "default" });
+    if (!stored) {
+      return {
+        heading: "Legacy",
+        accent: "Gallery",
+        subheading: "Browse curated moments from our past expos. Filter by year, category, or search for specific brands.",
+      };
+    }
+    return {
+      heading: stored.heading,
+      accent: (stored as any).accent ?? "Gallery",
+      subheading: stored.subheading,
+    };
+  });
+
   app.get("/gallery/:id", async (request, reply) => {
     const { id } = request.params as { id: string };
     const db = await getDb();
@@ -158,6 +182,23 @@ export default async function galleryRoutes(app: FastifyInstance) {
 
       request.log.info("gallery.bulk replaced");
       return { message: "Gallery items saved", count: parsed.data.items.length };
+    }
+  );
+
+  app.put(
+    "/gallery/hero",
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const parsed = galleryHeroSchema.safeParse(request.body);
+      if (!parsed.success) {
+        request.log.warn({ issues: parsed.error.issues }, "gallery.hero validation failed");
+        return reply.code(400).send({ message: "Invalid hero payload" });
+      }
+      const db = await getDb();
+      const col = db.collection("gallery_hero");
+      await col.updateOne({ key: "default" }, { $set: { key: "default", ...parsed.data } }, { upsert: true });
+      request.log.info("gallery.hero updated");
+      return parsed.data;
     }
   );
 

@@ -39,6 +39,9 @@ import AdminFounders from "./pages/AdminFounders";
 import Cofounders from "./pages/Cofounders";
 import CofounderDetail from "./pages/CofounderDetail";
 import AdminCofounders from "./pages/AdminCofounders";
+import Teams from "./pages/Teams";
+import TeamDetail from "./pages/TeamDetail";
+import AdminTeams from "./pages/AdminTeams";
 
 const queryClient = new QueryClient();
 
@@ -97,6 +100,14 @@ const App = () => (
             }
           />
           <Route
+            path="/admin/teams"
+            element={
+              <AdminGuard>
+                <AdminTeams />
+              </AdminGuard>
+            }
+          />
+          <Route
             path="/admin/buyers"
             element={
               <AdminGuard>
@@ -128,6 +139,8 @@ const App = () => (
           <Route path="/founders/:id" element={<FounderDetail />} />
           <Route path="/cofounders" element={<Cofounders />} />
           <Route path="/cofounders/:id" element={<CofounderDetail />} />
+          <Route path="/teams" element={<Teams />} />
+          <Route path="/teams/:id" element={<TeamDetail />} />
           <Route path="/buyers" element={<Buyers />} />
           <Route path="/buyers/:id" element={<BuyerDetail />} />
           <Route path="/sellers" element={<Sellers />} />

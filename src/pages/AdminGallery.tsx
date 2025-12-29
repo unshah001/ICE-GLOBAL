@@ -18,12 +18,19 @@ type GalleryFilters = {
 };
 
 const AdminGallery = () => {
-  const sections: AdminSectionLink[] = [{ id: "gallery-items", label: "Gallery Items" }];
+  const sections: AdminSectionLink[] = [
+    { id: "gallery-hero", label: "Hero" },
+    { id: "gallery-items", label: "Gallery Items" },
+  ];
   const navItems = adminNavLinks;
 
   const [items, setItems] = useState<GalleryItemAdmin[]>([]);
+  const [heroHeading, setHeroHeading] = useState("Legacy");
+  const [heroAccent, setHeroAccent] = useState("Gallery");
+  const [heroSubheading, setHeroSubheading] = useState("Browse curated moments from our past expos. Filter by year, category, or search for specific brands.");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [heroSaving, setHeroSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [page, setPage] = useState(1);
@@ -71,6 +78,7 @@ const AdminGallery = () => {
 
   useEffect(() => {
     loadGallery(1, { search, year, category, tag });
+    loadHero();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageSize]);
 
@@ -210,6 +218,56 @@ const AdminGallery = () => {
     }
   };
 
+  const loadHero = async () => {
+    const base = import.meta.env.VITE_API_BASE_URL || "";
+    try {
+      const res = await fetch(`${base}/gallery/hero`);
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setHeroHeading(data.heading || heroHeading);
+      setHeroAccent(data.accent || heroAccent);
+      setHeroSubheading(data.subheading || heroSubheading);
+    } catch {
+      // keep defaults
+    }
+  };
+
+  const saveHero = async () => {
+    setHeroSaving(true);
+    setError("");
+    setSuccess("");
+    try {
+      const base = import.meta.env.VITE_API_BASE_URL || "";
+      const token = await getAccessToken(base);
+      if (!token) {
+        setHeroSaving(false);
+        setError("Not authenticated. Please login again.");
+        return;
+      }
+      const attempt = async (auth: string) =>
+        fetch(`${base}/gallery/hero`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${auth}` },
+          body: JSON.stringify({ heading: heroHeading, accent: heroAccent, subheading: heroSubheading }),
+        });
+      let res = await attempt(token);
+      if (res.status === 401) {
+        const refreshed = await refreshAccessToken(base);
+        if (!refreshed) throw new Error("Session expired. Please login again.");
+        res = await attempt(refreshed);
+      }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || "Save failed");
+      }
+      setSuccess("Gallery hero updated");
+    } catch (err: any) {
+      setError(err.message || "Unable to save hero");
+    } finally {
+      setHeroSaving(false);
+    }
+  };
+
   return (
     <AdminLayout
       title="Gallery Management"
@@ -217,6 +275,32 @@ const AdminGallery = () => {
       navItems={navItems}
       sections={sections}
     >
+      <div id="gallery-hero" className="rounded-xl border border-border/70 bg-card/70 p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Hero</p>
+            <h3 className="text-lg font-semibold">Gallery hero text</h3>
+          </div>
+          <Button size="sm" onClick={saveHero} disabled={heroSaving}>
+            {heroSaving ? "Saving..." : "Save hero"}
+          </Button>
+        </div>
+        <div className="grid md:grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs text-muted-foreground">Heading</label>
+            <Input value={heroHeading} onChange={(e) => setHeroHeading(e.target.value)} />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">Accent (colored)</label>
+            <Input value={heroAccent} onChange={(e) => setHeroAccent(e.target.value)} />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">Subheading</label>
+            <Input value={heroSubheading} onChange={(e) => setHeroSubheading(e.target.value)} />
+          </div>
+        </div>
+      </div>
+
       <div className="flex flex-col gap-3 rounded-xl border border-border/70 bg-card/70 p-4">
         <div className="flex items-center gap-2 text-sm font-medium">
           <Filter className="w-4 h-4" />
