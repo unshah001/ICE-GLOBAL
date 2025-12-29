@@ -32,6 +32,7 @@ import privacyRoutes from "./privacy/routes";
 import sponsorRoutes from "./sponsor/routes";
 import termsRoutes from "./terms/routes";
 import testimonialsRoutes from "./testimonials/routes";
+import formsRoutes from "./forms/routes";
 
 export default async function registerRoutes(app: FastifyInstance) {
   await app.register(healthRoutes);
@@ -67,4 +68,5 @@ export default async function registerRoutes(app: FastifyInstance) {
   await app.register(sponsorRoutes);
   await app.register(termsRoutes);
   await app.register(testimonialsRoutes);
+  await app.register(formsRoutes);
 }

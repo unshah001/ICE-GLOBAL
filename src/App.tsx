@@ -53,6 +53,7 @@ import AdminPrivacy from "./pages/AdminPrivacy";
 import AdminSponsor from "./pages/AdminSponsor";
 import AdminTerms from "./pages/AdminTerms";
 import AdminTestimonials from "./pages/AdminTestimonials";
+import AdminForms from "./pages/AdminForms";
 
 const queryClient = new QueryClient();
 
@@ -195,6 +196,14 @@ const App = () => (
             element={
               <AdminGuard>
                 <AdminTestimonials />
+              </AdminGuard>
+            }
+          />
+          <Route
+            path="/admin/forms"
+            element={
+              <AdminGuard>
+                <AdminForms />
               </AdminGuard>
             }
           />

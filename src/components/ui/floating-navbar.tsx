@@ -22,6 +22,7 @@ interface FloatingNavbarProps {
 export const FloatingNavbar = ({ navItems = defaultNavItems, className }: FloatingNavbarProps) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [items, setItems] = useState<NavItem[]>(navItems ?? defaultNavItems);
   const location = useLocation();
 
   useEffect(() => {
@@ -30,6 +31,26 @@ export const FloatingNavbar = ({ navItems = defaultNavItems, className }: Floati
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const base = import.meta.env.VITE_API_BASE_URL || "";
+    const loadNav = async () => {
+      try {
+        const res = await fetch(`${base}/hero`);
+        if (!res.ok) throw new Error("nav fetch failed");
+        const data = await res.json();
+        if (Array.isArray(data.navItems) && data.navItems.length) {
+          setItems(data.navItems);
+        } else {
+          setItems(navItems ?? defaultNavItems);
+        }
+      } catch {
+        setItems(navItems ?? defaultNavItems);
+      }
+    };
+    loadNav();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -57,7 +78,7 @@ export const FloatingNavbar = ({ navItems = defaultNavItems, className }: Floati
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-1">
-            {navItems.map((item) => (
+            {items.map((item) => (
               <Link
                 key={item.name}
                 to={item.href}
@@ -100,7 +121,7 @@ export const FloatingNavbar = ({ navItems = defaultNavItems, className }: Floati
             className="fixed inset-0 z-40 bg-background/95 backdrop-blur-xl pt-24 px-6"
           >
             <div className="flex flex-col gap-4">
-              {navItems.map((item, index) => (
+              {items.map((item, index) => (
                 <motion.div
                   key={item.name}
                   initial={{ opacity: 0, x: -20 }}
@@ -124,7 +145,7 @@ export const FloatingNavbar = ({ navItems = defaultNavItems, className }: Floati
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: navItems.length * 0.1 }}
+                transition={{ delay: items.length * 0.1 }}
                 className="pt-4"
               >
                 <div className="flex flex-col gap-3">

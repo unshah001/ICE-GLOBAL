@@ -7,22 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-type RatingOption = { value: string; label: string };
+type Field = { id: string; label: string; type: "text" | "email" | "textarea" | "select" | "number"; required?: boolean; options?: string[] };
+
 type FeedbackContent = {
   hero: { badge: string; title: string; subheading: string };
   form: {
-    nameLabel: string;
-    emailLabel: string;
-    roleLabel: string;
-    ratingLabel: string;
-    feedbackLabel: string;
     buttonLabel: string;
     note: string;
-    rolePlaceholder: string;
-    feedbackPlaceholder: string;
     successMessage: string;
   };
-  ratingOptions: RatingOption[];
 };
 
 const defaultContent: FeedbackContent = {
@@ -32,64 +25,81 @@ const defaultContent: FeedbackContent = {
     subheading: "Tell us what you loved and what we can improve. Your input shapes the next INDIA GLOBAL EXPO.",
   },
   form: {
-    nameLabel: "Name",
-    emailLabel: "Email",
-    roleLabel: "Role",
-    ratingLabel: "Rating",
-    feedbackLabel: "Feedback",
     buttonLabel: "Submit feedback",
     note: "We read every response.",
-    rolePlaceholder: "Attendee, partner, sponsor...",
-    feedbackPlaceholder: "Share highlights, suggestions, or issues you faced.",
     successMessage: "Thanks for your feedback! We appreciate your time.",
   },
-  ratingOptions: [
-    { value: "5", label: "5 - Excellent" },
-    { value: "4", label: "4 - Good" },
-    { value: "3", label: "3 - Fair" },
-    { value: "2", label: "2 - Needs improvement" },
-    { value: "1", label: "1 - Poor" },
-  ],
 };
 
+const defaultFields: Field[] = [
+  { id: "name", label: "Name", type: "text", required: true },
+  { id: "email", label: "Email", type: "email", required: true },
+  { id: "role", label: "Role", type: "text" },
+  { id: "rating", label: "Rating (1-5)", type: "number", required: true },
+  { id: "message", label: "Feedback", type: "textarea", required: true },
+];
+
 const Feedback = () => {
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    role: "",
-    message: "",
-    rating: "5",
-  });
+  const [form, setForm] = useState<Record<string, string>>({});
   const [content, setContent] = useState<FeedbackContent>(defaultContent);
-
-  const handleChange =
-    (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
-      setForm((prev) => ({ ...prev, [key]: e.target.value }));
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setForm({ name: "", email: "", role: "", message: "", rating: "5" });
-    alert(content.form.successMessage);
-  };
-
+  const [fields, setFields] = useState<Field[]>(defaultFields);
   const base = import.meta.env.VITE_API_BASE_URL || "";
 
+  const handleChange =
+    (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+      setForm((prev) => ({ ...prev, [key]: e.target.value }));
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`${base}/forms/feedback/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) throw new Error("Submit failed");
+      setForm({});
+      alert(content.form.successMessage);
+    } catch {
+      alert("Unable to send right now. Please try again.");
+    }
+  };
+
   useEffect(() => {
-    const load = async () => {
+    const loadContent = async () => {
       try {
         const res = await fetch(`${base}/feedback`);
         if (!res.ok) throw new Error("failed");
-        const data = (await res.json()) as Partial<FeedbackContent>;
+        const data = await res.json();
         setContent({
           hero: { ...defaultContent.hero, ...(data.hero || {}) },
           form: { ...defaultContent.form, ...(data.form || {}) },
-          ratingOptions: data.ratingOptions && data.ratingOptions.length ? data.ratingOptions : defaultContent.ratingOptions,
         });
       } catch {
         setContent(defaultContent);
       }
     };
-    load();
+    const loadForm = async () => {
+      try {
+        const res = await fetch(`${base}/forms/feedback`);
+        if (!res.ok) throw new Error("failed");
+        const data = await res.json();
+        if (Array.isArray(data.fields) && data.fields.length) {
+          setFields(data.fields);
+          const initial: Record<string, string> = {};
+          data.fields.forEach((f: Field) => {
+            initial[f.id] = "";
+          });
+          setForm(initial);
+        }
+      } catch {
+        const initial: Record<string, string> = {};
+        defaultFields.forEach((f) => (initial[f.id] = ""));
+        setForm(initial);
+      }
+    };
+    loadContent();
+    loadForm();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -105,57 +115,39 @@ const Feedback = () => {
         <p className="text-muted-foreground max-w-3xl">{content.hero.subheading}</p>
       </section>
 
-      <section className="container-custom pb-16">
+      <section className="container-custom pb-16 flex justify-center">
         <form
           onSubmit={handleSubmit}
-          className="glass rounded-3xl border border-border/60 p-6 md:p-8 space-y-4 max-w-3xl"
+          className="glass rounded-3xl border border-border/60 p-6 md:p-8 space-y-4 max-w-3xl w-full"
         >
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm text-muted-foreground block mb-2">Name</label>
-              <Input value={form.name} onChange={handleChange("name")} placeholder={content.form.nameLabel} required />
-            </div>
-            <div>
-              <label className="text-sm text-muted-foreground block mb-2">{content.form.emailLabel}</label>
-              <Input
-                type="email"
-                value={form.email}
-                onChange={handleChange("email")}
-                placeholder="you@company.com"
-                required
-              />
-            </div>
-          </div>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm text-muted-foreground block mb-2">{content.form.roleLabel}</label>
-              <Input value={form.role} onChange={handleChange("role")} placeholder={content.form.rolePlaceholder} />
-            </div>
-            <div>
-              <label className="text-sm text-muted-foreground block mb-2">{content.form.ratingLabel}</label>
-              <select
-                value={form.rating}
-                onChange={handleChange("rating")}
-                className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                {(content.ratingOptions || []).map((r) => (
-                  <option key={r.value} value={r.value}>
-                    {r.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div>
-            <label className="text-sm text-muted-foreground block mb-2">{content.form.feedbackLabel}</label>
-            <Textarea
-              value={form.message}
-              onChange={handleChange("message")}
-              placeholder={content.form.feedbackPlaceholder}
-              rows={4}
-              required
-            />
-          </div>
+          {fields.map((field) => {
+            const common = {
+              required: field.required,
+              value: form[field.id] || "",
+              onChange: handleChange(field.id),
+            };
+            return (
+              <div key={field.id}>
+                <label className="text-sm text-muted-foreground block mb-2">{field.label}</label>
+                {field.type === "textarea" ? (
+                  <Textarea {...common} rows={4} />
+                ) : field.type === "select" ? (
+                  <select
+                    className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    {...common}
+                  >
+                    {(field.options || []).map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <Input type={field.type === "number" ? "number" : field.type} {...common} />
+                )}
+              </div>
+            );
+          })}
           <div className="flex gap-3 items-center">
             <Button type="submit" variant="hero">
               {content.form.buttonLabel}

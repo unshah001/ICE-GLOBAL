@@ -26,6 +26,7 @@ export const adminNavLinks = [
   { name: "Sponsor", href: "/admin/sponsor" },
   { name: "Terms", href: "/admin/terms" },
   { name: "Testimonials", href: "/admin/testimonials" },
+  { name: "Form Builder", href: "/admin/forms" },
   { name: "Content", href: "/admin#content" },
   { name: "Users", href: "/admin#users" },
   { name: "Settings", href: "/admin#settings" },

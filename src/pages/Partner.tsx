@@ -7,6 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
+type Field = {
+  id: string;
+  label: string;
+  type: "text" | "email" | "textarea" | "select" | "number";
+  required?: boolean;
+  options?: string[];
+};
+
 type PartnerPayload = {
   hero: { badge: string; title: string; subheading: string };
   form: {
@@ -47,20 +55,35 @@ const defaultPayload: PartnerPayload = {
 };
 
 const Partner = () => {
-  const [form, setForm] = useState({ name: "", email: "", company: "", goals: "" });
+  const [form, setForm] = useState<Record<string, string>>({});
+  const [fields, setFields] = useState<Field[]>([
+    { id: "name", label: "Name", type: "text", required: true },
+    { id: "email", label: "Email", type: "email", required: true },
+    { id: "company", label: "Company", type: "text" },
+    { id: "goals", label: "Goals & vision", type: "textarea", required: true },
+  ]);
   const [content, setContent] = useState<PartnerPayload>(defaultPayload);
+  const base = import.meta.env.VITE_API_BASE_URL || "";
 
   const handleChange =
-    (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
       setForm((prev) => ({ ...prev, [key]: e.target.value }));
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setForm({ name: "", email: "", company: "", goals: "" });
-    alert(content.form.successMessage);
+    try {
+      const res = await fetch(`${base}/forms/partner/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) throw new Error("Submit failed");
+      setForm({});
+      alert(content.form.successMessage);
+    } catch {
+      alert("Unable to send right now. Please try again.");
+    }
   };
-
-  const base = import.meta.env.VITE_API_BASE_URL || "";
 
   useEffect(() => {
     const load = async () => {
@@ -76,7 +99,27 @@ const Partner = () => {
         setContent(defaultPayload);
       }
     };
+    const loadForm = async () => {
+      try {
+        const res = await fetch(`${base}/forms/partner`);
+        if (!res.ok) throw new Error("failed");
+        const data = await res.json();
+        if (Array.isArray(data.fields) && data.fields.length) {
+          setFields(data.fields);
+          const initial: Record<string, string> = {};
+          data.fields.forEach((f: Field) => {
+            initial[f.id] = "";
+          });
+          setForm(initial);
+        }
+      } catch {
+        const initial: Record<string, string> = {};
+        fields.forEach((f) => (initial[f.id] = ""));
+        setForm(initial);
+      }
+    };
     load();
+    loadForm();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -92,41 +135,39 @@ const Partner = () => {
         <p className="text-muted-foreground max-w-3xl">{content.hero.subheading}</p>
       </section>
 
-      <section className="container-custom pb-16">
+      <section className="container-custom pb-16 flex justify-center">
         <form
           onSubmit={handleSubmit}
-          className="glass rounded-3xl border border-border/60 p-6 md:p-8 space-y-4 max-w-3xl"
+          className="glass rounded-3xl border border-border/60 p-6 md:p-8 space-y-4 max-w-3xl w-full"
         >
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm text-muted-foreground block mb-2">Name</label>
-              <Input value={form.name} onChange={handleChange("name")} required placeholder={content.form.namePlaceholder} />
-            </div>
-            <div>
-              <label className="text-sm text-muted-foreground block mb-2">{content.form.emailLabel}</label>
-              <Input
-                type="email"
-                value={form.email}
-                onChange={handleChange("email")}
-                required
-                placeholder={content.form.emailPlaceholder}
-              />
-            </div>
-          </div>
-          <div>
-            <label className="text-sm text-muted-foreground block mb-2">{content.form.companyLabel}</label>
-            <Input value={form.company} onChange={handleChange("company")} placeholder={content.form.companyPlaceholder} />
-          </div>
-          <div>
-            <label className="text-sm text-muted-foreground block mb-2">{content.form.goalsLabel}</label>
-            <Textarea
-              value={form.goals}
-              onChange={handleChange("goals")}
-              required
-              rows={4}
-              placeholder={content.form.goalsPlaceholder}
-            />
-          </div>
+          {fields.map((field) => {
+            const common = {
+              required: field.required,
+              value: form[field.id] || "",
+              onChange: handleChange(field.id),
+            };
+            return (
+              <div key={field.id}>
+                <label className="text-sm text-muted-foreground block mb-2">{field.label}</label>
+                {field.type === "textarea" ? (
+                  <Textarea {...common} rows={4} />
+                ) : field.type === "select" ? (
+                  <select
+                    className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    {...common}
+                  >
+                    {(field.options || []).map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <Input type={field.type === "number" ? "number" : field.type} {...common} />
+                )}
+              </div>
+            );
+          })}
           <div className="flex gap-3 items-center">
             <Button type="submit" variant="hero">
               {content.form.ctaLabel}

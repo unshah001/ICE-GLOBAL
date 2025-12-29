@@ -92,3 +92,19 @@ Teams.tsx
 Terms.tsx
 TestimonialsPage.tsx
 TestPage.tsx
+
+
+
+Lead/intent-capture forms available to users:
+
+Contact: general inquiry/lead (name, email, company, message) — Contact.tsx
+
+Partner inquiry: partnership goals (name, email, company, goals) — Partner.tsx
+
+Sponsor inquiry: sponsorship goals/budget (name, email, company, budget, objectives) — Sponsor.tsx
+
+Brand Guidelines request: asset request (name, email, company, intended use) — BrandGuidelines.tsx
+
+Feedback: experience input (name, email, role, rating, feedback) — Feedback.tsx
+
+Gallery comments: per-gallery comment post (name + comment) — GalleryDetail.tsx (lightweight engagement, not structured lead)

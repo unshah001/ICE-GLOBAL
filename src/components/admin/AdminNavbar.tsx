@@ -26,8 +26,11 @@ const AdminNavbar = ({ items = adminNavLinks }: AdminNavbarProps) => {
   const byName = Object.fromEntries(items.map((i) => [i.name, i]));
   const grouped = [
     { label: "Overview", names: ["Dashboard", "Content", "Users", "Settings"] },
-    { label: "Experience", names: ["Gallery", "Brands", "Team", "Founders", "Co-Founders"] },
-    { label: "Demand", names: ["Buyers", "Sellers"] },
+    { label: "Experience", names: ["Gallery", "Gallery Detail", "Brands", "Testimonials", "About", "Contact"] },
+    { label: "People", names: ["Team", "Founders", "Co-Founders"] },
+    { label: "Growth", names: ["Buyers", "Sellers", "Partner", "Sponsor"] },
+    { label: "Policies", names: ["Privacy", "Cookies", "Terms", "Not Found"] },
+    { label: "Forms", names: ["Form Builder"] },
     { label: "Session", names: ["Logout"] },
   ];
 
