@@ -1,20 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { adminNavLinks } from "@/data/admin";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Save } from "lucide-react";
+import DOMPurify from "dompurify";
 
 type TemplateRow = {
   id?: string;
@@ -55,9 +49,13 @@ const AdminTemplates = () => {
     return Object.fromEntries(entries);
   }, [active.placeholders]);
 
-  const renderPreview = (text: string) => {
+  const renderPreview = (text: string, asHtml = false) => {
     if (!text) return "";
-    return (active.placeholders || []).reduce((acc, key) => acc.replaceAll(`{{${key}}}`, sampleData[key] || `[${key}]`), text);
+    const replaced = (active.placeholders || []).reduce(
+      (acc, key) => acc.replaceAll(`{{${key}}}`, sampleData[key] || `[${key}]`),
+      text
+    );
+    return asHtml ? DOMPurify.sanitize(replaced) : replaced;
   };
 
   const refreshAccessToken = async () => {
@@ -332,12 +330,13 @@ const AdminTemplates = () => {
                 </div>
               </div>
               <div>
-                <label className="text-xs text-muted-foreground">Body</label>
-                <Textarea
-                  rows={8}
+                <label className="text-xs text-muted-foreground">Body (HTML supported)</label>
+                <textarea
+                  rows={10}
                   value={active.body}
                   onChange={(e) => setActive({ ...active, body: e.target.value })}
-                  placeholder="Use placeholders like {{name}} or {{email}}"
+                  placeholder="Paste or write HTML. Use placeholders like {{name}} or {{email}}."
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary font-mono"
                 />
               </div>
             </TabsContent>
@@ -370,9 +369,10 @@ const AdminTemplates = () => {
               </div>
               <div className="p-4 rounded-md border border-border/60 bg-muted/30">
                 <p className="text-xs uppercase text-muted-foreground mb-2">Body preview</p>
-                <pre className="whitespace-pre-wrap text-sm font-mono text-foreground">
-                  {renderPreview(active.body) || "No content yet."}
-                </pre>
+                <div
+                  className="prose prose-sm max-w-none prose-invert"
+                  dangerouslySetInnerHTML={{ __html: renderPreview(active.body, true) || "<p>No content yet.</p>" }}
+                />
               </div>
             </TabsContent>
           </Tabs>

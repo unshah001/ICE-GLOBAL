@@ -2,121 +2,103 @@ import { getDb } from "../src/db/mongo";
 
 const templates = [
   {
-    slug: "welcome",
-    type: "email",
-    title: "Welcome to ICE",
-    subject: "Welcome to ICE Exhibitions",
-    body: "Hi {{name}},\n\nThanks for reaching out to ICE Exhibitions. Our team will review your request and get back within 24 hours.\n\nCheers,\nICE Team",
-    placeholders: ["name"],
-    description: "Generic welcome email for new inquiries.",
-  },
-  {
-    slug: "password-reset",
-    type: "email",
-    title: "Password Reset",
-    subject: "Reset your ICE password",
-    body: "Hi {{name}},\n\nWe received a request to reset your password. Use this link: {{reset_link}}\nIf you didn’t request this, you can ignore this email.\n\nThanks,\nICE Security",
-    placeholders: ["name", "reset_link"],
-    description: "Password reset flow.",
-  },
-  {
-    slug: "event-rsvp",
-    type: "email",
-    title: "Event RSVP Confirmation",
-    subject: "You’re confirmed for {{event_name}}",
-    body: "Hi {{name}},\n\nYour RSVP for {{event_name}} is confirmed.\nDate: {{event_date}}\nLocation: {{event_location}}\n\nWe’ll send reminders before the event.\n\nThanks,\nICE Events",
-    placeholders: ["name", "event_name", "event_date", "event_location"],
-    description: "Confirmation for event RSVPs.",
-  },
-  {
-    slug: "event-update",
-    type: "email",
-    title: "Event Update",
-    subject: "Update for {{event_name}}",
-    body: "Hi {{name}},\n\nThere’s an update for {{event_name}}:\n{{update_body}}\n\nSee you soon,\nICE Events",
-    placeholders: ["name", "event_name", "update_body"],
-    description: "Notifications for schedule/venue/content changes.",
-  },
-  {
-    slug: "seller-submission",
-    type: "email",
-    title: "Seller submission received",
-    subject: "We received your seller submission",
-    body: "Hi {{name}},\n\nThanks for sharing your seller story for {{company}}. We’ll review and publish after QA.\n\nTrack status in your dashboard or reply to this email with questions.\n\nThanks,\nICE Team",
-    placeholders: ["name", "company"],
-    description: "Receipt for seller submissions.",
-  },
-  {
-    slug: "buyer-submission",
-    type: "email",
-    title: "Buyer submission received",
-    subject: "We received your buyer story",
-    body: "Hi {{name}},\n\nThanks for submitting your buyer journey. Our editors will review and reach out if we need more details.\n\nCheers,\nICE Team",
-    placeholders: ["name"],
-    description: "Receipt for buyer stories/journeys.",
-  },
-  {
-    slug: "admin-alert-upload",
-    type: "email",
-    title: "New asset uploaded",
-    subject: "New gallery upload: {{title}}",
-    body: "Team,\n\nA new gallery item was uploaded by {{uploaded_by}}.\nTitle: {{title}}\nCategory: {{category}}\n\nReview in admin before publishing.",
-    placeholders: ["uploaded_by", "title", "category"],
-    description: "Internal alert for new gallery uploads.",
-  },
-  {
-    slug: "admin-alert-delete",
-    type: "email",
-    title: "Content deleted",
-    subject: "Content deleted: {{entity}}",
-    body: "Team,\n\n{{entity}} was deleted by {{deleted_by}} at {{deleted_at}}.\nIf this was unexpected, please review activity logs.",
-    placeholders: ["entity", "deleted_by", "deleted_at"],
-    description: "Internal deletion notification.",
-  },
-  {
-    slug: "welcome-platform",
-    type: "email",
-    title: "Welcome to the platform",
-    subject: "You’re in. Let’s get started.",
-    body: "Hi {{name}},\n\nWelcome to ICE Exhibitions digital. You can manage submissions, track leads, and update content.\n\nNeed help? Reply to this email or visit our help center.\n\nThanks,\nICE Team",
-    placeholders: ["name"],
-    description: "Platform onboarding welcome for new admin/editor accounts.",
-  },
-  {
     slug: "otp",
-    type: "sms",
+    type: "email",
     title: "One-Time Passcode",
-    subject: "",
-    body: "Your ICE verification code is {{code}}. It expires in 10 minutes.",
-    placeholders: ["code"],
-    description: "SMS OTP template for sign-in or sensitive actions.",
+    subject: "Your verification code: {{code}}",
+    body: `<div style="font-family:Arial,sans-serif;background:#0b1021;padding:24px;color:#e5e7eb;">
+  <div style="max-width:520px;margin:0 auto;background:#0f172a;border:1px solid #1f2937;border-radius:16px;overflow:hidden;">
+    <div style="padding:24px 24px 12px;">
+      <p style="font-size:14px;color:#a5b4fc;margin:0 0 4px;">Secure login</p>
+      <h1 style="font-size:22px;color:#fff;margin:0 0 16px;">Your one-time code</h1>
+      <p style="font-size:15px;line-height:22px;color:#e5e7eb;margin:0 0 16px;">Hi {{name}}, use this code to complete your sign-in. It expires in 10 minutes.</p>
+      <div style="margin:16px 0;padding:14px 18px;border:1px dashed #3b82f6;border-radius:12px;text-align:center;background:#0b152b;">
+        <span style="font-size:24px;font-weight:700;letter-spacing:4px;color:#3b82f6;">{{code}}</span>
+      </div>
+      <p style="font-size:13px;color:#94a3b8;margin:0;">If you didn’t request this, you can ignore this email.</p>
+    </div>
+    <div style="background:#0b1324;padding:16px 24px;border-top:1px solid #1f2937;">
+      <p style="font-size:12px;color:#64748b;margin:0;">ICE Exhibitions • Secure access</p>
+    </div>
+  </div>
+</div>`,
+    placeholders: ["name", "code"],
+    description: "Email OTP template for user login verification.",
   },
   {
-    slug: "contact-confirmation",
+    slug: "contact-submitted",
     type: "email",
     title: "Contact Confirmation",
     subject: "We received your contact request",
-    body: "Hi {{name}},\n\nWe received your contact request about \"{{subject}}\". We’ll reply soon at {{email}}.\n\nThanks,\nICE Support",
-    placeholders: ["name", "subject", "email"],
+    body: `<div style="font-family:Arial,sans-serif;background:#0b1021;padding:24px;color:#e5e7eb;">
+  <div style="max-width:620px;margin:0 auto;background:#0f172a;border:1px solid #1f2937;border-radius:16px;overflow:hidden;">
+    <div style="padding:24px;border-bottom:1px solid #1f2937;background:linear-gradient(135deg,#111827 0%,#0b1224 100%);">
+      <p style="margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:0.2em;color:#a5b4fc;">Contact</p>
+      <h1 style="margin:0;font-size:24px;color:#fff;">Thanks for reaching out</h1>
+    </div>
+    <div style="padding:24px;">
+      <p style="font-size:15px;line-height:22px;margin:0 0 12px;">Hi {{name}},</p>
+      <p style="font-size:15px;line-height:22px;margin:0 0 12px;">We received your note and will reply at <strong>{{email}}</strong>. Expect a response within one business day.</p>
+      <div style="margin:16px 0;padding:12px 14px;border:1px solid #1f2937;border-radius:12px;background:#0b152b;">
+        <p style="margin:0;font-size:13px;color:#cbd5e1;">Tip: If you have assets or deadlines, reply to this email and attach them so we can plan faster.</p>
+      </div>
+      <p style="font-size:15px;line-height:22px;margin:0 0 4px;">Thanks,</p>
+      <p style="font-size:15px;line-height:22px;margin:0;">ICE Support</p>
+    </div>
+  </div>
+</div>`,
+    placeholders: ["name", "email"],
     formSlug: "contact",
     description: "Auto-response for contact form submissions.",
   },
   {
-    slug: "partner-inquiry",
+    slug: "partner-submitted",
     type: "email",
     title: "Partner Inquiry",
     subject: "Thanks for your partner inquiry",
-    body: "Hi {{name}},\n\nThanks for your interest in partnering with ICE Exhibitions. We’ll review your details and follow up with next steps.\n\nBest,\nPartnerships @ ICE",
+    body: `<div style="font-family:Arial,sans-serif;background:#0b1021;padding:24px;color:#e5e7eb;">
+  <div style="max-width:620px;margin:0 auto;background:#0f172a;border:1px solid #1f2937;border-radius:16px;overflow:hidden;">
+    <div style="padding:24px;border-bottom:1px solid #1f2937;background:linear-gradient(135deg,#0f172a 0%,#0b1224 100%);">
+      <p style="margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:0.2em;color:#a5b4fc;">Partnership</p>
+      <h1 style="margin:0;font-size:24px;color:#fff;">We got your partner inquiry</h1>
+    </div>
+    <div style="padding:24px;">
+      <p style="font-size:15px;line-height:22px;margin:0 0 12px;">Hi {{name}},</p>
+      <p style="font-size:15px;line-height:22px;margin:0 0 12px;">Thanks for your interest in partnering with ICE Exhibitions. Our team will review your goals and get back with next steps.</p>
+      <div style="margin:16px 0;padding:12px 14px;border:1px solid #1f2937;border-radius:12px;background:#0b152b;">
+        <p style="margin:0;font-size:13px;color:#cbd5e1;">If you have timelines, budgets, or hero products to highlight, reply with details so we can tailor the plan.</p>
+      </div>
+      <p style="font-size:15px;line-height:22px;margin:0 0 4px;">Best,</p>
+      <p style="font-size:15px;line-height:22px;margin:0;">Partnerships @ ICE</p>
+    </div>
+  </div>
+</div>`,
     placeholders: ["name"],
     formSlug: "partner",
     description: "Response for partner inquiries.",
   },
   {
-    slug: "sponsor-inquiry",
+    slug: "sponsor-submitted",
     type: "email",
     title: "Sponsor Inquiry",
     subject: "Sponsorship inquiry received",
-    body: "Hi {{name}},\n\nAppreciate your interest in sponsoring ICE. We’ll reach out to discuss packages and availability.\n\nRegards,\nSponsorships @ ICE",
+    body: `<div style="font-family:Arial,sans-serif;background:#0b1021;padding:24px;color:#e5e7eb;">
+  <div style="max-width:620px;margin:0 auto;background:#0f172a;border:1px solid #1f2937;border-radius:16px;overflow:hidden;">
+    <div style="padding:24px;border-bottom:1px solid #1f2937;background:linear-gradient(135deg,#0f172a 0%,#0b1224 100%);">
+      <p style="margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:0.2em;color:#a5b4fc;">Sponsorship</p>
+      <h1 style="margin:0;font-size:24px;color:#fff;">Thanks for your sponsorship inquiry</h1>
+    </div>
+    <div style="padding:24px;">
+      <p style="font-size:15px;line-height:22px;margin:0 0 12px;">Hi {{name}},</p>
+      <p style="font-size:15px;line-height:22px;margin:0 0 12px;">We appreciate your interest in sponsoring ICE. We’ll reach out to discuss packages, availability, and how to meet your objectives.</p>
+      <div style="margin:16px 0;padding:12px 14px;border:1px solid #1f2937;border-radius:12px;background:#0b152b;">
+        <p style="margin:0;font-size:13px;color:#cbd5e1;">Share your budget range and any must-have deliverables by replying to this email for a faster proposal.</p>
+      </div>
+      <p style="font-size:15px;line-height:22px;margin:0 0 4px;">Regards,</p>
+      <p style="font-size:15px;line-height:22px;margin:0;">Sponsorships @ ICE</p>
+    </div>
+  </div>
+</div>`,
     placeholders: ["name"],
     formSlug: "sponsor",
     description: "Response for sponsorship inquiries.",
@@ -126,38 +108,50 @@ const templates = [
     type: "email",
     title: "Brand Guidelines Request",
     subject: "Your brand guidelines request",
-    body: "Hi {{name}},\n\nHere’s the link to download our brand guidelines: {{guidelines_link}}.\n\nLet us know if you need assets or formats.\n\nThanks,\nICE Brand Team",
+    body: `<div style="font-family:Arial,sans-serif;background:#0b1021;padding:24px;color:#e5e7eb;">
+  <div style="max-width:620px;margin:0 auto;background:#0f172a;border:1px solid #1f2937;border-radius:16px;overflow:hidden;">
+    <div style="padding:24px;border-bottom:1px solid #1f2937;background:linear-gradient(135deg,#0f172a 0%,#0b1224 100%);">
+      <p style="margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:0.2em;color:#a5b4fc;">Brand</p>
+      <h1 style="margin:0;font-size:24px;color:#fff;">Your brand kit</h1>
+    </div>
+    <div style="padding:24px;">
+      <p style="font-size:15px;line-height:22px;margin:0 0 12px;">Hi {{name}},</p>
+      <p style="font-size:15px;line-height:22px;margin:0 0 12px;">Here’s the link to download our brand guidelines:</p>
+      <div style="margin:16px 0;padding:14px 16px;border:1px solid #3b82f6;border-radius:12px;background:#0b152b;">
+        <a href="{{guidelines_link}}" style="color:#3b82f6;font-weight:600;text-decoration:none;">Open brand guidelines</a>
+      </div>
+      <p style="font-size:15px;line-height:22px;margin:0 0 12px;">If you need logos in other formats or additional assets, reply and we’ll send them over.</p>
+      <p style="font-size:15px;line-height:22px;margin:0 0 4px;">Thanks,</p>
+      <p style="font-size:15px;line-height:22px;margin:0;">ICE Brand Team</p>
+    </div>
+  </div>
+</div>`,
     placeholders: ["name", "guidelines_link"],
     formSlug: "brand-guidelines",
     description: "Delivers brand guidelines link to requesters.",
   },
   {
-    slug: "feedback-thank-you",
+    slug: "feedback-submitted",
     type: "email",
     title: "Feedback Thank You",
     subject: "Thanks for your feedback",
-    body: "Hi {{name}},\n\nThanks for sharing feedback about ICE Exhibitions. We value your input and will use it to improve the next edition.\n\nThanks,\nICE Team",
+    body: `<div style="font-family:Arial,sans-serif;background:#0b1021;padding:24px;color:#e5e7eb;">
+  <div style="max-width:620px;margin:0 auto;background:#0f172a;border:1px solid #1f2937;border-radius:16px;overflow:hidden;">
+    <div style="padding:24px;border-bottom:1px solid #1f2937;background:linear-gradient(135deg,#0f172a 0%,#0b1224 100%);">
+      <p style="margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:0.2em;color:#a5b4fc;">Feedback</p>
+      <h1 style="margin:0;font-size:24px;color:#fff;">We appreciate your input</h1>
+    </div>
+    <div style="padding:24px;">
+      <p style="font-size:15px;line-height:22px;margin:0 0 12px;">Hi {{name}},</p>
+      <p style="font-size:15px;line-height:22px;margin:0 0 12px;">Thanks for sharing feedback about ICE Exhibitions. We value your input and will use it to improve the next edition.</p>
+      <p style="font-size:15px;line-height:22px;margin:0 0 4px;">Thanks,</p>
+      <p style="font-size:15px;line-height:22px;margin:0;">ICE Team</p>
+    </div>
+  </div>
+</div>`,
     placeholders: ["name"],
     formSlug: "feedback",
     description: "Acknowledges feedback submissions.",
-  },
-  {
-    slug: "form-receipt",
-    type: "email",
-    title: "Form submission received",
-    subject: "We received your submission",
-    body: "Hi {{name}},\n\nWe received your submission for {{form}}. Our team will review and get back to you shortly.\n\nCheers,\nICE Team",
-    placeholders: ["name", "form"],
-    description: "Generic receipt template for any form.",
-  },
-  {
-    slug: "lead-notification",
-    type: "email",
-    title: "New lead notification",
-    subject: "New lead captured: {{name}}",
-    body: "Team,\n\nA new lead was captured from {{form}}.\nName: {{name}}\nEmail: {{email}}\nCompany: {{company}}\n\nView in admin for full details.",
-    placeholders: ["form", "name", "email", "company"],
-    description: "Internal notification for new leads.",
   },
 ];
 

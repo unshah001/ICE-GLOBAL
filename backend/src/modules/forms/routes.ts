@@ -2,6 +2,9 @@ import { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { getDb } from "../../db/mongo";
 import { ObjectId } from "mongodb";
+import { queueEmail } from "../../services/email";
+import { env } from "../../config/env";
+import { isNotificationEnabled } from "../../services/notifications";
 
 const baseFields = [
   { id: "name", label: "Name", type: "text", required: true },
@@ -92,6 +95,43 @@ const ensureBaseFields = (fields: z.infer<typeof fieldSchema>[]) => {
 };
 
 export default async function formsRoutes(app: FastifyInstance) {
+  const eventMap: Record<string, string> = {
+    contact: "contact-submitted",
+    partner: "partner-submitted",
+    sponsor: "sponsor-submitted",
+    "brand-guidelines": "brand-guidelines",
+    feedback: "feedback-submitted",
+  };
+
+  const renderTemplate = (content: string, placeholders: Record<string, string>) =>
+    Object.entries(placeholders).reduce((acc, [k, v]) => acc.replaceAll(`{{${k}}}`, v), content || "");
+
+  const maybeSendEmail = async (slug: string, email: string, placeholders: Record<string, string>) => {
+    const event = eventMap[slug];
+    if (!event || !email) return;
+    const db = await getDb();
+
+    // Check notification settings
+    const enabled = await isNotificationEnabled(event);
+    if (!enabled) return;
+
+    const tpl = await db.collection("templates").findOne<{ subject?: string; body?: string }>({ slug: event });
+    if (!tpl) return;
+
+    const subject = renderTemplate(tpl.subject || "Thanks for your submission", placeholders);
+    const html = renderTemplate(tpl.body || "<p>Thanks for reaching out.</p>", placeholders);
+    const text = html.replace(/<[^>]+>/g, "");
+
+    await queueEmail({
+      to: email,
+      subject,
+      html,
+      text,
+      event,
+      meta: { slug, placeholders },
+    });
+  };
+
   app.get("/forms", async () => {
     const db = await getDb();
     const col = db.collection("forms_definitions");
@@ -172,6 +212,16 @@ export default async function formsRoutes(app: FastifyInstance) {
       data: fields.map((f) => ({ id: f.id, label: f.label, value: body[f.id] })),
       createdAt: new Date(),
     });
+
+    const placeholders: Record<string, string> = {};
+    fields.forEach((f) => {
+      const val = body[f.id];
+      if (typeof val === "string") placeholders[f.id] = val;
+    });
+    const email = typeof body.email === "string" ? body.email : "";
+    if (email) {
+      await maybeSendEmail(slug, email, placeholders);
+    }
 
     return { message: "Submitted" };
   });

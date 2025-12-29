@@ -5,16 +5,12 @@ import { queueEmail } from "../../services/email";
 import { env } from "../../config/env";
 
 const eventCatalog = [
-  { key: "welcome", title: "Welcome email", description: "Sent when a new admin account is created." },
   { key: "otp", title: "OTP verification", description: "One-time password for secure logins." },
-  { key: "password-reset", title: "Password reset", description: "Password reset / magic link flow." },
   { key: "contact-submitted", title: "Contact form", description: "Trigger when a contact form is submitted." },
   { key: "partner-submitted", title: "Partner inquiry", description: "Trigger on partner inquiry submission." },
   { key: "sponsor-submitted", title: "Sponsor inquiry", description: "Trigger on sponsor inquiry submission." },
   { key: "brand-guidelines", title: "Brand guidelines request", description: "Send assets link for brand guidelines." },
   { key: "feedback-submitted", title: "Feedback received", description: "Trigger when feedback form is submitted." },
-  { key: "event-rsvp", title: "Event RSVP", description: "Confirm RSVP for an event." },
-  { key: "event-update", title: "Event update", description: "Notify about event time/location updates." },
 ];
 
 const settingsSchema = z.object({
@@ -39,7 +35,7 @@ export default async function notificationsRoutes(app: FastifyInstance) {
       const cfg = map[event.key];
       return {
         ...event,
-        enabled: cfg?.enabled ?? false,
+        enabled: cfg?.enabled ?? true, // default ON
       };
     });
 

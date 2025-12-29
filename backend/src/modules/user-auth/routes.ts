@@ -4,6 +4,7 @@ import { ObjectId } from "mongodb";
 import { queueEmail } from "../../services/email";
 import { env } from "../../config/env";
 import { getDb } from "../../db/mongo";
+import { isNotificationEnabled } from "../../services/notifications";
 
 const requestSchema = z.object({ email: z.string().email() });
 const verifySchema = z.object({ email: z.string().email(), otp: z.string().length(6) });
@@ -42,13 +43,22 @@ export default async function userAuthRoutes(app: FastifyInstance) {
     const code = generateOtp();
     const expires = Date.now() + 10 * 60 * 1000;
     otpStore.set(email, { code, expires });
-    await queueEmail({
-      to: email,
-      subject: `Your login code: ${code}`,
-      html: `<p>Your one-time code is <strong>${code}</strong>.</p><p>This code expires in 10 minutes.</p>`,
-      event: "otp",
-      meta: { kind: "user-login" },
-    });
+    if (await isNotificationEnabled("otp")) {
+      const db = await getDb();
+      const tpl = await db.collection("templates").findOne<{ subject?: string; body?: string }>({ slug: "otp" });
+      const placeholders: Record<string, string> = { code, name: email.split("@")[0] || "there", email };
+      const render = (content: string) =>
+        Object.entries(placeholders).reduce((acc, [k, v]) => acc.replaceAll(`{{${k}}}`, v), content || "");
+      const subject = render(tpl?.subject || `Your login code: ${code}`);
+      const html = render(tpl?.body || `<p>Your one-time code is <strong>${code}</strong>.</p><p>This code expires in 10 minutes.</p>`);
+      await queueEmail({
+        to: email,
+        subject,
+        html,
+        event: "otp",
+        meta: { kind: "user-login" },
+      });
+    }
     return { message: "OTP sent" };
   });
 
