@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Instagram, Twitter, Linkedin, Mail, MapPin, Phone } from "lucide-react";
@@ -20,6 +21,40 @@ const Footer = ({
 }: {
   data?: FooterData;
 }) => {
+  const [branding, setBranding] = useState<{
+    logoUrl: string;
+    darkLogoUrl: string;
+    navLogoUrl: string;
+    navDarkLogoUrl: string;
+    footerLogoUrl: string;
+    footerDarkLogoUrl: string;
+    navWidth: number;
+    navHeight: number;
+    footerWidth: number;
+    footerHeight: number;
+    href: string;
+    width: number;
+    height: number;
+    padding: string;
+    background: string;
+    alt: string;
+  } | null>(null);
+
+  useEffect(() => {
+    const base = import.meta.env.VITE_API_BASE_URL || "";
+    const loadBranding = async () => {
+      try {
+        const res = await fetch(`${base}/branding`);
+        if (!res.ok) throw new Error("branding fetch failed");
+        const payload = await res.json();
+        setBranding(payload);
+      } catch {
+        setBranding(null);
+      }
+    };
+    loadBranding();
+  }, []);
+
   const currentYear = new Date().getFullYear();
 
   const footerLinks = {
@@ -101,10 +136,34 @@ const Footer = ({
             {/* Brand */}
             <div className="lg:col-span-2">
               <Link
-                to="/"
+                to={branding?.href || "/"}
                 className="font-display font-bold text-2xl text-foreground hover:text-primary transition-colors inline-block mb-4"
+                style={{
+                  padding: branding?.padding || undefined,
+                  background: branding?.background || undefined,
+                }}
               >
-                ICE <span className="text-primary"> GLOBAL </span>
+                {branding?.footerLogoUrl || branding?.logoUrl ? (
+                  <img
+                    src={branding.footerLogoUrl || branding.logoUrl}
+                    alt={branding.alt || "ICE Exhibitions"}
+                    style={{
+                      width:
+                        branding.footerWidth || branding.width
+                          ? `${branding.footerWidth || branding.width}px`
+                          : undefined,
+                      height:
+                        branding.footerHeight || branding.height
+                          ? `${branding.footerHeight || branding.height}px`
+                          : undefined,
+                      objectFit: "contain",
+                    }}
+                  />
+                ) : (
+                  <>
+                    ICE <span className="text-primary"> GLOBAL </span>
+                  </>
+                )}
               </Link>
               <p className="text-muted-foreground max-w-sm mb-6">
                 {data?.ctaDescription ||

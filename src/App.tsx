@@ -57,6 +57,10 @@ import AdminForms from "./pages/AdminForms";
 import SubmitSuccess from "./pages/SubmitSuccess";
 import SubmitError from "./pages/SubmitError";
 import AdminSubmitSuccess from "./pages/AdminSubmitSuccess";
+import AdminBranding from "./pages/AdminBranding";
+import AdminLeads from "./pages/AdminLeads";
+import AdminProfile from "./pages/AdminProfile";
+import AdminTemplates from "./pages/AdminTemplates";
 
 const queryClient = new QueryClient();
 
@@ -215,6 +219,38 @@ const App = () => (
             element={
               <AdminGuard>
                 <AdminSubmitSuccess />
+              </AdminGuard>
+            }
+          />
+          <Route
+            path="/admin/leads"
+            element={
+              <AdminGuard>
+                <AdminLeads />
+              </AdminGuard>
+            }
+          />
+          <Route
+            path="/admin/profile"
+            element={
+              <AdminGuard>
+                <AdminProfile />
+              </AdminGuard>
+            }
+          />
+          <Route
+            path="/admin/templates"
+            element={
+              <AdminGuard>
+                <AdminTemplates />
+              </AdminGuard>
+            }
+          />
+          <Route
+            path="/admin/platform-branding"
+            element={
+              <AdminGuard>
+                <AdminBranding />
               </AdminGuard>
             }
           />

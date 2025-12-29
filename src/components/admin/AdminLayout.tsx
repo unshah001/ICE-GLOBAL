@@ -1,13 +1,11 @@
 import { ReactNode } from "react";
-import { adminNavLinks } from "@/data/admin";
 import { Badge } from "@/components/ui/badge";
-import AdminSidebar, { type AdminSectionLink } from "@/components/admin/AdminSidebar";
 import AdminNavbar from "@/components/admin/AdminNavbar";
+import AdminRail, { type AdminSectionLink } from "@/components/admin/AdminRail";
 
 interface AdminLayoutProps {
   title?: string;
   description?: string;
-  navItems?: { name: string; href: string }[];
   sections: AdminSectionLink[];
   children: ReactNode;
 }
@@ -19,13 +17,12 @@ interface AdminLayoutProps {
 const AdminLayout = ({
   title = "Admin Control Center",
   description = "Manage every section of the experience from one place.",
-  navItems = adminNavLinks,
   sections,
   children,
 }: AdminLayoutProps) => {
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <AdminNavbar items={navItems} />
+      <AdminNavbar />
       <section className="relative pt-20 md:pt-24 pb-16 md:pb-8">
         <div className="container-custom relative z-10 max-w-6xl mx-auto space-y-6">
           <div className="text-center space-y-3">
@@ -38,7 +35,7 @@ const AdminLayout = ({
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[260px,1fr] items-start">
-            <AdminSidebar sections={sections} />
+            <AdminRail sections={sections} />
             <div className="space-y-10">{children}</div>
           </div>
         </div>

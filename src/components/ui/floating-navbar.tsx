@@ -19,10 +19,28 @@ interface FloatingNavbarProps {
   className?: string;
 }
 
+type Branding = {
+  logoUrl: string;
+  darkLogoUrl: string;
+  navLogoUrl: string;
+  navDarkLogoUrl: string;
+  navWidth: number;
+  navHeight: number;
+  faviconUrl: string;
+  logoType: string;
+  width: number;
+  height: number;
+  padding: string;
+  background: string;
+  href: string;
+  alt: string;
+};
+
 export const FloatingNavbar = ({ navItems = defaultNavItems, className }: FloatingNavbarProps) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [items, setItems] = useState<NavItem[]>(navItems ?? defaultNavItems);
+  const [branding, setBranding] = useState<Branding | null>(null);
   const location = useLocation();
 
   useEffect(() => {
@@ -53,6 +71,32 @@ export const FloatingNavbar = ({ navItems = defaultNavItems, className }: Floati
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    const base = import.meta.env.VITE_API_BASE_URL || "";
+    const loadBranding = async () => {
+      try {
+        const res = await fetch(`${base}/branding`);
+        if (!res.ok) throw new Error("branding fetch failed");
+        const payload = await res.json();
+        setBranding(payload);
+        if (payload?.faviconUrl) {
+          const linkEl = document.querySelector("link[rel~='icon']") as HTMLLinkElement | null;
+          if (linkEl) {
+            linkEl.href = payload.faviconUrl;
+          } else {
+            const link = document.createElement("link");
+            link.rel = "icon";
+            link.href = payload.faviconUrl;
+            document.head.appendChild(link);
+          }
+        }
+      } catch {
+        setBranding(null);
+      }
+    };
+    loadBranding();
+  }, []);
+
   return (
     <>
       <motion.nav
@@ -70,10 +114,30 @@ export const FloatingNavbar = ({ navItems = defaultNavItems, className }: Floati
         <div className="flex items-center justify-between gap-4 md:gap-8 max-w-6xl mx-auto w-full">
           {/* Logo */}
           <Link
-            to="/"
-            className="font-display font-bold text-xl text-foreground hover:text-primary transition-colors"
+            to={branding?.href || "/"}
+            className="flex items-center gap-2 font-display font-bold text-xl text-foreground hover:text-primary transition-colors"
+            style={{
+              padding: branding?.padding || undefined,
+              background: branding?.background || undefined,
+            }}
           >
-            ICE <span className="text-primary"> GLOBAL </span>
+            {branding?.navLogoUrl || branding?.logoUrl ? (
+              <img
+                src={branding.navLogoUrl || branding.logoUrl}
+                alt={branding.alt || "ICE Exhibitions"}
+                style={{
+                  width:
+                    branding.navWidth || branding.width ? `${branding.navWidth || branding.width}px` : undefined,
+                  height:
+                    branding.navHeight || branding.height ? `${branding.navHeight || branding.height}px` : undefined,
+                  objectFit: "contain",
+                }}
+              />
+            ) : (
+              <>
+                ICE <span className="text-primary"> GLOBAL </span>
+              </>
+            )}
           </Link>
 
           {/* Desktop Nav */}

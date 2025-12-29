@@ -1,38 +1,41 @@
-import { NavLink } from "react-router-dom";
-import { adminNavLinks } from "@/data/admin";
-import { cn } from "@/lib/utils";
+import { NavLink, useNavigate } from "react-router-dom";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
+import { Button } from "@/components/ui/button";
+import { Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ChevronDown } from "lucide-react";
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { adminNavGroups } from "@/data/admin";
+import { cn } from "@/lib/utils";
 
-type AdminNavItem = { name: string; href: string };
-
-interface AdminNavbarProps {
-  items?: AdminNavItem[];
-}
+interface AdminNavbarProps {}
 
 /**
  * Dedicated admin top navigation bar (full-width, solid background) to keep the CMS
  * separate from the marketing floating navbar.
  */
-const AdminNavbar = ({ items = adminNavLinks }: AdminNavbarProps) => {
-  const byName = Object.fromEntries(items.map((i) => [i.name, i]));
-  const grouped = [
-    { label: "Overview", names: ["Dashboard", "Content", "Users", "Settings"] },
-    { label: "Experience", names: ["Gallery", "Gallery Detail", "Brands", "Testimonials", "About", "Contact"] },
-    { label: "People", names: ["Team", "Founders", "Co-Founders"] },
-    { label: "Growth", names: ["Buyers", "Sellers", "Partner", "Sponsor"] },
-    { label: "Policies", names: ["Privacy", "Cookies", "Terms", "Not Found", "Submit Success"] },
-    { label: "Forms", names: ["Form Builder"] },
-    { label: "Session", names: ["Logout"] },
-  ];
+const AdminNavbar = ({}: AdminNavbarProps) => {
+  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      if ((event.key === "k" || event.key === "K") && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault();
+        setOpen((o) => !o);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  const items = useMemo(() => adminNavGroups.flatMap((g) => g.items.map((i) => ({ ...i, group: g.label }))), []);
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/70 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70">
@@ -43,45 +46,45 @@ const AdminNavbar = ({ items = adminNavLinks }: AdminNavbarProps) => {
           </span>
           <span>Control Center</span>
         </NavLink>
-        <nav className="hidden md:flex items-center gap-2">
-          {grouped.map((group) => (
-            <DropdownMenu key={group.label}>
-              <DropdownMenuTrigger className="inline-flex items-center gap-1 px-3 py-2 rounded-lg text-sm border border-border/60 hover:border-primary/40 hover:text-primary transition-colors">
-                {group.label}
-                <ChevronDown className="w-4 h-4" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="min-w-[200px]">
-                <DropdownMenuLabel className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  {group.label}
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {group.names
-                  .map((name) => byName[name])
-                  .filter(Boolean)
-                  .map((item) => (
-                    <DropdownMenuItem asChild key={item.href}>
-                      <NavLink
-                        to={item.href}
-                        className={({ isActive }) =>
-                          cn(
-                            "flex w-full items-center justify-between text-sm px-2 py-1.5 rounded-md",
-                            isActive ? "text-primary bg-primary/10" : "text-foreground"
-                          )
-                        }
-                      >
-                        <span>{item.name}</span>
-                        <span className="text-[11px] text-muted-foreground">↗</span>
-                      </NavLink>
-                    </DropdownMenuItem>
-                  ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ))}
-        </nav>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="hidden md:inline-flex gap-2"
+            onClick={() => {
+              setOpen(true);
+            }}
+          >
+            <Search className="w-4 h-4" />
+            Quick search
+          </Button>
           <ThemeSwitcher />
         </div>
       </div>
+      <CommandDialog open={open} onOpenChange={setOpen}>
+        <CommandInput placeholder="Search admin…" />
+        <CommandList>
+          <CommandEmpty>No results found.</CommandEmpty>
+          {adminNavGroups.map((group) => (
+            <CommandGroup key={group.label} heading={group.label}>
+              {group.items.map((item) => (
+                <CommandItem
+                  key={item.href}
+                  value={`${group.label} ${item.name}`}
+                  onSelect={() => {
+                    setOpen(false);
+                    navigate(item.href);
+                  }}
+                  className={cn("flex items-center gap-2")}
+                >
+                  <span>{item.name}</span>
+                  <span className="text-[11px] text-muted-foreground ml-auto">{group.label}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          ))}
+        </CommandList>
+      </CommandDialog>
     </header>
   );
 };

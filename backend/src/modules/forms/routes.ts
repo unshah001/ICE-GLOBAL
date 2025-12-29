@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { getDb } from "../../db/mongo";
+import { ObjectId } from "mongodb";
 
 const baseFields = [
   { id: "name", label: "Name", type: "text", required: true },
@@ -174,4 +175,118 @@ export default async function formsRoutes(app: FastifyInstance) {
 
     return { message: "Submitted" };
   });
+
+  app.get(
+    "/forms/submissions",
+    { preHandler: [app.authenticate] },
+    async (request) => {
+      const params = request.query as {
+        slug?: string;
+        limit?: string;
+        cursor?: string;
+        q?: string;
+        from?: string;
+        to?: string;
+        order?: "asc" | "desc";
+      };
+      const limit = Math.min(parseInt(params.limit || "20", 10) || 20, 100);
+      const db = await getDb();
+      const col = db.collection("forms_submissions");
+      const filter: any = {};
+      const order = params.order === "asc" ? 1 : -1;
+      if (params.slug) filter.slug = params.slug;
+      if (params.cursor) {
+        try {
+          filter._id = order === -1 ? { $lt: new ObjectId(params.cursor) } : { $gt: new ObjectId(params.cursor) };
+        } catch {
+          // ignore invalid cursor
+        }
+      }
+      if (params.from || params.to) {
+        filter.createdAt = {};
+        if (params.from) filter.createdAt.$gte = new Date(params.from);
+        if (params.to) filter.createdAt.$lte = new Date(params.to);
+      }
+      if (params.q) {
+        filter.$or = [
+          { "data.value": { $regex: params.q, $options: "i" } },
+          { "data.label": { $regex: params.q, $options: "i" } },
+        ];
+      }
+      const docs = await col.find(filter).sort({ _id: order }).limit(limit + 1).toArray();
+      const hasMore = docs.length > limit;
+      const sliced = docs.slice(0, limit);
+      const items = sliced.map((d) => ({
+        id: d._id?.toString(),
+        slug: d.slug,
+        createdAt: d.createdAt,
+        data: d.data,
+      }));
+      const nextCursor = hasMore ? docs[limit]._id?.toString() : null;
+      const defsCol = db.collection("forms_definitions");
+      const defs = await defsCol.find({}, { projection: { _id: 0, slug: 1, title: 1 } }).toArray();
+      return {
+        data: items,
+        cursor: { next: nextCursor, limit },
+        filters: {
+          slug: params.slug || null,
+          q: params.q || null,
+          from: params.from || null,
+          to: params.to || null,
+          order: order === 1 ? "asc" : "desc",
+          forms: defs,
+        },
+      };
+    }
+  );
+
+  app.get(
+    "/forms/submissions/export",
+    { preHandler: [app.authenticate] },
+    async (request) => {
+      const params = request.query as {
+        slug?: string;
+        q?: string;
+        from?: string;
+        to?: string;
+        order?: "asc" | "desc";
+        limit?: string;
+      };
+      const limit = Math.min(parseInt(params.limit || "1000", 10) || 1000, 5000);
+      const db = await getDb();
+      const col = db.collection("forms_submissions");
+      const filter: any = {};
+      const order = params.order === "asc" ? 1 : -1;
+      if (params.slug) filter.slug = params.slug;
+      if (params.from || params.to) {
+        filter.createdAt = {};
+        if (params.from) filter.createdAt.$gte = new Date(params.from);
+        if (params.to) filter.createdAt.$lte = new Date(params.to);
+      }
+      if (params.q) {
+        filter.$or = [
+          { "data.value": { $regex: params.q, $options: "i" } },
+          { "data.label": { $regex: params.q, $options: "i" } },
+        ];
+      }
+      const docs = await col.find(filter).sort({ _id: order }).limit(limit).toArray();
+      const items = docs.map((d) => ({
+        id: d._id?.toString(),
+        slug: d.slug,
+        createdAt: d.createdAt,
+        data: d.data,
+      }));
+      return {
+        data: items,
+        filters: {
+          slug: params.slug || null,
+          q: params.q || null,
+          from: params.from || null,
+          to: params.to || null,
+          order: order === 1 ? "asc" : "desc",
+          limit,
+        },
+      };
+    }
+  );
 }

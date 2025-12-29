@@ -28,10 +28,67 @@ export const adminNavLinks = [
   { name: "Testimonials", href: "/admin/testimonials" },
   { name: "Form Builder", href: "/admin/forms" },
   { name: "Submit Success", href: "/admin/submit-success" },
+  { name: "Platform Branding", href: "/admin/platform-branding" },
+  { name: "Leads", href: "/admin/leads" },
+  { name: "Profile", href: "/admin/profile" },
+  { name: "Templates", href: "/admin/templates" },
   { name: "Content", href: "/admin#content" },
   { name: "Users", href: "/admin#users" },
   { name: "Settings", href: "/admin#settings" },
   { name: "Logout", href: "/admin/login" },
+];
+
+export const adminNavGroups = [
+  { label: "Overview", items: [{ name: "Dashboard", href: "/admin" }] },
+  {
+    label: "Experiences",
+    items: [
+      { name: "Gallery", href: "/admin/gallery" },
+      { name: "Gallery Detail", href: "/admin/gallery-detail" },
+      { name: "Brands", href: "/admin/brands" },
+      { name: "Testimonials", href: "/admin/testimonials" },
+    ],
+  },
+  {
+    label: "Pages",
+    items: [
+      { name: "About", href: "/admin/about" },
+      { name: "Contact", href: "/admin/contact" },
+      { name: "Not Found", href: "/admin/not-found" },
+    ],
+  },
+  {
+    label: "People",
+    items: [
+      { name: "Team", href: "/admin/teams" },
+      { name: "Founders", href: "/admin/founders" },
+      { name: "Co-Founders", href: "/admin/cofounders" },
+    ],
+  },
+  {
+    label: "Growth",
+    items: [
+      { name: "Buyers", href: "/admin/buyers" },
+      { name: "Sellers", href: "/admin/sellers" },
+      { name: "Partner", href: "/admin/partner" },
+      { name: "Sponsor", href: "/admin/sponsor" },
+    ],
+  },
+  {
+    label: "Governance",
+    items: [
+      { name: "Platform Branding", href: "/admin/platform-branding" },
+      { name: "Privacy", href: "/admin/privacy" },
+      { name: "Cookies", href: "/admin/cookies" },
+      { name: "Terms", href: "/admin/terms" },
+      { name: "Submit Success", href: "/admin/submit-success" },
+    ],
+  },
+  { label: "Forms", items: [{ name: "Form Builder", href: "/admin/forms" }] },
+  { label: "Leads", items: [{ name: "Leads", href: "/admin/leads" }] },
+  { label: "Templates", items: [{ name: "Templates", href: "/admin/templates" }] },
+  { label: "Profile", items: [{ name: "Profile", href: "/admin/profile" }] },
+  { label: "Session", items: [{ name: "Logout", href: "/admin/login" }] },
 ];
 
 export const adminStats = [
