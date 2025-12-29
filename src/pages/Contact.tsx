@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { navItems } from "@/data/expo-data";
 import { Mail, Phone, MapPin, Clock } from "lucide-react";
+import { prefillFormValues, useProfilePrefill } from "@/hooks/useProfilePrefill";
 
 type ContactCard = { icon: "mail" | "phone" | "map" | "clock"; title: string; value: string; hint: string };
 type ContactContent = {
@@ -78,6 +79,7 @@ const Contact = () => {
   ]);
   const navigate = useNavigate();
   const [content, setContent] = useState<ContactContent>(defaultContent);
+  const { profile } = useProfilePrefill();
 
   const handleChange =
     (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
@@ -142,6 +144,11 @@ const Contact = () => {
     loadForm();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!profile || !fields.length) return;
+    setForm((prev) => prefillFormValues(prev, fields, profile));
+  }, [profile, fields]);
 
   const iconMap = useMemo(
     () => ({

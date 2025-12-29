@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { prefillFormValues, useProfilePrefill } from "@/hooks/useProfilePrefill";
 
 type Field = { id: string; label: string; type: "text" | "email" | "textarea" | "select" | "number"; required?: boolean; options?: string[] };
 
@@ -45,6 +46,7 @@ const Sponsor = () => {
   const [content, setContent] = useState<SponsorPayload>(defaultContent);
   const base = import.meta.env.VITE_API_BASE_URL || "";
   const navigate = useNavigate();
+  const { profile } = useProfilePrefill();
 
   const handleChange =
     (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
@@ -103,6 +105,11 @@ const Sponsor = () => {
     loadForm();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!profile || !fields.length) return;
+    setForm((prev) => prefillFormValues(prev, fields, profile));
+  }, [profile, fields]);
 
   return (
     <main className="min-h-screen bg-background text-foreground">
