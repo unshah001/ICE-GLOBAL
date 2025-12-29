@@ -47,6 +47,20 @@ const payloadSchema = z.object({
   founders: z.array(founderSchema),
 });
 
+const detailCopySchema = z.object({
+  moreEyebrow: z.string().default("More founders"),
+  moreTitle: z.string().default("Explore more founder profiles"),
+  moreDescription: z.string().default("Scroll to reveal more founders—tap to open their detailed profiles."),
+});
+
+const heroSchema = z.object({
+  badge: z.string().default("Founders"),
+  title: z.string().default("Meet the founders of ICE"),
+  subheading: z
+    .string()
+    .default("Professional profiles of ICE 1.0 and 2.0—research-driven, with operational and creative highlights."),
+});
+
 const listQuerySchema = z.object({
   cursor: z.string().optional(),
   limit: z
@@ -84,6 +98,16 @@ export default async function foundersRoutes(app: FastifyInstance) {
     };
   });
 
+  app.get("/founders/hero", async () => {
+    const db = await getDb();
+    const col = db.collection<{ badge: string; title: string; subheading: string }>("founders_hero");
+    const stored = await col.findOne({ key: "default" });
+    if (!stored) return heroSchema.parse({});
+    const parsed = heroSchema.safeParse(stored);
+    if (!parsed.success) return heroSchema.parse({});
+    return parsed.data;
+  });
+
   app.get("/founders/list", async (request) => {
     const db = await getDb();
     const col = db.collection<z.infer<typeof founderSchema>>("founders_list");
@@ -111,6 +135,16 @@ export default async function foundersRoutes(app: FastifyInstance) {
     const next = data.length === limit ? data[data.length - 1]._id?.toString() : null;
     const eras = await col.distinct("era");
     return { data, cursor: { next, limit }, filters: { eras } };
+  });
+
+  app.get("/founders/detail-copy", async () => {
+    const db = await getDb();
+    const col = db.collection<{ moreEyebrow: string; moreTitle: string; moreDescription: string }>("founders_detail_copy");
+    const stored = await col.findOne({ key: "default" });
+    if (!stored) return detailCopySchema.parse({});
+    const parsed = detailCopySchema.safeParse(stored);
+    if (!parsed.success) return detailCopySchema.parse({});
+    return parsed.data;
   });
 
   app.get("/founders/:id", async (request, reply) => {
@@ -149,6 +183,23 @@ export default async function foundersRoutes(app: FastifyInstance) {
       );
       request.log.info("founders.update success");
       return parse.data;
+    }
+  );
+
+  app.put(
+    "/founders/hero",
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const parsed = heroSchema.safeParse(request.body);
+      if (!parsed.success) {
+        request.log.warn({ issues: parsed.error.issues }, "founders.hero validation failed");
+        return reply.code(400).send({ message: "Invalid hero payload" });
+      }
+      const db = await getDb();
+      const col = db.collection("founders_hero");
+      await col.updateOne({ key: "default" }, { $set: { key: "default", ...parsed.data } }, { upsert: true });
+      request.log.info("founders.hero updated");
+      return parsed.data;
     }
   );
 
@@ -197,6 +248,23 @@ export default async function foundersRoutes(app: FastifyInstance) {
       const col = db.collection("founders");
       await col.updateOne({ key: "default" }, { $set: empty }, { upsert: true });
       return empty;
+    }
+  );
+
+  app.put(
+    "/founders/detail-copy",
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const parsed = detailCopySchema.safeParse(request.body);
+      if (!parsed.success) {
+        request.log.warn({ issues: parsed.error.issues }, "founders.detail-copy validation failed");
+        return reply.code(400).send({ message: "Invalid payload" });
+      }
+      const db = await getDb();
+      const col = db.collection("founders_detail_copy");
+      await col.updateOne({ key: "default" }, { $set: { key: "default", ...parsed.data } }, { upsert: true });
+      request.log.info("founders.detail-copy updated");
+      return parsed.data;
     }
   );
 }

@@ -32,6 +32,20 @@ const GalleryDetail = () => {
   const [form, setForm] = useState({ author: "", message: "" });
   const commentsRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [copy, setCopy] = useState({
+    badge: "Gallery",
+    backLabel: "Back to gallery",
+    spreadTitle: "Spread the word",
+    spreadBody: "Share this moment with your team or friends. Every repost helps the community grow.",
+    commentTitle: "Comments",
+    commentPlaceholderName: "Your name",
+    commentPlaceholderMessage: "Share your thoughts...",
+    commentButton: "Post Comment",
+    emptyComments: "Be the first to start the conversation.",
+    shareLabel: "Share",
+    likesLabel: "Likes",
+    storyLabelPrefix: "Story",
+  });
 
   const { scrollYProgress } = useScroll();
   const heroScale = useTransform(scrollYProgress, [0, 0.25], [1.08, 1]);
@@ -67,7 +81,18 @@ const GalleryDetail = () => {
         setIsLoading(false);
       }
     };
+    const loadCopy = async () => {
+      try {
+        const res = await fetch(`${base}/gallery-detail/copy`);
+        if (!res.ok) throw new Error("Copy fetch failed");
+        const data = await res.json();
+        setCopy((prev) => ({ ...prev, ...(data || {}) }));
+      } catch {
+        // keep defaults
+      }
+    };
     load();
+    loadCopy();
   }, [id]);
 
   useEffect(() => {
@@ -138,7 +163,7 @@ const GalleryDetail = () => {
         <div className="container-custom relative z-10">
           <Link to="/gallery" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
             <ArrowLeft className="w-4 h-4" />
-            Back to gallery
+            {copy.backLabel}
           </Link>
 
           <div className="mt-8 grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
@@ -190,7 +215,7 @@ const GalleryDetail = () => {
                 </Button>
                 <Button variant="outline" onClick={() => handleShare()} className="flex items-center gap-2">
                   <Share2 className="w-4 h-4" />
-                  Share
+                  {copy.shareLabel}
                 </Button>
                 <Button variant="ghost" onClick={scrollToComments} className="text-muted-foreground hover:text-primary flex items-center gap-2">
                   <MessageCircle className="w-4 h-4" />
@@ -221,13 +246,13 @@ const GalleryDetail = () => {
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,hsl(var(--primary)/0.2),transparent_40%),radial-gradient(circle_at_80%_80%,hsl(var(--secondary)/0.18),transparent_40%)]" />
                   <div className="relative flex flex-col gap-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-semibold tracking-[0.2em] uppercase">
-                        Story {idx + 1}
-                      </div>
+                    <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-semibold tracking-[0.2em] uppercase">
+                      {copy.storyLabelPrefix} {idx + 1}
+                    </div>
                       <div className="flex items-center gap-2">
                         <Button variant="ghost" size="sm" onClick={() => handleShare(anchor)}>
                           <Share2 className="w-4 h-4 mr-2" />
-                          Share
+                          {copy.shareLabel}
                         </Button>
                         <Button variant="outline" size="sm" onClick={scrollToComments}>
                           <MessageCircle className="w-4 h-4 mr-2" />
@@ -283,31 +308,31 @@ const GalleryDetail = () => {
         <div className="container-custom grid lg:grid-cols-3 gap-10 lg:gap-14">
           <div className="lg:col-span-2 space-y-6">
             <div className="flex items-center justify-between">
-              <h3 className="text-2xl font-display font-semibold">Comments</h3>
+              <h3 className="text-2xl font-display font-semibold">{copy.commentTitle}</h3>
               <Badge variant="secondary">{comments.length}</Badge>
             </div>
 
             <form onSubmit={handleCommentSubmit} className="glass rounded-xl p-5 space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm text-muted-foreground block mb-2">Name</label>
+                  <label className="text-sm text-muted-foreground block mb-2">{copy.commentPlaceholderName}</label>
                   <Input
                     value={form.author}
                     onChange={(e) => setForm((prev) => ({ ...prev, author: e.target.value }))}
-                    placeholder="Your name"
+                    placeholder={copy.commentPlaceholderName}
                   />
                 </div>
                 <div>
-                  <label className="text-sm text-muted-foreground block mb-2">Comment</label>
+                  <label className="text-sm text-muted-foreground block mb-2">{copy.commentPlaceholderMessage}</label>
                   <Textarea
                     value={form.message}
                     onChange={(e) => setForm((prev) => ({ ...prev, message: e.target.value }))}
-                    placeholder="Share your thoughts..."
+                    placeholder={copy.commentPlaceholderMessage}
                     rows={3}
                   />
                 </div>
               </div>
-              <Button type="submit">Post Comment</Button>
+              <Button type="submit">{copy.commentButton}</Button>
             </form>
 
             <div className="space-y-4">
@@ -323,24 +348,24 @@ const GalleryDetail = () => {
                 </div>
               ))}
               {comments.length === 0 && (
-                <p className="text-muted-foreground">Be the first to start the conversation.</p>
+                <p className="text-muted-foreground">{copy.emptyComments}</p>
               )}
             </div>
           </div>
 
           <div className="glass rounded-xl p-6 space-y-4 border border-border/70">
-            <h4 className="text-lg font-display font-semibold">Spread the word</h4>
+            <h4 className="text-lg font-display font-semibold">{copy.spreadTitle}</h4>
             <p className="text-sm text-muted-foreground">
-              Share this moment with your team or friends. Every repost helps the community grow.
+              {copy.spreadBody}
             </p>
             <div className="flex gap-3">
               <Button variant="outline" className="flex-1" onClick={handleShare}>
                 <Share2 className="w-4 h-4 mr-2" />
-                Share Link
+                {copy.shareLabel} Link
               </Button>
               <Button variant={isLiked ? "default" : "secondary"} onClick={handleLike}>
                 <Heart className={`w-4 h-4 mr-2 ${isLiked ? "fill-primary text-primary-foreground" : ""}`} />
-                {likes}
+                {likes} {copy.likesLabel}
               </Button>
             </div>
           </div>

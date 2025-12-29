@@ -45,6 +45,14 @@ import AdminTeams from "./pages/AdminTeams";
 import AdminAbout from "./pages/AdminAbout";
 import AdminContact from "./pages/AdminContact";
 import AdminCookies from "./pages/AdminCookies";
+import AdminFeedback from "./pages/AdminFeedback";
+import AdminGalleryDetail from "./pages/AdminGalleryDetail";
+import AdminNotFound from "./pages/AdminNotFound";
+import AdminPartner from "./pages/AdminPartner";
+import AdminPrivacy from "./pages/AdminPrivacy";
+import AdminSponsor from "./pages/AdminSponsor";
+import AdminTerms from "./pages/AdminTerms";
+import AdminTestimonials from "./pages/AdminTestimonials";
 
 const queryClient = new QueryClient();
 
@@ -123,6 +131,70 @@ const App = () => (
             element={
               <AdminGuard>
                 <AdminCookies />
+              </AdminGuard>
+            }
+          />
+          <Route
+            path="/admin/feedback"
+            element={
+              <AdminGuard>
+                <AdminFeedback />
+              </AdminGuard>
+            }
+          />
+          <Route
+            path="/admin/gallery-detail"
+            element={
+              <AdminGuard>
+                <AdminGalleryDetail />
+              </AdminGuard>
+            }
+          />
+          <Route
+            path="/admin/not-found"
+            element={
+              <AdminGuard>
+                <AdminNotFound />
+              </AdminGuard>
+            }
+          />
+          <Route
+            path="/admin/partner"
+            element={
+              <AdminGuard>
+                <AdminPartner />
+              </AdminGuard>
+            }
+          />
+          <Route
+            path="/admin/privacy"
+            element={
+              <AdminGuard>
+                <AdminPrivacy />
+              </AdminGuard>
+            }
+          />
+          <Route
+            path="/admin/sponsor"
+            element={
+              <AdminGuard>
+                <AdminSponsor />
+              </AdminGuard>
+            }
+          />
+          <Route
+            path="/admin/terms"
+            element={
+              <AdminGuard>
+                <AdminTerms />
+              </AdminGuard>
+            }
+          />
+          <Route
+            path="/admin/testimonials"
+            element={
+              <AdminGuard>
+                <AdminTestimonials />
               </AdminGuard>
             }
           />

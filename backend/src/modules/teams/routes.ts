@@ -47,6 +47,20 @@ const payloadSchema = z.object({
   team: z.array(teamMemberSchema),
 });
 
+const detailCopySchema = z.object({
+  moreEyebrow: z.string().default("More team"),
+  moreTitle: z.string().default("Explore more team profiles"),
+  moreDescription: z.string().default("Scroll to reveal more team members—tap to open their detailed profiles."),
+});
+
+const heroSchema = z.object({
+  badge: z.string().default("Team"),
+  title: z.string().default("The team behind ICE"),
+  subheading: z
+    .string()
+    .default("Producers, ops, media, design, and data—search and filter to see who keeps the circuit running."),
+});
+
 const listQuerySchema = z.object({
   cursor: z.string().optional(),
   limit: z
@@ -82,6 +96,26 @@ export default async function teamsRoutes(app: FastifyInstance) {
       ctaHref: stored.ctaHref ?? "",
       team: stored.team ?? [],
     };
+  });
+
+  app.get("/teams/hero", async () => {
+    const db = await getDb();
+    const col = db.collection<{ badge: string; title: string; subheading: string }>("teams_hero");
+    const stored = await col.findOne({ key: "default" });
+    if (!stored) return heroSchema.parse({});
+    const parsed = heroSchema.safeParse(stored);
+    if (!parsed.success) return heroSchema.parse({});
+    return parsed.data;
+  });
+
+  app.get("/teams/detail-copy", async () => {
+    const db = await getDb();
+    const col = db.collection<{ moreEyebrow: string; moreTitle: string; moreDescription: string }>("teams_detail_copy");
+    const stored = await col.findOne({ key: "default" });
+    if (!stored) return detailCopySchema.parse({});
+    const parsed = detailCopySchema.safeParse(stored);
+    if (!parsed.success) return detailCopySchema.parse({});
+    return parsed.data;
   });
 
   app.get("/teams/list", async (request) => {
@@ -153,6 +187,23 @@ export default async function teamsRoutes(app: FastifyInstance) {
   );
 
   app.put(
+    "/teams/hero",
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const parsed = heroSchema.safeParse(request.body);
+      if (!parsed.success) {
+        request.log.warn({ issues: parsed.error.issues }, "teams.hero validation failed");
+        return reply.code(400).send({ message: "Invalid hero payload" });
+      }
+      const db = await getDb();
+      const col = db.collection("teams_hero");
+      await col.updateOne({ key: "default" }, { $set: { key: "default", ...parsed.data } }, { upsert: true });
+      request.log.info("teams.hero updated");
+      return parsed.data;
+    }
+  );
+
+  app.put(
     "/teams/:id",
     { preHandler: [app.authenticate] },
     async (request, reply) => {
@@ -197,6 +248,23 @@ export default async function teamsRoutes(app: FastifyInstance) {
       const col = db.collection("teams");
       await col.updateOne({ key: "default" }, { $set: empty }, { upsert: true });
       return empty;
+    }
+  );
+
+  app.put(
+    "/teams/detail-copy",
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const parsed = detailCopySchema.safeParse(request.body);
+      if (!parsed.success) {
+        request.log.warn({ issues: parsed.error.issues }, "teams.detail-copy validation failed");
+        return reply.code(400).send({ message: "Invalid payload" });
+      }
+      const db = await getDb();
+      const col = db.collection("teams_detail_copy");
+      await col.updateOne({ key: "default" }, { $set: { key: "default", ...parsed.data } }, { upsert: true });
+      request.log.info("teams.detail-copy updated");
+      return parsed.data;
     }
   );
 }

@@ -35,12 +35,19 @@ type FounderItem = {
   detail?: FounderStory;
 };
 
+const defaultCopy = {
+  moreEyebrow: "More founders",
+  moreTitle: "Explore more founder profiles",
+  moreDescription: "Scroll to reveal more founders—tap to open their detailed profiles.",
+};
+
 const FounderDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [founder, setFounder] = useState<FounderItem | null>(null);
   const [moreFounders, setMoreFounders] = useState<FounderItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [copy, setCopy] = useState(defaultCopy);
   const base = import.meta.env.VITE_API_BASE_URL || "";
 
   const { scrollYProgress } = useScroll();
@@ -72,8 +79,23 @@ const FounderDetail = () => {
         setMoreFounders([]);
       }
     };
+    const loadCopy = async () => {
+      try {
+        const res = await fetch(`${base}/founders/detail-copy`);
+        if (!res.ok) throw new Error("Copy fetch failed");
+        const data = await res.json();
+        setCopy({
+          moreEyebrow: data.moreEyebrow || defaultCopy.moreEyebrow,
+          moreTitle: data.moreTitle || defaultCopy.moreTitle,
+          moreDescription: data.moreDescription || defaultCopy.moreDescription,
+        });
+      } catch {
+        setCopy(defaultCopy);
+      }
+    };
     load();
     loadMore();
+    loadCopy();
   }, [base, id]);
 
   if (loading) {
@@ -233,11 +255,9 @@ const FounderDetail = () => {
       <section className="section-padding bg-muted/20">
         <div className="container-custom space-y-8">
           <div className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.3em] text-primary/80">More founders</p>
-            <h2 className="text-2xl md:text-3xl font-display font-semibold">Explore more founder profiles</h2>
-            <p className="text-muted-foreground text-sm md:text-base">
-              Scroll to reveal more founders—tap to open their detailed profiles.
-            </p>
+            <p className="text-xs uppercase tracking-[0.3em] text-primary/80">{copy.moreEyebrow}</p>
+            <h2 className="text-2xl md:text-3xl font-display font-semibold">{copy.moreTitle}</h2>
+            <p className="text-muted-foreground text-sm md:text-base">{copy.moreDescription}</p>
           </div>
           <StickyScrollReveal
             content={(moreFounders.length ? moreFounders : []).map((item, idx) => ({

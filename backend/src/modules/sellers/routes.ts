@@ -39,6 +39,20 @@ const payloadSchema = z.object({
   sellers: z.array(sellerSchema),
 });
 
+const detailCopySchema = z.object({
+  moreEyebrow: z.string().default("More sellers"),
+  moreTitle: z.string().default("Explore more seller stories"),
+  moreDescription: z.string().default("Scroll to reveal more seller journeys—each card updates the preview with their imagery and outcomes."),
+});
+
+const heroSchema = z.object({
+  badge: z.string().default("Seller Stories"),
+  title: z.string().default("Sellers who grew with ICE"),
+  subheading: z
+    .string()
+    .default("Search and filter seller success stories—discover playbooks, outcomes, and how they used the platform."),
+});
+
 const listQuerySchema = z.object({
   cursor: z.string().optional(),
   limit: z
@@ -67,6 +81,16 @@ export default async function sellersRoutes(app: FastifyInstance) {
       ctaLabel: stored.ctaLabel ?? "",
       ctaHref: stored.ctaHref ?? "",
     };
+  });
+
+  app.get("/sellers/hero", async () => {
+    const db = await getDb();
+    const col = db.collection<{ badge: string; title: string; subheading: string }>("sellers_hero");
+    const stored = await col.findOne({ key: "default" });
+    if (!stored) return heroSchema.parse({});
+    const parsed = heroSchema.safeParse(stored);
+    if (!parsed.success) return heroSchema.parse({});
+    return parsed.data;
   });
 
   app.get("/sellers/list", async (request) => {
@@ -98,6 +122,16 @@ export default async function sellersRoutes(app: FastifyInstance) {
     const next = data.length === limit ? data[data.length - 1]._id?.toString() : null;
     const companies = await col.distinct("company");
     return { data, cursor: { next, limit }, filters: { companies } };
+  });
+
+  app.get("/sellers/detail-copy", async () => {
+    const db = await getDb();
+    const col = db.collection<{ moreEyebrow: string; moreTitle: string; moreDescription: string }>("sellers_detail_copy");
+    const stored = await col.findOne({ key: "default" });
+    if (!stored) return detailCopySchema.parse({});
+    const parsed = detailCopySchema.safeParse(stored);
+    if (!parsed.success) return detailCopySchema.parse({});
+    return parsed.data;
   });
 
   app.get("/sellers/:id", async (request, reply) => {
@@ -136,6 +170,23 @@ export default async function sellersRoutes(app: FastifyInstance) {
       );
       request.log.info("sellers.update success");
       return parse.data;
+    }
+  );
+
+  app.put(
+    "/sellers/hero",
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const parsed = heroSchema.safeParse(request.body);
+      if (!parsed.success) {
+        request.log.warn({ issues: parsed.error.issues }, "sellers.hero validation failed");
+        return reply.code(400).send({ message: "Invalid hero payload" });
+      }
+      const db = await getDb();
+      const col = db.collection("sellers_hero");
+      await col.updateOne({ key: "default" }, { $set: { key: "default", ...parsed.data } }, { upsert: true });
+      request.log.info("sellers.hero updated");
+      return parsed.data;
     }
   );
 
@@ -191,6 +242,23 @@ export default async function sellersRoutes(app: FastifyInstance) {
       const col = db.collection("sellers");
       await col.updateOne({ key: "default" }, { $set: empty }, { upsert: true });
       return empty;
+    }
+  );
+
+  app.put(
+    "/sellers/detail-copy",
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const parsed = detailCopySchema.safeParse(request.body);
+      if (!parsed.success) {
+        request.log.warn({ issues: parsed.error.issues }, "sellers.detail-copy validation failed");
+        return reply.code(400).send({ message: "Invalid payload" });
+      }
+      const db = await getDb();
+      const col = db.collection("sellers_detail_copy");
+      await col.updateOne({ key: "default" }, { $set: { key: "default", ...parsed.data } }, { upsert: true });
+      request.log.info("sellers.detail-copy updated");
+      return parsed.data;
     }
   );
 }

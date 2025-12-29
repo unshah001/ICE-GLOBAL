@@ -29,9 +29,15 @@ type FoundersResponse = {
 };
 
 const PAGE_LIMIT = 24;
+const defaultHero = {
+  badge: "Founders",
+  title: "Meet the founders of ICE",
+  subheading: "Professional profiles of ICE 1.0 and 2.0—research-driven, with operational and creative highlights.",
+};
 
 const Founders = () => {
   const [items, setItems] = useState<FounderItem[]>([]);
+  const [hero, setHero] = useState(defaultHero);
   const [era, setEra] = useState<string>("All");
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -43,6 +49,21 @@ const Founders = () => {
   const searchParams = useSearchParams()[0];
 
   const base = import.meta.env.VITE_API_BASE_URL || "";
+
+  const loadHero = async () => {
+    try {
+      const res = await fetch(`${base}/founders/hero`);
+      if (!res.ok) throw new Error("Failed");
+      const data = await res.json();
+      setHero({
+        badge: data.badge || defaultHero.badge,
+        title: data.title || defaultHero.title,
+        subheading: data.subheading || defaultHero.subheading,
+      });
+    } catch {
+      setHero(defaultHero);
+    }
+  };
 
   const load = async (reset = true) => {
     setIsLoading(true);
@@ -82,6 +103,7 @@ const Founders = () => {
     const initialSearch = searchParams.get("search");
     if (initialEra) setEra(initialEra);
     if (initialSearch) setSearch(initialSearch);
+    loadHero();
     load(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -128,12 +150,10 @@ const Founders = () => {
           <div className="text-center max-w-3xl mx-auto space-y-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold uppercase tracking-[0.2em]">
               <Sparkles className="w-4 h-4" />
-              Founders
+              {hero.badge}
             </div>
-            <h1 className="text-4xl md:text-5xl font-display font-bold">Meet the founders of ICE</h1>
-            <p className="text-muted-foreground">
-              Professional profiles of ICE 1.0 and 2.0—research-driven, with operational and creative highlights.
-            </p>
+            <h1 className="text-4xl md:text-5xl font-display font-bold">{hero.title}</h1>
+            <p className="text-muted-foreground">{hero.subheading}</p>
           </div>
 
           <div className="mt-8 grid gap-3 md:grid-cols-[2fr,1fr] lg:grid-cols-[2fr,1fr,1fr] items-center">

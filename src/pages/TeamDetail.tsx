@@ -35,12 +35,19 @@ type TeamItem = {
   detail?: TeamStory;
 };
 
+const defaultCopy = {
+  moreEyebrow: "More team",
+  moreTitle: "Explore more team profiles",
+  moreDescription: "Scroll to reveal more team members—tap to open their detailed profiles.",
+};
+
 const TeamDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [member, setMember] = useState<TeamItem | null>(null);
   const [more, setMore] = useState<TeamItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [copy, setCopy] = useState(defaultCopy);
   const base = import.meta.env.VITE_API_BASE_URL || "";
 
   const { scrollYProgress } = useScroll();
@@ -72,8 +79,23 @@ const TeamDetail = () => {
         setMore([]);
       }
     };
+    const loadCopy = async () => {
+      try {
+        const res = await fetch(`${base}/teams/detail-copy`);
+        if (!res.ok) throw new Error("Copy fetch failed");
+        const data = await res.json();
+        setCopy({
+          moreEyebrow: data.moreEyebrow || defaultCopy.moreEyebrow,
+          moreTitle: data.moreTitle || defaultCopy.moreTitle,
+          moreDescription: data.moreDescription || defaultCopy.moreDescription,
+        });
+      } catch {
+        setCopy(defaultCopy);
+      }
+    };
     load();
     loadMore();
+    loadCopy();
   }, [base, id]);
 
   if (loading) {
@@ -233,10 +255,10 @@ const TeamDetail = () => {
       <section className="section-padding bg-muted/20">
         <div className="container-custom space-y-8">
           <div className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.3em] text-primary/80">More team</p>
-            <h2 className="text-2xl md:text-3xl font-display font-semibold">Explore more team profiles</h2>
+            <p className="text-xs uppercase tracking-[0.3em] text-primary/80">{copy.moreEyebrow}</p>
+            <h2 className="text-2xl md:text-3xl font-display font-semibold">{copy.moreTitle}</h2>
             <p className="text-muted-foreground text-sm md:text-base">
-              Scroll to reveal more team members—tap to open their detailed profiles.
+              {copy.moreDescription}
             </p>
           </div>
           <StickyScrollReveal

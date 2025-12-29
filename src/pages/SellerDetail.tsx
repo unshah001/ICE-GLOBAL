@@ -26,12 +26,19 @@ type SellerDetailStory = {
 
 type SellerDetailItem = SellerTestimonial & { detail?: SellerDetailStory };
 
+const defaultCopy = {
+  moreEyebrow: "More sellers",
+  moreTitle: "Explore more seller stories",
+  moreDescription: "Scroll to reveal more seller journeys—each card updates the preview with their imagery and outcomes.",
+};
+
 const SellerDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [seller, setSeller] = useState<SellerDetailItem | null>(null);
   const [moreSellers, setMoreSellers] = useState<SellerDetailItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [copy, setCopy] = useState(defaultCopy);
   const base = import.meta.env.VITE_API_BASE_URL || "";
 
   const { scrollYProgress } = useScroll();
@@ -64,8 +71,23 @@ const SellerDetail = () => {
         setMoreSellers(sellerTestimonials.filter((s) => s.id !== id));
       }
     };
+    const loadCopy = async () => {
+      try {
+        const res = await fetch(`${base}/sellers/detail-copy`);
+        if (!res.ok) throw new Error("Copy fetch failed");
+        const data = await res.json();
+        setCopy({
+          moreEyebrow: data.moreEyebrow || defaultCopy.moreEyebrow,
+          moreTitle: data.moreTitle || defaultCopy.moreTitle,
+          moreDescription: data.moreDescription || defaultCopy.moreDescription,
+        });
+      } catch {
+        setCopy(defaultCopy);
+      }
+    };
     load();
     loadMore();
+    loadCopy();
   }, [base, id]);
 
   if (loading) {
@@ -202,10 +224,10 @@ const SellerDetail = () => {
       <section className="section-padding bg-muted/20">
         <div className="container-custom space-y-8">
           <div className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.3em] text-primary/80">More sellers</p>
-            <h2 className="text-2xl md:text-3xl font-display font-semibold">Explore more seller stories</h2>
+            <p className="text-xs uppercase tracking-[0.3em] text-primary/80">{copy.moreEyebrow}</p>
+            <h2 className="text-2xl md:text-3xl font-display font-semibold">{copy.moreTitle}</h2>
             <p className="text-muted-foreground text-sm md:text-base">
-              Scroll to reveal more seller journeys—each card updates the preview with their imagery and outcomes.
+              {copy.moreDescription}
             </p>
           </div>
           <StickyScrollReveal

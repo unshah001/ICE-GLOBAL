@@ -18,9 +18,15 @@ type SellersResponse = {
 };
 
 const PAGE_LIMIT = 24;
+const defaultHero = {
+  badge: "Seller Stories",
+  title: "Sellers who grew with ICE",
+  subheading: "Search and filter seller success stories—discover playbooks, outcomes, and how they used the platform.",
+};
 
 const Sellers = () => {
   const [items, setItems] = useState<SellerTestimonial[]>(sellerTestimonials);
+  const [hero, setHero] = useState(defaultHero);
   const [company, setCompany] = useState<string>("All");
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -32,6 +38,21 @@ const Sellers = () => {
   const searchParams = useSearchParams()[0];
 
   const base = import.meta.env.VITE_API_BASE_URL || "";
+
+  const loadHero = async () => {
+    try {
+      const res = await fetch(`${base}/sellers/hero`);
+      if (!res.ok) throw new Error("Failed");
+      const data = await res.json();
+      setHero({
+        badge: data.badge || defaultHero.badge,
+        title: data.title || defaultHero.title,
+        subheading: data.subheading || defaultHero.subheading,
+      });
+    } catch {
+      setHero(defaultHero);
+    }
+  };
 
   const load = async (reset = true) => {
     setIsLoading(true);
@@ -71,6 +92,7 @@ const Sellers = () => {
     const initialSearch = searchParams.get("search");
     if (initialCompany) setCompany(initialCompany);
     if (initialSearch) setSearch(initialSearch);
+    loadHero();
     load(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -117,12 +139,10 @@ const Sellers = () => {
           <div className="text-center max-w-3xl mx-auto space-y-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold uppercase tracking-[0.2em]">
               <Briefcase className="w-4 h-4" />
-              Seller Stories
+              {hero.badge}
             </div>
-            <h1 className="text-4xl md:text-5xl font-display font-bold">Sellers who grew with ICE</h1>
-            <p className="text-muted-foreground">
-              Search and filter seller success stories—discover playbooks, outcomes, and how they used the platform.
-            </p>
+            <h1 className="text-4xl md:text-5xl font-display font-bold">{hero.title}</h1>
+            <p className="text-muted-foreground">{hero.subheading}</p>
           </div>
 
           <div className="mt-8 grid gap-3 md:grid-cols-[2fr,1fr] items-center">

@@ -24,6 +24,14 @@ import dualCtaRoutes from "./dual-cta/routes";
 import footerRoutes from "./footer/routes";
 import contactRoutes from "./contact/routes";
 import cookiesRoutes from "./cookies/routes";
+import feedbackRoutes from "./feedback/routes";
+import galleryDetailRoutes from "./gallery-detail/routes";
+import notFoundRoutes from "./not-found/routes";
+import partnerRoutes from "./partner/routes";
+import privacyRoutes from "./privacy/routes";
+import sponsorRoutes from "./sponsor/routes";
+import termsRoutes from "./terms/routes";
+import testimonialsRoutes from "./testimonials/routes";
 
 export default async function registerRoutes(app: FastifyInstance) {
   await app.register(healthRoutes);
@@ -51,4 +59,12 @@ export default async function registerRoutes(app: FastifyInstance) {
   await app.register(footerRoutes);
   await app.register(contactRoutes);
   await app.register(cookiesRoutes);
+  await app.register(feedbackRoutes);
+  await app.register(galleryDetailRoutes);
+  await app.register(notFoundRoutes);
+  await app.register(partnerRoutes);
+  await app.register(privacyRoutes);
+  await app.register(sponsorRoutes);
+  await app.register(termsRoutes);
+  await app.register(testimonialsRoutes);
 }
