@@ -91,7 +91,7 @@ const AdminDashboard = () => {
         )}
       </div>
 
-      <div id="cms" className="grid gap-4 lg:grid-cols-[1.4fr,1fr]">
+      <div id="cms" className="grid gap-4">
         <Card className="bg-card/70 border-border/60">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -135,7 +135,7 @@ const AdminDashboard = () => {
         </Card>
       </div>
 
-      <div id="leads" className="grid gap-4 lg:grid-cols-[1.5fr,1fr] items-start">
+      <div id="leads" className="grid gap-4 items-start">
         <Card className="bg-card/70 border-border/60">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
