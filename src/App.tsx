@@ -42,6 +42,9 @@ import AdminCofounders from "./pages/AdminCofounders";
 import Teams from "./pages/Teams";
 import TeamDetail from "./pages/TeamDetail";
 import AdminTeams from "./pages/AdminTeams";
+import AdminAbout from "./pages/AdminAbout";
+import AdminContact from "./pages/AdminContact";
+import AdminCookies from "./pages/AdminCookies";
 
 const queryClient = new QueryClient();
 
@@ -96,6 +99,30 @@ const App = () => (
             element={
               <AdminGuard>
                 <AdminCofounders />
+              </AdminGuard>
+            }
+          />
+          <Route
+            path="/admin/about"
+            element={
+              <AdminGuard>
+                <AdminAbout />
+              </AdminGuard>
+            }
+          />
+          <Route
+            path="/admin/contact"
+            element={
+              <AdminGuard>
+                <AdminContact />
+              </AdminGuard>
+            }
+          />
+          <Route
+            path="/admin/cookies"
+            element={
+              <AdminGuard>
+                <AdminCookies />
               </AdminGuard>
             }
           />

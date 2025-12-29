@@ -40,6 +40,11 @@ type BuyersResponse = {
 };
 
 const PAGE_LIMIT = 24;
+const defaultHero = {
+  badge: "Buyer Stories",
+  title: "Buyers who keep coming back",
+  subheading: "Search and filter buyer journeys—spend, visits, and how ICE programming keeps them onsite.",
+};
 const createId = () =>
   typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
     ? crypto.randomUUID()
@@ -54,6 +59,8 @@ const AdminBuyers = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [hero, setHero] = useState(defaultHero);
+  const [savingHero, setSavingHero] = useState(false);
   const [city, setCity] = useState<string>("All");
   const [segment, setSegment] = useState<string>("All");
   const [search, setSearch] = useState("");
@@ -99,7 +106,10 @@ const AdminBuyers = () => {
   };
 
   useEffect(() => {
-    load(true);
+    const run = async () => {
+      await Promise.all([loadHero(), load(true)]);
+    };
+    run();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -223,6 +233,51 @@ const AdminBuyers = () => {
     return refreshAccessToken(base);
   };
 
+  const loadHero = async () => {
+    const base = import.meta.env.VITE_API_BASE_URL || "";
+    try {
+      const res = await fetch(`${base}/buyers/hero`);
+      if (!res.ok) throw new Error("Failed");
+      const data = await res.json();
+      setHero({
+        badge: data.badge || defaultHero.badge,
+        title: data.title || defaultHero.title,
+        subheading: data.subheading || defaultHero.subheading,
+      });
+    } catch {
+      setHero(defaultHero);
+    }
+  };
+
+  const saveHero = async () => {
+    setSavingHero(true);
+    setError("");
+    setSuccess("");
+    try {
+      const base = import.meta.env.VITE_API_BASE_URL || "";
+      const token = await getAccessToken(base);
+      if (!token) throw new Error("Not authenticated.");
+      const attempt = async (authToken: string) =>
+        fetch(`${base}/buyers/hero`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+          body: JSON.stringify(hero),
+        });
+      let res = await attempt(token);
+      if (res.status === 401) {
+        const refreshed = await refreshAccessToken(base);
+        if (!refreshed) throw new Error("Session expired. Please login again.");
+        res = await attempt(refreshed);
+      }
+      if (!res.ok) throw new Error("Unable to save hero");
+      setSuccess("Hero updated");
+    } catch (err: any) {
+      setError(err.message || "Unable to save hero");
+    } finally {
+      setSavingHero(false);
+    }
+  };
+
   const saveItems = async () => {
     setSaving(true);
     setError("");
@@ -302,6 +357,32 @@ const AdminBuyers = () => {
           <span>{success}</span>
         </div>
       )}
+
+      <div className="rounded-xl border border-border/60 bg-card/70 p-4 flex flex-col gap-3">
+        <div className="grid md:grid-cols-3 gap-3">
+          <div>
+            <label className="text-xs text-muted-foreground">Badge</label>
+            <Input value={hero.badge} onChange={(e) => setHero((h) => ({ ...h, badge: e.target.value }))} />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">Title</label>
+            <Input value={hero.title} onChange={(e) => setHero((h) => ({ ...h, title: e.target.value }))} />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">Subheading</label>
+            <Input value={hero.subheading} onChange={(e) => setHero((h) => ({ ...h, subheading: e.target.value }))} />
+          </div>
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={loadHero} disabled={loading}>
+            Refresh hero
+          </Button>
+          <Button onClick={saveHero} disabled={savingHero}>
+            <Save className="w-4 h-4 mr-2" />
+            {savingHero ? "Saving..." : "Save hero"}
+          </Button>
+        </div>
+      </div>
 
       <div className="rounded-xl border border-border/60 bg-card/70 p-4 flex flex-col gap-3">
         <div className="flex flex-col md:flex-row gap-3 items-start md:items-center">

@@ -60,3 +60,35 @@ Reference overview: NEW_HOME_SECTIONS.md.
 
 Auto con
 
+
+
+
+About.tsx
+BrandDetail.tsx
+BrandGuidelines.tsx
+BrandsHero.tsx
+Brands.tsx
+BuyerDetail.tsx
+Buyers.tsx
+CofounderDetail.tsx
+Cofounders.tsx
+Contact.tsx
+Cookies.tsx
+Feedback.tsx
+FounderDetail.tsx
+Founders.tsx
+GalleryDetail.tsx
+Gallery.tsx
+Index.tsx
+NewHome.tsx
+NotFound.tsx
+Partner.tsx
+Privacy.tsx
+SellerDetail.tsx
+Sellers.tsx
+Sponsor.tsx
+TeamDetail.tsx
+Teams.tsx
+Terms.tsx
+TestimonialsPage.tsx
+TestPage.tsx

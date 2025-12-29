@@ -47,6 +47,22 @@ const payloadSchema = z.object({
   cofounders: z.array(cofounderSchema),
 });
 
+const detailCopySchema = z.object({
+  moreEyebrow: z.string().default("More co-founders"),
+  moreTitle: z.string().default("Explore more co-founder profiles"),
+  moreDescription: z
+    .string()
+    .default("Scroll to reveal more co-founders—tap to open their detailed profiles."),
+});
+
+const heroSchema = z.object({
+  badge: z.string().default("Co-Founders"),
+  title: z.string().default("Meet the co-founders of IGE & IGN"),
+  subheading: z
+    .string()
+    .default("Professional, research-ready profiles across IGE and IGN—ops, media, partnerships, and experience design."),
+});
+
 const listQuerySchema = z.object({
   cursor: z.string().optional(),
   limit: z
@@ -86,6 +102,16 @@ export default async function cofoundersRoutes(app: FastifyInstance) {
     };
   });
 
+  app.get("/cofounders/hero", async () => {
+    const db = await getDb();
+    const col = db.collection<{ badge: string; title: string; subheading: string }>("cofounders_hero");
+    const stored = await col.findOne({ key: "default" });
+    if (!stored) return heroSchema.parse({});
+    const parsed = heroSchema.safeParse(stored);
+    if (!parsed.success) return heroSchema.parse({});
+    return parsed.data;
+  });
+
   app.get("/cofounders/list", async (request) => {
     const db = await getDb();
     const col = db.collection<z.infer<typeof cofounderSchema>>("cofounders_list");
@@ -113,6 +139,16 @@ export default async function cofoundersRoutes(app: FastifyInstance) {
     const next = data.length === limit ? data[data.length - 1]._id?.toString() : null;
     const tracks = await col.distinct("track");
     return { data, cursor: { next, limit }, filters: { tracks } };
+  });
+
+  app.get("/cofounders/detail-copy", async () => {
+    const db = await getDb();
+    const col = db.collection<{ moreEyebrow: string; moreTitle: string; moreDescription: string }>("cofounders_detail_copy");
+    const stored = await col.findOne({ key: "default" });
+    if (!stored) return detailCopySchema.parse({});
+    const parsed = detailCopySchema.safeParse(stored);
+    if (!parsed.success) return detailCopySchema.parse({});
+    return parsed.data;
   });
 
   app.get("/cofounders/:id", async (request, reply) => {
@@ -151,6 +187,23 @@ export default async function cofoundersRoutes(app: FastifyInstance) {
       );
       request.log.info("cofounders.update success");
       return parse.data;
+    }
+  );
+
+  app.put(
+    "/cofounders/hero",
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const parsed = heroSchema.safeParse(request.body);
+      if (!parsed.success) {
+        request.log.warn({ issues: parsed.error.issues }, "cofounders.hero validation failed");
+        return reply.code(400).send({ message: "Invalid hero payload" });
+      }
+      const db = await getDb();
+      const col = db.collection("cofounders_hero");
+      await col.updateOne({ key: "default" }, { $set: { key: "default", ...parsed.data } }, { upsert: true });
+      request.log.info("cofounders.hero updated");
+      return parsed.data;
     }
   );
 
@@ -199,6 +252,23 @@ export default async function cofoundersRoutes(app: FastifyInstance) {
       const col = db.collection("cofounders");
       await col.updateOne({ key: "default" }, { $set: empty }, { upsert: true });
       return empty;
+    }
+  );
+
+  app.put(
+    "/cofounders/detail-copy",
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const parsed = detailCopySchema.safeParse(request.body);
+      if (!parsed.success) {
+        request.log.warn({ issues: parsed.error.issues }, "cofounders.detail-copy validation failed");
+        return reply.code(400).send({ message: "Invalid payload" });
+      }
+      const db = await getDb();
+      const col = db.collection("cofounders_detail_copy");
+      await col.updateOne({ key: "default" }, { $set: { key: "default", ...parsed.data } }, { upsert: true });
+      request.log.info("cofounders.detail-copy updated");
+      return parsed.data;
     }
   );
 }

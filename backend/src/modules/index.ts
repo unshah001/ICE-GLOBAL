@@ -22,6 +22,8 @@ import aboutRoutes from "./about/routes";
 import countsRoutes from "./counts/routes";
 import dualCtaRoutes from "./dual-cta/routes";
 import footerRoutes from "./footer/routes";
+import contactRoutes from "./contact/routes";
+import cookiesRoutes from "./cookies/routes";
 
 export default async function registerRoutes(app: FastifyInstance) {
   await app.register(healthRoutes);
@@ -47,4 +49,6 @@ export default async function registerRoutes(app: FastifyInstance) {
   await app.register(countsRoutes);
   await app.register(dualCtaRoutes);
   await app.register(footerRoutes);
+  await app.register(contactRoutes);
+  await app.register(cookiesRoutes);
 }

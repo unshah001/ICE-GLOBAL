@@ -31,9 +31,15 @@ type BuyersResponse = {
 };
 
 const PAGE_LIMIT = 24;
+const defaultHero = {
+  badge: "Buyer Stories",
+  title: "Buyers who keep coming back",
+  subheading: "Search and filter buyer journeys—spend, visits, and how ICE programming keeps them onsite.",
+};
 
 const Buyers = () => {
   const [items, setItems] = useState<BuyerDetail[]>(buyerTestimonials);
+  const [hero, setHero] = useState(defaultHero);
   const [city, setCity] = useState<string>("All");
   const [segment, setSegment] = useState<string>("All");
   const [search, setSearch] = useState("");
@@ -47,6 +53,21 @@ const Buyers = () => {
   const searchParams = useSearchParams()[0];
 
   const base = import.meta.env.VITE_API_BASE_URL || "";
+
+  const loadHero = async () => {
+    try {
+      const res = await fetch(`${base}/buyers/hero`);
+      if (!res.ok) throw new Error("Failed to load hero");
+      const data = await res.json();
+      setHero({
+        badge: data.badge || defaultHero.badge,
+        title: data.title || defaultHero.title,
+        subheading: data.subheading || defaultHero.subheading,
+      });
+    } catch {
+      setHero(defaultHero);
+    }
+  };
 
   const load = async (reset = true) => {
     setIsLoading(true);
@@ -91,6 +112,7 @@ const Buyers = () => {
     if (initialCity) setCity(initialCity);
     if (initialSegment) setSegment(initialSegment);
     if (initialSearch) setSearch(initialSearch);
+    loadHero();
     load(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -138,12 +160,10 @@ const Buyers = () => {
           <div className="text-center max-w-3xl mx-auto space-y-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold uppercase tracking-[0.2em]">
               <Tags className="w-4 h-4" />
-              Buyer Stories
+              {hero.badge}
             </div>
-            <h1 className="text-4xl md:text-5xl font-display font-bold">Buyers who keep coming back</h1>
-            <p className="text-muted-foreground">
-              Search and filter buyer journeys—spend, visits, and how ICE programming keeps them onsite.
-            </p>
+            <h1 className="text-4xl md:text-5xl font-display font-bold">{hero.title}</h1>
+            <p className="text-muted-foreground">{hero.subheading}</p>
           </div>
 
           <div className="mt-8 grid gap-3 md:grid-cols-[2fr,1fr,1fr] items-center">

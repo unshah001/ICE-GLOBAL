@@ -29,9 +29,15 @@ type CofoundersResponse = {
 };
 
 const PAGE_LIMIT = 24;
+const defaultHero = {
+  badge: "Co-Founders",
+  title: "Meet the co-founders of IGE & IGN",
+  subheading: "Professional, research-ready profiles across IGE and IGN—ops, media, partnerships, and experience design.",
+};
 
 const Cofounders = () => {
   const [items, setItems] = useState<CofounderItem[]>([]);
+  const [hero, setHero] = useState(defaultHero);
   const [track, setTrack] = useState<string>("All");
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -43,6 +49,21 @@ const Cofounders = () => {
   const searchParams = useSearchParams()[0];
 
   const base = import.meta.env.VITE_API_BASE_URL || "";
+
+  const loadHero = async () => {
+    try {
+      const res = await fetch(`${base}/cofounders/hero`);
+      if (!res.ok) throw new Error("Failed");
+      const data = await res.json();
+      setHero({
+        badge: data.badge || defaultHero.badge,
+        title: data.title || defaultHero.title,
+        subheading: data.subheading || defaultHero.subheading,
+      });
+    } catch {
+      setHero(defaultHero);
+    }
+  };
 
   const load = async (reset = true) => {
     setIsLoading(true);
@@ -82,6 +103,7 @@ const Cofounders = () => {
     const initialSearch = searchParams.get("search");
     if (initialTrack) setTrack(initialTrack);
     if (initialSearch) setSearch(initialSearch);
+    loadHero();
     load(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -128,12 +150,10 @@ const Cofounders = () => {
           <div className="text-center max-w-3xl mx-auto space-y-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold uppercase tracking-[0.2em]">
               <Sparkles className="w-4 h-4" />
-              Co-Founders
+              {hero.badge}
             </div>
-            <h1 className="text-4xl md:text-5xl font-display font-bold">Meet the co-founders of IGE & IGN</h1>
-            <p className="text-muted-foreground">
-              Professional, research-ready profiles across IGE and IGN—ops, media, partnerships, and experience design.
-            </p>
+            <h1 className="text-4xl md:text-5xl font-display font-bold">{hero.title}</h1>
+            <p className="text-muted-foreground">{hero.subheading}</p>
           </div>
 
           <div className="mt-8 grid gap-3 md:grid-cols-[2fr,1fr] lg:grid-cols-[2fr,1fr,1fr] items-center">

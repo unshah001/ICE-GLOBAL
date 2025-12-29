@@ -40,6 +40,14 @@ const payloadSchema = z.object({
   buyers: z.array(buyerSchema),
 });
 
+const buyersHeroSchema = z.object({
+  badge: z.string().default("Buyer Stories"),
+  title: z.string().default("Buyers who keep coming back"),
+  subheading: z
+    .string()
+    .default("Search and filter buyer journeys—spend, visits, and how ICE programming keeps them onsite."),
+});
+
 const listQuerySchema = z.object({
   cursor: z.string().optional(),
   limit: z
@@ -78,6 +86,20 @@ export default async function buyersRoutes(app: FastifyInstance) {
       ctaHref: stored.ctaHref ?? "",
       buyers: stored.buyers ?? [],
     };
+  });
+
+  app.get("/buyers/hero", async () => {
+    const db = await getDb();
+    const col = db.collection<{ badge: string; title: string; subheading: string }>("buyers_hero");
+    const stored = await col.findOne({ key: "default" });
+    if (!stored) {
+      return buyersHeroSchema.parse({});
+    }
+    const parsed = buyersHeroSchema.safeParse(stored);
+    if (!parsed.success) {
+      return buyersHeroSchema.parse({});
+    }
+    return parsed.data;
   });
 
   app.get("/buyers/list", async (request) => {
@@ -184,6 +206,23 @@ export default async function buyersRoutes(app: FastifyInstance) {
       if (!res.deletedCount) return reply.code(404).send({ message: "Buyer not found" });
       request.log.info({ id }, "buyers.list deleted");
       return { message: "Deleted", id };
+    }
+  );
+
+  app.put(
+    "/buyers/hero",
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const parsed = buyersHeroSchema.safeParse(request.body);
+      if (!parsed.success) {
+        request.log.warn({ issues: parsed.error.issues }, "buyers.hero validation failed");
+        return reply.code(400).send({ message: "Invalid hero payload" });
+      }
+      const db = await getDb();
+      const col = db.collection("buyers_hero");
+      await col.updateOne({ key: "default" }, { $set: { key: "default", ...parsed.data } }, { upsert: true });
+      request.log.info("buyers.hero updated");
+      return parsed.data;
     }
   );
 
