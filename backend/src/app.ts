@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 import plugins from "./plugins";
 import jwtPlugin from "./plugins/jwt";
+import cachePlugin from "./plugins/cache";
 import registerRoutes from "./modules";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
@@ -14,6 +15,7 @@ export const buildApp = () => {
 
   app.register(plugins);
   app.register(jwtPlugin);
+  app.register(cachePlugin);
 
   app.register(swagger, {
     openapi: {
