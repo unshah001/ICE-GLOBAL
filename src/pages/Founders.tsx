@@ -10,6 +10,18 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Search, Sparkles } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+type FounderStory = {
+  headline?: string;
+  summary?: string;
+  heroImage?: string;
+  heroVariants?: { key: string; path: string }[];
+  highlights?: { title: string; body: string }[];
+  metrics?: { label: string; value: string }[];
+  pullQuote?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+};
+
 type FounderItem = {
   id: string;
   name: string;
@@ -17,9 +29,11 @@ type FounderItem = {
   era: string;
   focus: string;
   image: string;
+  variants?: { key: string; path: string }[];
   highlight: string;
   href?: string;
   social?: { linkedin?: string; twitter?: string; website?: string };
+  detail?: FounderStory;
 };
 
 type FoundersResponse = {
@@ -33,6 +47,21 @@ const defaultHero = {
   badge: "Founders",
   title: "Meet the founders of ICE",
   subheading: "Professional profiles of ICE 1.0 and 2.0—research-driven, with operational and creative highlights.",
+};
+
+const mediaBase = (import.meta.env.VITE_MEDIA_BASE_URL || "").replace(/\/$/, "");
+const resolveMedia = (path?: string) => {
+  if (!path) return "";
+  if (/^https?:\/\//i.test(path)) return path;
+  return mediaBase ? `${mediaBase}/${path}` : path;
+};
+const pickVariant = (variants?: { key: string; path: string }[], preferred: string[] = []) => {
+  if (!variants?.length) return undefined;
+  for (const key of preferred) {
+    const hit = variants.find((v) => v.key === key);
+    if (hit) return hit.path;
+  }
+  return variants[0]?.path;
 };
 
 const Founders = () => {
@@ -201,7 +230,7 @@ const Founders = () => {
                   <Link to={`/founders/${founder.id}`} className="block h-full">
                     <div className="relative h-48 overflow-hidden">
                       <img
-                        src={founder.image}
+                        src={resolveMedia(pickVariant(founder.variants, ["medium", "main", "thumb"]) || founder.image)}
                         alt={founder.name}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       />

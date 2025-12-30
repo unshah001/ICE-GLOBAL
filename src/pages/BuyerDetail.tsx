@@ -16,6 +16,7 @@ type BuyerStory = {
   headline?: string;
   summary?: string;
   heroImage?: string;
+  heroVariants?: { key: string; path: string }[];
   highlights?: { title: string; body: string }[];
   metrics?: { label: string; value: string }[];
   pullQuote?: string;
@@ -23,7 +24,7 @@ type BuyerStory = {
   ctaHref?: string;
 };
 
-type BuyerDetailItem = BuyerTestimonial & { detail?: BuyerStory };
+type BuyerDetailItem = BuyerTestimonial & { detail?: BuyerStory; variants?: { key: string; path: string }[] };
 
 const BuyerDetail = () => {
   const { id } = useParams();
@@ -32,6 +33,20 @@ const BuyerDetail = () => {
   const [moreBuyers, setMoreBuyers] = useState<BuyerDetailItem[]>([]);
   const [loading, setLoading] = useState(true);
   const base = import.meta.env.VITE_API_BASE_URL || "";
+  const mediaBase = (import.meta.env.VITE_MEDIA_BASE_URL || "").replace(/\/$/, "");
+  const resolveMedia = (path?: string) => {
+    if (!path) return "";
+    if (/^https?:\/\//i.test(path)) return path;
+    return mediaBase ? `${mediaBase}/${path}` : path;
+  };
+  const pickVariant = (variants?: { key: string; path: string }[], preferred: string[] = []) => {
+    if (!variants?.length) return undefined;
+    for (const key of preferred) {
+      const hit = variants.find((v) => v.key === key);
+      if (hit) return hit.path;
+    }
+    return variants[0]?.path;
+  };
 
   const { scrollYProgress } = useScroll();
   const imageScale = useTransform(scrollYProgress, [0, 0.3], [1.05, 1]);
@@ -86,6 +101,13 @@ const BuyerDetail = () => {
     highlights: [],
     metrics: [],
   };
+  const heroImg =
+    resolveMedia(
+      pickVariant(story.heroVariants, ["main", "hero", "medium"]) ||
+        story.heroImage ||
+        pickVariant(buyer.variants, ["main", "medium", "thumb"]) ||
+        buyer.image
+    ) || "";
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -94,7 +116,7 @@ const BuyerDetail = () => {
       <section className="relative min-h-[70vh] flex items-end pb-16 pt-28 md:pt-36 overflow-hidden">
         <BackgroundBeams className="z-0" />
         <motion.img
-          src={story.heroImage || buyer.image}
+          src={heroImg}
           alt={buyer.name}
           className="absolute inset-0 w-full h-full object-cover"
           style={{ scale: imageScale, opacity: imageOpacity }}
@@ -214,7 +236,11 @@ const BuyerDetail = () => {
             content={(moreBuyers.length ? moreBuyers : buyerTestimonials.filter((b) => b.id !== id)).map((item, idx) => ({
               title: item.name,
               description: item.quote,
-              image: item.image,
+              image: resolveMedia(
+                pickVariant(item.detail?.heroVariants, ["main", "hero", "medium"]) ||
+                  pickVariant(item.variants, ["main", "medium", "thumb"]) ||
+                  item.image
+              ),
               id: item.id,
               content: (
                 <div className="relative w-full h-full rounded-3xl overflow-hidden border border-white/15 bg-gradient-to-br from-black/45 via-black/20 to-black/55 shadow-[0_15px_60px_-35px_rgba(0,0,0,0.9)]">

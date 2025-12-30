@@ -12,7 +12,7 @@ import { ArrowRight, Briefcase, Search } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type SellersResponse = {
-  data: SellerTestimonial[];
+  data: (SellerTestimonial & { variants?: { key: string; path: string }[] })[];
   cursor?: { next: string | null; limit: number };
   filters?: { companies?: string[] };
 };
@@ -24,8 +24,23 @@ const defaultHero = {
   subheading: "Search and filter seller success stories—discover playbooks, outcomes, and how they used the platform.",
 };
 
+const mediaBase = (import.meta.env.VITE_MEDIA_BASE_URL || "").replace(/\/$/, "");
+const resolveMedia = (path?: string) => {
+  if (!path) return "";
+  if (/^https?:\/\//i.test(path)) return path;
+  return mediaBase ? `${mediaBase}/${path}` : path;
+};
+const pickVariant = (variants?: { key: string; path: string }[], preferred: string[] = []) => {
+  if (!variants?.length) return undefined;
+  for (const key of preferred) {
+    const hit = variants.find((v) => v.key === key);
+    if (hit) return hit.path;
+  }
+  return variants[0]?.path;
+};
+
 const Sellers = () => {
-  const [items, setItems] = useState<SellerTestimonial[]>(sellerTestimonials);
+  const [items, setItems] = useState<(SellerTestimonial & { variants?: { key: string; path: string }[] })[]>(sellerTestimonials);
   const [hero, setHero] = useState(defaultHero);
   const [company, setCompany] = useState<string>("All");
   const [search, setSearch] = useState("");
@@ -190,7 +205,7 @@ const Sellers = () => {
                   <Link to={`/sellers/${seller.id}`} className="block h-full">
                     <div className="relative h-48 overflow-hidden">
                       <img
-                        src={seller.image}
+                        src={resolveMedia(pickVariant((seller as any).variants, ["medium", "main", "thumb"]) || seller.image)}
                         alt={seller.name}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       />

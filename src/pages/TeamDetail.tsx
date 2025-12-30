@@ -15,6 +15,7 @@ type TeamStory = {
   headline?: string;
   summary?: string;
   heroImage?: string;
+  heroVariants?: { key: string; path: string }[];
   highlights?: { title: string; body: string }[];
   metrics?: { label: string; value: string }[];
   pullQuote?: string;
@@ -29,6 +30,7 @@ type TeamItem = {
   department: string;
   focus: string;
   image: string;
+  variants?: { key: string; path: string }[];
   highlight: string;
   href?: string;
   social?: { linkedin?: string; twitter?: string; website?: string };
@@ -53,6 +55,20 @@ const TeamDetail = () => {
   const { scrollYProgress } = useScroll();
   const imageScale = useTransform(scrollYProgress, [0, 0.3], [1.05, 1]);
   const imageOpacity = useTransform(scrollYProgress, [0, 0.4], [1, 0.85]);
+  const mediaBase = (import.meta.env.VITE_MEDIA_BASE_URL || "").replace(/\/$/, "");
+  const resolveMedia = (path?: string) => {
+    if (!path) return "";
+    if (/^https?:\/\//i.test(path)) return path;
+    return mediaBase ? `${mediaBase}/${path}` : path;
+  };
+  const pickVariant = (variants?: { key: string; path: string }[], preferred: string[] = []) => {
+    if (!variants?.length) return undefined;
+    for (const key of preferred) {
+      const hit = variants.find((v) => v.key === key);
+      if (hit) return hit.path;
+    }
+    return variants[0]?.path;
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -117,6 +133,13 @@ const TeamDetail = () => {
     highlights: [],
     metrics: [],
   };
+  const heroImg =
+    resolveMedia(
+      pickVariant(story.heroVariants, ["main", "hero", "medium"]) ||
+        story.heroImage ||
+        pickVariant(member.variants, ["main", "medium", "thumb"]) ||
+        member.image
+    ) || "";
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -125,7 +148,7 @@ const TeamDetail = () => {
       <section className="relative min-h-[70vh] flex items-end pb-16 pt-28 md:pt-36 overflow-hidden">
         <BackgroundBeams className="z-0" />
         <motion.img
-          src={story.heroImage || member.image}
+          src={heroImg}
           alt={member.name}
           className="absolute inset-0 w-full h-full object-cover"
           style={{ scale: imageScale, opacity: imageOpacity }}
@@ -265,7 +288,11 @@ const TeamDetail = () => {
             content={(more.length ? more : []).map((item, idx) => ({
               title: item.name,
               description: item.highlight,
-              image: item.image,
+              image: resolveMedia(
+                pickVariant(item.detail?.heroVariants, ["main", "hero", "medium"]) ||
+                  pickVariant(item.variants, ["main", "medium", "thumb"]) ||
+                  item.image
+              ),
               id: item.id,
               content: (
                 <div className="relative w-full h-full rounded-3xl overflow-hidden border border-white/15 bg-gradient-to-br from-black/45 via-black/20 to-black/55 shadow-[0_15px_60px_-35px_rgba(0,0,0,0.9)]">

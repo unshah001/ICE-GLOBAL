@@ -16,12 +16,14 @@ type BuyerDetail = BuyerTestimonial & {
     headline?: string;
     summary?: string;
     heroImage?: string;
+    heroVariants?: { key: string; path: string }[];
     highlights?: { title: string; body: string }[];
     metrics?: { label: string; value: string }[];
     pullQuote?: string;
     ctaLabel?: string;
     ctaHref?: string;
   };
+  variants?: { key: string; path: string }[];
 };
 
 type BuyersResponse = {
@@ -35,6 +37,21 @@ const defaultHero = {
   badge: "Buyer Stories",
   title: "Buyers who keep coming back",
   subheading: "Search and filter buyer journeys—spend, visits, and how ICE programming keeps them onsite.",
+};
+
+const mediaBase = (import.meta.env.VITE_MEDIA_BASE_URL || "").replace(/\/$/, "");
+const resolveMedia = (path?: string) => {
+  if (!path) return "";
+  if (/^https?:\/\//i.test(path)) return path;
+  return mediaBase ? `${mediaBase}/${path}` : path;
+};
+const pickVariant = (variants?: { key: string; path: string }[], preferred: string[] = []) => {
+  if (!variants?.length) return undefined;
+  for (const key of preferred) {
+    const hit = variants.find((v) => v.key === key);
+    if (hit) return hit.path;
+  }
+  return variants[0]?.path;
 };
 
 const Buyers = () => {
@@ -223,7 +240,7 @@ const Buyers = () => {
                   <Link to={`/buyers/${buyer.id}`} className="block h-full">
                     <div className="relative h-48 overflow-hidden">
                       <img
-                        src={buyer.image}
+                        src={resolveMedia(pickVariant(buyer.variants, ["medium", "main", "thumb"]) || buyer.image)}
                         alt={buyer.name}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       />

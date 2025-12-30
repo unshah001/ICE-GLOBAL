@@ -10,6 +10,18 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Search, Sparkles } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+type CofounderStory = {
+  headline?: string;
+  summary?: string;
+  heroImage?: string;
+  heroVariants?: { key: string; path: string }[];
+  highlights?: { title: string; body: string }[];
+  metrics?: { label: string; value: string }[];
+  pullQuote?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+};
+
 type CofounderItem = {
   id: string;
   name: string;
@@ -17,9 +29,11 @@ type CofounderItem = {
   track: string;
   focus: string;
   image: string;
+  variants?: { key: string; path: string }[];
   highlight: string;
   href?: string;
   social?: { linkedin?: string; twitter?: string; website?: string };
+  detail?: CofounderStory;
 };
 
 type CofoundersResponse = {
@@ -33,6 +47,21 @@ const defaultHero = {
   badge: "Co-Founders",
   title: "Meet the co-founders of IGE & IGN",
   subheading: "Professional, research-ready profiles across IGE and IGN—ops, media, partnerships, and experience design.",
+};
+
+const mediaBase = (import.meta.env.VITE_MEDIA_BASE_URL || "").replace(/\/$/, "");
+const resolveMedia = (path?: string) => {
+  if (!path) return "";
+  if (/^https?:\/\//i.test(path)) return path;
+  return mediaBase ? `${mediaBase}/${path}` : path;
+};
+const pickVariant = (variants?: { key: string; path: string }[], preferred: string[] = []) => {
+  if (!variants?.length) return undefined;
+  for (const key of preferred) {
+    const hit = variants.find((v) => v.key === key);
+    if (hit) return hit.path;
+  }
+  return variants[0]?.path;
 };
 
 const Cofounders = () => {
@@ -201,7 +230,7 @@ const Cofounders = () => {
                   <Link to={`/cofounders/${cofounder.id}`} className="block h-full">
                     <div className="relative h-48 overflow-hidden">
                       <img
-                        src={cofounder.image}
+                        src={resolveMedia(pickVariant(cofounder.variants, ["medium", "main", "thumb"]) || cofounder.image)}
                         alt={cofounder.name}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       />
