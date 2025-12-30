@@ -87,6 +87,7 @@ import AdminCounts from "./pages/AdminCounts";
 import AdminDualCta from "./pages/AdminDualCta";
 import AdminProfileConfig from "./pages/AdminProfileConfig";
 import AdminUsers from "./pages/AdminUsers";
+import AdminDigests from "./pages/AdminDigests";
 import ThemeLoader from "./components/ThemeLoader";
 
 const queryClient = new QueryClient();
@@ -511,6 +512,14 @@ const App = () => (
             element={
               <AdminGuard>
                 <AdminDualCta />
+              </AdminGuard>
+            }
+          />
+          <Route
+            path="/admin/digests"
+            element={
+              <AdminGuard>
+                <AdminDigests />
               </AdminGuard>
             }
           />

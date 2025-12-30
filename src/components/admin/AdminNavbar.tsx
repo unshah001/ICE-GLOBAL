@@ -1,7 +1,6 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
 import {
   CommandDialog,
   CommandEmpty,
@@ -21,7 +20,6 @@ interface AdminNavbarProps {}
  */
 const AdminNavbar = ({}: AdminNavbarProps) => {
   const [open, setOpen] = useState(false);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
@@ -39,12 +37,12 @@ const AdminNavbar = ({}: AdminNavbarProps) => {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/70 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70">
       <div className="flex items-center justify-between h-16 px-4 sm:px-6 md:px-10 lg:px-12 xl:px-16">
-        <NavLink to="/admin" className="flex items-center gap-2 font-display text-xl font-semibold">
+        <a href="/admin" className="flex items-center gap-2 font-display text-xl font-semibold">
           <span className="rounded-md bg-primary/15 px-2 py-1 text-primary text-sm uppercase tracking-[0.18em]">
             Admin
           </span>
           <span>Control Center</span>
-        </NavLink>
+        </a>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -71,7 +69,7 @@ const AdminNavbar = ({}: AdminNavbarProps) => {
                   value={`${group.label} ${item.name}`}
                   onSelect={() => {
                     setOpen(false);
-                    navigate(item.href);
+                    window.location.href = item.href;
                   }}
                   className={cn("flex items-center gap-2")}
                 >

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
 import { adminNavGroups } from "@/data/admin";
 import { cn } from "@/lib/utils";
 import { ChevronDown } from "lucide-react";
@@ -47,19 +46,16 @@ const AdminRail = ({ sections = [], className }: AdminRailProps) => {
               {openGroups[group.label] && (
                 <div className="flex flex-col gap-1">
                   {group.items.map((item) => (
-                    <NavLink
+                    <a
                       key={item.href}
-                      to={item.href}
-                      className={({ isActive }) =>
-                        cn(
-                          "flex items-center justify-between text-sm px-3 py-2 rounded-lg border border-transparent hover:border-primary/30 hover:text-primary transition-colors",
-                          isActive && "text-primary bg-primary/10 border-primary/20"
-                        )
-                      }
+                      href={item.href}
+                      className={cn(
+                        "flex items-center justify-between text-sm px-3 py-2 rounded-lg border border-transparent hover:border-primary/30 hover:text-primary transition-colors"
+                      )}
                     >
                       <span>{item.name}</span>
                       <span className="text-[11px] text-muted-foreground">↗</span>
-                    </NavLink>
+                    </a>
                   ))}
                 </div>
               )}
