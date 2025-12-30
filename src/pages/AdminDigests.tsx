@@ -42,6 +42,22 @@ const emptyConfig: DigestConfig = {
 const frequencies: DigestConfig["frequency"][] = ["daily", "weekly", "monthly", "quarterly", "semiannual", "annual"];
 
 type FormDef = { slug: string; title: string };
+type DigestLog = {
+  id: string;
+  name: string;
+  status: "success" | "failed";
+  rangeFrom?: string;
+  rangeTo?: string;
+  createdAt?: string;
+  recipients?: string[];
+  metrics?: any;
+  error?: string;
+};
+
+type LoggingSettings = {
+  retentionDays: number;
+  graceDays?: number;
+};
 
 const AdminDigests = () => {
   const base = import.meta.env.VITE_API_BASE_URL || "";
@@ -52,6 +68,11 @@ const AdminDigests = () => {
   const [sending, setSending] = useState(false);
   const [enqueuing, setEnqueuing] = useState(false);
   const [forms, setForms] = useState<FormDef[]>([]);
+  const [logs, setLogs] = useState<DigestLog[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+  const [logSettings, setLogSettings] = useState<LoggingSettings>({ retentionDays: 30, graceDays: 15 });
+  const [activitySettings, setActivitySettings] = useState<{ retentionDays: number }>({ retentionDays: 30 });
+  const [settingsSaving, setSettingsSaving] = useState(false);
 
   const refreshAccessToken = async () => {
     const refreshToken = localStorage.getItem("admin_refresh_token");
@@ -114,9 +135,49 @@ const AdminDigests = () => {
     }
   };
 
+  const loadLogs = async () => {
+    setLogsLoading(true);
+    try {
+      const token = await getAccessToken();
+      if (!token) throw new Error("Not authenticated");
+      const res = await fetch(`${base}/admin/digests/logs?limit=20`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed to load logs");
+      const payload = await res.json();
+      setLogs(payload?.data || []);
+    } catch (err) {
+      console.error(err);
+      setLogs([]);
+    } finally {
+      setLogsLoading(false);
+    }
+  };
+
+  const loadLoggingSettings = async () => {
+    try {
+      const token = await getAccessToken();
+      if (!token) throw new Error("Not authenticated");
+      const res = await fetch(`${base}/admin/settings/logging`, { headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) {
+        const data = await res.json();
+        setLogSettings(data);
+      }
+      const resAct = await fetch(`${base}/admin/settings/activity-logging`, { headers: { Authorization: `Bearer ${token}` } });
+      if (resAct.ok) {
+        const data = await resAct.json();
+        setActivitySettings(data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     loadConfigs();
     loadForms();
+    loadLogs();
+    loadLoggingSettings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -252,6 +313,8 @@ const AdminDigests = () => {
       sections={[
         { id: "configs", label: "Configs" },
         { id: "editor", label: "Editor" },
+        { id: "logs", label: "Digest Logs" },
+        { id: "logging-settings", label: "Logging Settings" },
       ]}
     >
       <div className="grid lg:grid-cols-3 gap-6">
@@ -443,6 +506,179 @@ const AdminDigests = () => {
             <div className="text-xs text-muted-foreground space-y-1">
               <p>Send now triggers an immediate digest using the configured frequency window.</p>
               <p>“Run due digests” enqueues any configs past their next run time (use via cron).</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-3 bg-card/70 border-border/60" id="logs">
+          <CardHeader className="space-y-2">
+            <CardTitle>Digest Logs</CardTitle>
+            <CardDescription>Recent digest executions (latest 20).</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {logsLoading ? (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="w-4 h-4 animate-spin" /> Loading logs...
+              </div>
+            ) : logs.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No logs yet.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="text-xs uppercase text-muted-foreground">
+                    <tr>
+                      <th className="text-left py-2 pr-3">Name</th>
+                      <th className="text-left py-2 pr-3">Status</th>
+                      <th className="text-left py-2 pr-3">Range</th>
+                      <th className="text-left py-2 pr-3">Sent</th>
+                      <th className="text-left py-2 pr-3">Recipients</th>
+                      <th className="text-left py-2 pr-3">Leads</th>
+                      <th className="text-left py-2 pr-3">Comments</th>
+                      <th className="text-left py-2 pr-3">Likes</th>
+                      <th className="text-left py-2 pr-3">Users</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/70">
+                    {logs.map((log) => (
+                      <tr key={log.id}>
+                        <td className="py-2 pr-3">{log.name}</td>
+                        <td className="py-2 pr-3">
+                          <Badge variant={log.status === "success" ? "secondary" : "destructive"}>
+                            {log.status}
+                          </Badge>
+                        </td>
+                        <td className="py-2 pr-3">
+                          <div className="text-xs">
+                            {log.rangeFrom ? new Date(log.rangeFrom).toLocaleString() : "-"}
+                          </div>
+                          <div className="text-xs">
+                            {log.rangeTo ? new Date(log.rangeTo).toLocaleString() : "-"}
+                          </div>
+                        </td>
+                        <td className="py-2 pr-3 text-xs text-muted-foreground">
+                          {log.createdAt ? new Date(log.createdAt).toLocaleString() : "-"}
+                        </td>
+                        <td className="py-2 pr-3 text-xs">
+                          {log.recipients?.length ? log.recipients.join(", ") : "-"}
+                        </td>
+                        <td className="py-2 pr-3 text-xs">
+                          {log.metrics?.leads?.total ?? 0}
+                        </td>
+                        <td className="py-2 pr-3 text-xs">
+                          {log.metrics?.comments?.total ?? 0}
+                        </td>
+                        <td className="py-2 pr-3 text-xs">
+                          {log.metrics?.likes?.total ?? 0}
+                        </td>
+                        <td className="py-2 pr-3 text-xs">
+                          {log.metrics?.users?.total ?? 0}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-3 bg-card/70 border-border/60" id="logging-settings">
+          <CardHeader className="space-y-2">
+            <CardTitle>Logging Settings</CardTitle>
+            <CardDescription>Retention for digest logs and activity events.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Digest log retention (days)</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={365}
+                  value={logSettings.retentionDays}
+                  onChange={(e) => setLogSettings((prev) => ({ ...prev, retentionDays: Number(e.target.value) }))}
+                />
+                <Label>Grace days</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={180}
+                  value={logSettings.graceDays ?? 15}
+                  onChange={(e) => setLogSettings((prev) => ({ ...prev, graceDays: Number(e.target.value) }))}
+                />
+                <div className="flex gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={async () => {
+                      setSettingsSaving(true);
+                      try {
+                        const token = await getAccessToken();
+                        if (!token) throw new Error("Not authenticated");
+                        await fetch(`${base}/admin/settings/logging`, {
+                          method: "PUT",
+                          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                          body: JSON.stringify(logSettings),
+                        });
+                        await fetch(`${base}/admin/digests/logs/prune-now`, {
+                          method: "POST",
+                          headers: { Authorization: `Bearer ${token}` },
+                        });
+                        await loadLogs();
+                      } catch (err) {
+                        console.error(err);
+                      } finally {
+                        setSettingsSaving(false);
+                      }
+                    }}
+                    disabled={settingsSaving}
+                  >
+                    {settingsSaving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                    Save & prune
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Activity retention (days)</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={365}
+                  value={activitySettings.retentionDays}
+                  onChange={(e) => setActivitySettings({ retentionDays: Number(e.target.value) })}
+                />
+                <div className="flex gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={async () => {
+                      setSettingsSaving(true);
+                      try {
+                        const token = await getAccessToken();
+                        if (!token) throw new Error("Not authenticated");
+                        await fetch(`${base}/admin/settings/activity-logging`, {
+                          method: "PUT",
+                          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                          body: JSON.stringify(activitySettings),
+                        });
+                        await fetch(`${base}/admin/activity/prune-now`, {
+                          method: "POST",
+                          headers: { Authorization: `Bearer ${token}` },
+                        });
+                      } catch (err) {
+                        console.error(err);
+                      } finally {
+                        setSettingsSaving(false);
+                      }
+                    }}
+                    disabled={settingsSaving}
+                  >
+                    {settingsSaving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                    Save & prune
+                  </Button>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
