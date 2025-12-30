@@ -24,6 +24,21 @@ type GalleryResponse = {
   };
 };
 
+const mediaBase = import.meta.env.VITE_MEDIA_BASE_URL || "";
+const toUrl = (pathOrUrl: string) => {
+  if (!pathOrUrl) return "";
+  if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
+  const base = mediaBase.replace(/\/$/, "");
+  return `${base}/${pathOrUrl.replace(/^\/+/, "")}`;
+};
+
+const resolveImage = (item: GalleryItem) => {
+  const variant = item.variants?.find((v) => v.key === "main") ?? item.variants?.[0];
+  if (variant?.path) return toUrl(variant.path);
+  if (variant?.fileName) return toUrl(variant.fileName);
+  return item.image;
+};
+
 // Lazy loaded image component
 const LazyImage = ({ src, alt, className }: { src: string; alt: string; className?: string }) => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -74,7 +89,9 @@ const LazyImage = ({ src, alt, className }: { src: string; alt: string; classNam
 };
 
 const Gallery = () => {
-  const [items, setItems] = useState<GalleryItem[]>(fallbackGalleryItems.slice(0, ITEMS_PER_PAGE));
+  const [items, setItems] = useState<GalleryItem[]>(
+    fallbackGalleryItems.slice(0, ITEMS_PER_PAGE).map((i) => ({ ...i, variants: i.variants ?? [{ key: "main", path: i.image }] }))
+  );
   const [hero, setHero] = useState<{ heading: string; accent: string; subheading: string }>({
     heading: "Legacy",
     accent: "Gallery",
@@ -117,9 +134,18 @@ const Gallery = () => {
         const res = await fetch(`${base}/gallery?${params.toString()}`);
         if (!res.ok) throw new Error("Gallery fetch failed");
         const data = (await res.json()) as GalleryResponse;
-        const nextItems = data.data ?? [];
+        const nextItems = (data.data ?? []).map((i) => ({
+          ...i,
+          variants: i.variants ?? [{ key: "main", path: i.image }],
+        }));
         if (reset) {
-          setItems(nextItems.length ? nextItems : fallbackGalleryItems.slice(0, ITEMS_PER_PAGE));
+          setItems(
+            nextItems.length
+              ? nextItems
+              : fallbackGalleryItems
+                  .slice(0, ITEMS_PER_PAGE)
+                  .map((i) => ({ ...i, variants: i.variants ?? [{ key: "main", path: i.image }] }))
+          );
         } else {
           setItems((prev) => [...prev, ...nextItems]);
         }
@@ -132,7 +158,11 @@ const Gallery = () => {
         setTags(["All", ...(data.filters?.tags || [])]);
       } catch {
         if (reset) {
-          setItems(fallbackGalleryItems.slice(0, ITEMS_PER_PAGE));
+          setItems(
+            fallbackGalleryItems
+              .slice(0, ITEMS_PER_PAGE)
+              .map((i) => ({ ...i, variants: i.variants ?? [{ key: "main", path: i.image }] }))
+          );
           setTotal(fallbackGalleryItems.length);
           setTotalPages(Math.ceil(fallbackGalleryItems.length / ITEMS_PER_PAGE));
           setYears([
@@ -201,6 +231,7 @@ const Gallery = () => {
         const looped = fallbackGalleryItems.map((item, idx) => ({
           ...item,
           id: `${item.id}-loop-${page}-${idx}`,
+          variants: item.variants ?? [{ key: "main", path: item.image }],
         }));
         setItems((prev) => [...prev, ...looped]);
         setPage((prev) => prev + 1);
@@ -385,11 +416,7 @@ const Gallery = () => {
                     className="break-inside-avoid group"
                   >
                     <Link to={`/gallery/${item.originalId ?? item.id}`} className="relative block overflow-hidden rounded-xl">
-                      <LazyImage
-                        src={item.image}
-                        alt={item.title}
-                        className="transition-transform duration-500 group-hover:scale-110"
-                      />
+                      <LazyImage src={resolveImage(item)} alt={item.title} className="transition-transform duration-500 group-hover:scale-110" />
                       <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
                         <h3 className="font-display font-semibold text-foreground">

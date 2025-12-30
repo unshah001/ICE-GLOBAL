@@ -23,6 +23,19 @@ const galleryItemSchema = z.object({
   category: z.string().min(1),
   brand: z.string().min(1),
   image: z.string().min(1),
+  variants: z
+    .array(
+      z.object({
+        key: z.string().min(1),
+        path: z.string().min(1),
+        fileName: z.string().optional(),
+        format: z.string().optional(),
+        width: z.number().optional(),
+        height: z.number().optional(),
+        size: z.number().optional(),
+      })
+    )
+    .optional(),
   excerpt: z.string().min(1),
   article: z.array(gallerySectionSchema).default([]),
   likes: z.number().int().nonnegative().default(0),
@@ -73,6 +86,7 @@ export default async function galleryRoutes(app: FastifyInstance) {
     return {
       ...rest,
       comments: [], // comments are served via /gallery/:id/comments
+      variants: item.variants ?? [],
     };
   };
 

@@ -38,6 +38,26 @@ const makeId = () => {
 };
 
 const getCommentStorageKey = (id: string) => `gallery-comments-${id}`;
+
+const mediaBase = import.meta.env.VITE_MEDIA_BASE_URL || "";
+const toUrl = (pathOrUrl: string) => {
+  if (!pathOrUrl) return "";
+  if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
+  const base = mediaBase.replace(/\/$/, "");
+  return `${base}/${pathOrUrl.replace(/^\/+/, "")}`;
+};
+
+const resolveImage = (item: GalleryItem) => {
+  const variant = item.variants?.find((v) => v.key === "main") ?? item.variants?.[0];
+  if (variant?.path) return toUrl(variant.path);
+  if (variant?.fileName) return toUrl(variant.fileName);
+  return item.image;
+};
+
+const normalizeItem = (item: GalleryItem) => ({
+  ...item,
+  variants: item.variants ?? [{ key: "main", path: item.image }],
+});
 const sectionSlug = (text: string, fallback: string) =>
   text
     .toLowerCase()
@@ -105,24 +125,26 @@ const GalleryDetail = () => {
         const res = await fetch(`${base}/gallery/${id}`);
         if (!res.ok) throw new Error("Gallery detail fetch failed");
         const data = (await res.json()) as GalleryItem;
-        setItem(data);
-        const stored = localStorage.getItem(getCommentStorageKey(data.id));
+        const normalized = normalizeItem(data);
+        setItem(normalized);
+        const stored = localStorage.getItem(getCommentStorageKey(normalized.id));
         setComments([]);
         setVisibleComments(0);
         setCommentsCursor(null);
-        await loadComments(data.id, undefined, stored ? sortComments(JSON.parse(stored)) : undefined);
-        setLikes(data.likes ?? 0);
+        await loadComments(normalized.id, undefined, stored ? sortComments(JSON.parse(stored)) : undefined);
+        setLikes(normalized.likes ?? 0);
         setIsLiked(false);
       } catch {
         const fallback = galleryItems.find((entry) => entry.id === id) || null;
-        setItem(fallback);
-        if (fallback) {
-          const stored = localStorage.getItem(getCommentStorageKey(fallback.id));
-          const sourceComments = fallback.comments || [];
+        const normalized = fallback ? normalizeItem(fallback) : null;
+        setItem(normalized);
+        if (normalized) {
+          const stored = localStorage.getItem(getCommentStorageKey(normalized.id));
+          const sourceComments = normalized.comments || [];
           setComments(stored ? sortComments(JSON.parse(stored)) : sortComments(sourceComments));
           setVisibleComments(5);
           setCommentsCursor(null);
-          setLikes(fallback.likes ?? 0);
+          setLikes(normalized.likes ?? 0);
         } else {
           setComments([]);
           setVisibleComments(0);
@@ -488,7 +510,7 @@ const GalleryDetail = () => {
               className="relative overflow-hidden rounded-3xl bg-card border border-border shadow-2xl shadow-primary/10"
             >
               <motion.img
-                src={item.image}
+                src={resolveImage(item)}
                 alt={item.title}
                 className="w-full h-full object-cover"
                 style={{ scale: heroScale, opacity: heroOpacity }}

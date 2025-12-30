@@ -59,7 +59,7 @@ const AdminGallery = () => {
       const res = await fetch(`${base}/gallery?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to load gallery items");
       const data = await res.json();
-      setItems(data.data || []);
+      setItems((data.data || []).map(normalizeItem));
       setPage(nextPage);
       setTotalPages(data.pagination?.totalPages ?? 1);
       setTotal(data.pagination?.total ?? data.data?.length ?? 0);
@@ -89,10 +89,23 @@ const AdminGallery = () => {
       return next;
     });
 
+  const defaultVariants = [
+    { key: "main", path: "" },
+    { key: "medium", path: "" },
+    { key: "thumb", path: "" },
+  ];
+
+  const normalizeItem = (item: any) => ({
+    ...item,
+    variants:
+      item.variants && item.variants.length
+        ? item.variants
+        : defaultVariants.map((v) => ({ ...v, path: v.key === "main" ? item.image ?? "" : "" })),
+  });
+
   const addItem = () =>
     setItems((prev) => [
-      ...prev,
-      {
+      normalizeItem({
         id: makeId(),
         title: "",
         year: "",
@@ -104,7 +117,8 @@ const AdminGallery = () => {
         likes: 0,
         comments: [],
         tags: [],
-      },
+      }),
+      ...prev,
     ]);
 
   const removeItem = async (idx: number) => {
@@ -224,6 +238,13 @@ const AdminGallery = () => {
 
       // Save only the current page items individually to avoid wiping other pages.
       for (const item of items) {
+        const cleanedVariants =
+          item.variants
+            ?.map((v) => ({ ...v, path: (v.path || v.fileName || "").trim(), fileName: (v.fileName || "").trim() }))
+            .filter((v) => v.path || v.fileName) ?? [];
+
+        const payload = { ...item, variants: cleanedVariants };
+
         const attempt = async (token: string) =>
           fetch(`${base}/gallery/${item.id}`, {
             method: "PUT",
@@ -231,7 +252,7 @@ const AdminGallery = () => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify(item),
+            body: JSON.stringify(payload),
           });
 
         let res = await attempt(ensureToken);

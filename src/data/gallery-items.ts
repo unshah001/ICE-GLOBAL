@@ -19,6 +19,7 @@ export interface GalleryItem {
   category: string;
   brand: string;
   image: string;
+  variants?: { key: string; path: string; fileName?: string; format?: string }[];
   excerpt: string;
   article: GalleryArticleSection[];
   likes: number;
