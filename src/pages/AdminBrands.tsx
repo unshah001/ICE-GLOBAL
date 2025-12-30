@@ -541,6 +541,24 @@ const AdminBrands = () => {
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           Page {page} of {totalPages}
+          <div className="flex items-center gap-1">
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={page <= 1 || loading}
+              onClick={() => loadBrands(Math.max(1, page - 1), { category, search })}
+            >
+              Prev
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={page >= totalPages || loading}
+              onClick={() => loadBrands(page + 1, { category, search })}
+            >
+              Next
+            </Button>
+          </div>
         </div>
       </div>
 

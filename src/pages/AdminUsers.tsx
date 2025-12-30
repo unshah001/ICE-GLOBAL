@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, RefreshCcw } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type UserRow = {
   id?: string;
@@ -30,9 +31,12 @@ const AdminUsers = () => {
   const [search, setSearch] = useState("");
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
-  const [cursor, setCursor] = useState<string | null>(null);
+  const [pageSize, setPageSize] = useState(20);
+  const [currentCursor, setCurrentCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [next, setNext] = useState<string | null>(null);
+  const [prevStack, setPrevStack] = useState<string[]>([]);
+  const [page, setPage] = useState(1);
 
   const refreshAccessToken = async () => {
     const refreshToken = localStorage.getItem("admin_refresh_token");
@@ -68,7 +72,7 @@ const AdminUsers = () => {
     return refreshAccessToken();
   };
 
-  const load = async (reset = false) => {
+  const load = async (mode: "reset" | "next" | "prev" = "reset") => {
     setLoading(true);
     try {
       const token = await getAccessToken();
@@ -77,7 +81,9 @@ const AdminUsers = () => {
       if (search.trim()) params.set("search", search.trim());
       if (start) params.set("start", start);
       if (end) params.set("end", end);
-      if (!reset && cursor) params.set("cursor", cursor);
+      if (mode === "next" && next) params.set("cursor", next);
+      if (mode === "prev" && prevStack.length) params.set("cursor", prevStack[prevStack.length - 1]);
+      params.set("limit", String(pageSize));
       const res = await fetch(`${base}/admin/users?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -90,25 +96,38 @@ const AdminUsers = () => {
       }
       if (!res.ok) throw new Error("Load failed");
       const data = await res.json();
-      setUsers(reset ? data.data || [] : [...users, ...(data.data || [])]);
+      const incoming = data.data || [];
+      if (mode === "reset") {
+        setPrevStack([]);
+        setPage(1);
+      } else if (mode === "next" && next) {
+        setPrevStack((prev) => [...prev, currentCursor ?? ""]);
+        setPage((p) => p + 1);
+      } else if (mode === "prev" && prevStack.length) {
+        setPrevStack((prev) => prev.slice(0, -1));
+        setPage((p) => Math.max(1, p - 1));
+      }
+      setCurrentCursor(mode === "reset" ? null : mode === "next" ? next : prevStack[prevStack.length - 1] ?? null);
+      setUsers(incoming);
       setNext(data.cursor?.next || null);
-      setCursor(reset ? data.cursor?.next || null : data.cursor?.next || null);
     } catch (err) {
       console.error(err);
-      setUsers(reset ? [] : users);
+      setUsers(mode === "reset" ? [] : users);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    load(true);
+    load("reset");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const applyFilters = () => {
-    setCursor(null);
-    load(true);
+    setPrevStack([]);
+    setCurrentCursor(null);
+    setPage(1);
+    load("reset");
   };
 
   return (
@@ -124,10 +143,22 @@ const AdminUsers = () => {
           <CardDescription>Search by email/name/company and filter by date.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid md:grid-cols-4 gap-3">
+          <div className="grid md:grid-cols-5 gap-3">
             <Input placeholder="Search email, name, company" value={search} onChange={(e) => setSearch(e.target.value)} />
             <Input type="date" value={start} onChange={(e) => setStart(e.target.value)} />
             <Input type="date" value={end} onChange={(e) => setEnd(e.target.value)} />
+            <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Page size" />
+              </SelectTrigger>
+              <SelectContent>
+                {[10, 20, 50, 100].map((size) => (
+                  <SelectItem key={size} value={String(size)}>
+                    {size} / page
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <div className="flex gap-2">
               <Button className="flex-1" onClick={applyFilters} disabled={loading}>
                 {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
@@ -170,11 +201,17 @@ const AdminUsers = () => {
               </TableBody>
             </Table>
           </div>
-          <div className="flex justify-end">
-            <Button variant="outline" onClick={() => { setCursor(next); load(); }} disabled={loading || !next}>
-              {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              {next ? "Load more" : "No more"}
-            </Button>
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <div>Page {page}</div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => load("prev")} disabled={loading || !prevStack.length}>
+                Prev
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => load("next")} disabled={loading || !next}>
+                Next
+              </Button>
+              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+            </div>
           </div>
         </CardContent>
       </Card>

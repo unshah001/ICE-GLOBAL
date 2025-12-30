@@ -482,6 +482,42 @@ const AdminGallery = () => {
         onSave={saveGallery}
         saving={saving || loading}
       />
+
+      <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+        <div>
+          Page {page} / {totalPages} • {total} items
+        </div>
+        <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+          <SelectTrigger className="w-24">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {[12, 24, 48, 96].map((size) => (
+              <SelectItem key={size} value={String(size)}>
+                {size} / page
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <div className="flex items-center gap-1">
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={page <= 1 || loading}
+            onClick={() => loadGallery(page - 1, { search, year, category, tag })}
+          >
+            Prev
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={page >= totalPages || loading}
+            onClick={() => loadGallery(page + 1, { search, year, category, tag })}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
     </AdminLayout>
   );
 };

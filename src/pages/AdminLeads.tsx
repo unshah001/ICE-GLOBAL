@@ -26,7 +26,11 @@ const AdminLeads = () => {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [order, setOrder] = useState<"asc" | "desc">("desc");
+  const [pageSize, setPageSize] = useState(20);
+  const [currentCursor, setCurrentCursor] = useState<string | null>(null);
   const [next, setNext] = useState<string | null>(null);
+  const [prevStack, setPrevStack] = useState<string[]>([]);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [selected, setSelected] = useState<LeadRow | null>(null);
@@ -69,7 +73,7 @@ const AdminLeads = () => {
     }
   };
 
-  const loadLeads = async (opts?: { reset?: boolean }) => {
+  const loadLeads = async (mode: "reset" | "next" | "prev" = "reset") => {
     if (loading) return;
     setLoading(true);
     setError("");
@@ -82,14 +86,26 @@ const AdminLeads = () => {
         if (query.trim()) params.set("q", query.trim());
         if (from) params.set("from", from);
         if (to) params.set("to", to);
-        if (!opts?.reset && cursor) params.set("cursor", cursor);
+        if (cursor) params.set("cursor", cursor);
         params.set("order", order);
-        params.set("limit", "20");
+        params.set("limit", String(pageSize));
         return fetch(`${base}/forms/submissions?${params.toString()}`, {
           headers: { Authorization: `Bearer ${authToken}` },
         });
       };
-      const cursor = opts?.reset ? null : next;
+      let cursor: string | null = null;
+      if (mode === "next") cursor = next;
+      if (mode === "prev") {
+        cursor = prevStack[prevStack.length - 1] ?? null;
+      }
+      if (mode === "reset") {
+        cursor = null;
+        setPrevStack([]);
+        setCurrentCursor(null);
+        setPage(1);
+      }
+
+      const previousCursor = currentCursor;
       let res = await attempt(token, cursor);
       if (res && res.status === 401) {
         const refreshed = await refreshAccessToken();
@@ -97,8 +113,19 @@ const AdminLeads = () => {
       }
       if (!res || !res.ok) throw new Error("Failed to load leads");
       const payload = await res.json();
+      const incoming: LeadRow[] = payload.data || [];
       setNext(payload?.cursor?.next || null);
-      setLeads((prev) => (opts?.reset ? payload.data : [...prev, ...(payload.data || [])]));
+      setCurrentCursor(cursor);
+      if (mode === "next") {
+        setPrevStack((prev) => [...prev, previousCursor ?? ""]);
+        setPage((p) => p + 1);
+      } else if (mode === "prev") {
+        setPrevStack((prev) => prev.slice(0, -1));
+        setPage((p) => Math.max(1, p - 1));
+      } else {
+        setPage(1);
+      }
+      setLeads(incoming);
     } catch (err: any) {
       setError(err.message || "Unable to load leads");
     } finally {
@@ -112,9 +139,9 @@ const AdminLeads = () => {
   }, []);
 
   useEffect(() => {
-    loadLeads({ reset: true });
+    loadLeads("reset");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug, order]);
+  }, [slug, order, pageSize]);
 
   const grouped = useMemo(() => {
     const map: Record<string, LeadRow[]> = {};
@@ -141,7 +168,7 @@ const AdminLeads = () => {
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                onBlur={() => loadLeads({ reset: true })}
+                onBlur={() => loadLeads("reset")}
                 placeholder="Search name/email/fields"
                 className="pl-9 w-full"
               />
@@ -168,6 +195,18 @@ const AdminLeads = () => {
                 <SelectItem value="asc">Oldest first</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Page size" />
+              </SelectTrigger>
+              <SelectContent>
+                {[10, 20, 50, 100].map((size) => (
+                  <SelectItem key={size} value={String(size)}>
+                    {size} / page
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <div className="grid grid-cols-2 gap-2 col-span-full">
               <div className="relative">
                 <Calendar className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
@@ -180,7 +219,7 @@ const AdminLeads = () => {
             </div>
           </div>
           <div className="flex flex-wrap gap-2 justify-end">
-            <Button variant="outline" size="sm" onClick={() => loadLeads({ reset: true })} disabled={loading}>
+            <Button variant="outline" size="sm" onClick={() => loadLeads("reset")} disabled={loading}>
               <RefreshCw className="w-4 h-4 mr-2" />
               Apply
             </Button>
@@ -193,7 +232,7 @@ const AdminLeads = () => {
                 setFrom("");
                 setTo("");
                 setOrder("desc");
-                loadLeads({ reset: true });
+                loadLeads("reset");
               }}
             >
               Clear
@@ -253,18 +292,28 @@ const AdminLeads = () => {
               </div>
             ))}
           </div>
-          <div className="flex justify-center">
-            {loading ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="w-4 h-4 animate-spin" /> Loading...
-              </div>
-            ) : next ? (
-              <Button variant="outline" onClick={() => loadLeads()}>
-                Load more
+          <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
+            <div>
+              Page {page}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={loading || !prevStack.length}
+                onClick={() => loadLeads("prev")}
+              >
+                Prev
               </Button>
-            ) : (
-              <div className="text-sm text-muted-foreground">No more leads</div>
-            )}
+              <Button variant="outline" size="sm" disabled={loading || !next} onClick={() => loadLeads("next")}>
+                Next
+              </Button>
+              {loading && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin" /> Loading...
+                </div>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
