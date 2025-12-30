@@ -12,7 +12,7 @@ import BrandsHero from "./BrandsHero";
 type BrandsResponse = {
   data: typeof brandHighlights;
   filters?: { categories: string[] };
-  cursor?: { next: string | null; limit: number };
+  pagination?: { page: number; pageSize: number; total: number; totalPages: number };
 };
 
 const PAGE_LIMIT = 24;
@@ -48,19 +48,20 @@ const Brands = () => {
   const [categories, setCategories] = useState<string[]>(["All", ...Array.from(new Set(brandHighlights.map((b) => b.category)))]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const base = import.meta.env.VITE_API_BASE_URL || "";
-    const load = async (reset = true) => {
+    const load = async (targetPage = 1, reset = true) => {
       setIsLoading(true);
       setError("");
       try {
         const params = new URLSearchParams();
-        params.set("limit", String(PAGE_LIMIT));
-        if (!reset && cursor) params.set("cursor", cursor);
+        params.set("page", String(targetPage));
+        params.set("pageSize", String(PAGE_LIMIT));
+        params.set("sort", "newest");
         if (category !== "All") params.set("category", category);
         if (query.trim()) params.set("search", query.trim());
         const res = await fetch(`${base}/brands?${params.toString()}`);
@@ -73,50 +74,25 @@ const Brands = () => {
           setItems((prev) => [...prev, ...nextItems]);
         }
         setCategories(["All", ...(data.filters?.categories || categories.slice(1))]);
-        setCursor(data.cursor?.next ?? null);
-        setHasMore(Boolean(data.cursor?.next));
+        setPage(targetPage);
+        setTotalPages(data.pagination?.totalPages ?? 1);
       } catch (err: any) {
         setError(err.message || "Unable to load brands");
-        setItems(brandHighlights);
+        setItems(brandHighlights.map(normalizeBrand));
         setCategories(["All", ...Array.from(new Set(brandHighlights.map((b) => b.category)))]);
-        setCursor(null);
-        setHasMore(false);
+        setPage(1);
+        setTotalPages(1);
       } finally {
         setIsLoading(false);
       }
     };
-    load(true);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category, query]);
 
-  useEffect(() => {
+    load(1, true);
+
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && hasMore && !isLoading) {
-          const base = import.meta.env.VITE_API_BASE_URL || "";
-          const fetchMore = async () => {
-            setIsLoading(true);
-            try {
-              const params = new URLSearchParams();
-              params.set("limit", String(PAGE_LIMIT));
-              if (cursor) params.set("cursor", cursor);
-              if (category !== "All") params.set("category", category);
-              if (query.trim()) params.set("search", query.trim());
-              const res = await fetch(`${base}/brands?${params.toString()}`);
-              if (!res.ok) throw new Error("Failed to load brands");
-              const data = (await res.json()) as BrandsResponse;
-              const nextItems = (data.data || []).map(normalizeBrand);
-              setItems((prev) => [...prev, ...nextItems]);
-              setCursor(data.cursor?.next ?? null);
-              setHasMore(Boolean(data.cursor?.next));
-            } catch (err: any) {
-              setError(err.message || "Unable to load brands");
-              setHasMore(false);
-            } finally {
-              setIsLoading(false);
-            }
-          };
-          fetchMore();
+        if (entry.isIntersecting && page < totalPages && !isLoading) {
+          load(page + 1, false);
         }
       },
       { rootMargin: "200px" }
@@ -124,7 +100,8 @@ const Brands = () => {
 
     if (loadMoreRef.current) observer.observe(loadMoreRef.current);
     return () => observer.disconnect();
-  }, [category, query, cursor, hasMore, isLoading]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [category, query]);
 
   const filtered = useMemo(() => {
     return items.filter((brand) => {

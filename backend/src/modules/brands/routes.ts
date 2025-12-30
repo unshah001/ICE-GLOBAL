@@ -28,7 +28,7 @@ const brandSchema = z.object({
     .object({
       headline: z.string().optional(),
       summary: z.string().optional(),
-      heroImage: z.string().min(1).optional(),
+      heroImage: z.string().optional(),
       heroVariants: z
         .array(
           z.object({
@@ -97,6 +97,7 @@ const listQuerySchema = z.object({
   cursor: z.string().optional(),
   category: z.string().optional(),
   search: z.string().optional(),
+  sort: z.enum(["newest", "oldest", "name-asc", "name-desc"]).optional(),
 });
 
 export default async function brandsRoutes(app: FastifyInstance) {
@@ -148,7 +149,7 @@ export default async function brandsRoutes(app: FastifyInstance) {
     const parsed = listQuerySchema.safeParse(request.query);
     const query = parsed.success
       ? parsed.data
-      : { page: 1, pageSize: 24, limit: 24, category: undefined, search: undefined, cursor: undefined };
+      : { page: 1, pageSize: 24, limit: 24, category: undefined, search: undefined, cursor: undefined, sort: "newest" };
 
     const filter: Record<string, unknown> = {};
     if (query.category && query.category !== "All") {
@@ -165,6 +166,16 @@ export default async function brandsRoutes(app: FastifyInstance) {
     const useCursor = Boolean(query.cursor);
     const limit = Math.min(Math.max(query.limit ?? 24, 1), 200);
 
+    const sortParam = query.sort ?? "newest";
+    const sort: Record<string, 1 | -1> =
+      sortParam === "oldest"
+        ? { createdAt: 1, _id: 1 }
+        : sortParam === "name-asc"
+          ? { name: 1 }
+          : sortParam === "name-desc"
+            ? { name: -1 }
+            : { createdAt: -1, _id: -1 };
+
     if (useCursor) {
       if (query.cursor) {
         try {
@@ -175,7 +186,7 @@ export default async function brandsRoutes(app: FastifyInstance) {
       }
       const data = await col
         .find(filter)
-        .sort({ _id: 1 })
+        .sort(sortParam === "oldest" ? { _id: 1 } : { _id: -1 })
         .limit(limit)
         .toArray();
       const categories = await col.distinct("category");
@@ -193,7 +204,7 @@ export default async function brandsRoutes(app: FastifyInstance) {
     const totalPages = Math.max(Math.ceil(total / pageSize), 1);
     const data = await col
       .find(filter)
-      .sort({ name: 1 })
+      .sort(sort)
       .skip((page - 1) * pageSize)
       .limit(pageSize)
       .toArray();

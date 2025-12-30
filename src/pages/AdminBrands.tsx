@@ -96,6 +96,7 @@ const AdminBrands = () => {
   const [categories, setCategories] = useState<string[]>(["All"]);
   const [category, setCategory] = useState<string>("All");
   const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<"newest" | "oldest" | "name-asc" | "name-desc">("newest");
   const [uploadTarget, setUploadTarget] = useState<{ idx: number; field: "image" | "hero" } | null>(null);
   const [originalMap, setOriginalMap] = useState<Record<string, string>>({});
 
@@ -108,6 +109,7 @@ const AdminBrands = () => {
     params.set("pageSize", String(pageSize));
     if (opts?.category && opts.category !== "All") params.set("category", opts.category);
     if (opts?.search) params.set("search", opts.search);
+    params.set("sort", sort);
 
     try {
       const res = await fetch(`${base}/brands?${params.toString()}`);
@@ -135,7 +137,7 @@ const AdminBrands = () => {
     loadBrands(1, { category, search });
     loadHero();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageSize]);
+  }, [pageSize, sort]);
 
   const updateItem = (idx: number, key: keyof BrandItem, value: string) =>
     setItems((prev) => {
@@ -489,6 +491,17 @@ const AdminBrands = () => {
                   {size} / page
                 </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+          <Select value={sort} onValueChange={(v) => setSort(v as any)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Sort" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Newest first</SelectItem>
+              <SelectItem value="oldest">Oldest first</SelectItem>
+              <SelectItem value="name-asc">Name A-Z</SelectItem>
+              <SelectItem value="name-desc">Name Z-A</SelectItem>
             </SelectContent>
           </Select>
           <div className="flex gap-2 ml-auto">
