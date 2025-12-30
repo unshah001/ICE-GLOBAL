@@ -19,6 +19,8 @@ const defaultSections = [
   { id: "celebs", label: "Celebrities", enabled: true },
   { id: "sellers", label: "Seller Voices", enabled: true },
   { id: "buyers", label: "Buyer Voices", enabled: true },
+  { id: "team", label: "Team", enabled: true },
+  { id: "testimonials", label: "Testimonials", enabled: true },
   { id: "timeline", label: "Timeline", enabled: true },
   { id: "arches", label: "Entrance Arches", enabled: true },
   { id: "stalls", label: "Stalls Mosaic", enabled: true },
@@ -31,6 +33,17 @@ const defaultSections = [
   { id: "footer", label: "Footer", enabled: true },
 ];
 
+function mergeWithDefaults(sections: { id: string; label: string; enabled: boolean }[]) {
+  const seen = new Set(sections.map((s) => s.id));
+  const merged = [...sections];
+  for (const section of defaultSections) {
+    if (!seen.has(section.id)) {
+      merged.push(section);
+    }
+  }
+  return merged;
+}
+
 export default async function homeLayoutRoutes(app: FastifyInstance) {
   const db = await getDb();
   const col = db.collection("home_layout");
@@ -42,7 +55,7 @@ export default async function homeLayoutRoutes(app: FastifyInstance) {
     }
     const parsed = payloadSchema.safeParse(stored);
     if (!parsed.success) return { sections: defaultSections };
-    return parsed.data;
+    return { sections: mergeWithDefaults(parsed.data.sections) };
   });
 
   app.put(

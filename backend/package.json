@@ -33,6 +33,8 @@
     "seed:founders:list": "tsx scripts/seed-founders-list.ts",
     "seed:teams": "tsx scripts/seed-teams.ts",
     "seed:teams:list": "tsx scripts/seed-teams-list.ts",
+    "seed:team-home": "tsx scripts/seed-team-home.ts",
+    "seed:testimonials-home": "tsx scripts/seed-testimonials-home.ts",
     "seed:about": "tsx scripts/seed-about.ts",
     "seed:testimonials": "tsx scripts/seed-testimonials.ts",
     "seed:templates": "tsx scripts/seed-templates.ts"
