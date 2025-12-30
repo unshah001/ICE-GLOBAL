@@ -15,7 +15,7 @@ module.exports = {
       // If your app reads PORT/NODE_ENV/etc
       env: {
         NODE_ENV: "production",
-        APP_PORT:8080
+        APP_PORT:8082
       },
 
       // Logs

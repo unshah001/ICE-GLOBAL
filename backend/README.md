@@ -76,3 +76,8 @@ pm2 start ecosystem.config.cjs
 pm2 save
 pm2 logs server
 
+
+api.yourdomain.com 
+media.iceglobal.in
+
+iceglobal.in
