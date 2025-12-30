@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React from "react";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, Star, ArrowUpRight } from "lucide-react";
+import { Star, ArrowUpRight } from "lucide-react";
 
 interface TestimonialCardProps {
   image: string;
@@ -11,6 +11,7 @@ interface TestimonialCardProps {
   role: string;
   company: string;
   rating: number;
+  quote?: string;
 }
 
 const TestimonialCard = ({
@@ -19,40 +20,39 @@ const TestimonialCard = ({
   role,
   company,
   rating,
+  quote,
 }: TestimonialCardProps) => {
   return (
     <motion.div
-      whileHover={{ y: -5 }}
-      className="relative flex-shrink-0 w-[280px] md:w-[320px] rounded-2xl overflow-hidden group cursor-pointer"
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.45 }}
+      whileHover={{ y: -6 }}
+      className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/80 shadow-lg shadow-primary/10"
     >
-      <div className="aspect-[3/4] relative">
-        <img
-          src={image}
-          alt={name}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-        />
-        <div className="absolute top-4 right-4 w-10 h-10 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <ArrowUpRight className="w-5 h-5 text-foreground" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,hsl(var(--primary)/0.12),transparent_40%),radial-gradient(circle_at_80%_80%,hsl(var(--secondary)/0.12),transparent_40%)]" />
+      <div className="relative p-5 space-y-4 h-full flex flex-col">
+        <div className="flex items-center gap-3">
+          <img
+            src={image}
+            alt={name}
+            className="w-14 h-14 rounded-2xl object-cover border border-border/70"
+          />
+          <div>
+            <p className="text-sm text-muted-foreground">{role}</p>
+            <p className="font-display font-semibold text-lg">{name}</p>
+            <div className="text-xs uppercase tracking-wide text-primary/80">{company}</div>
+          </div>
         </div>
-      </div>
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background/95 via-background/80 to-transparent">
-        <div className="flex gap-0.5 mb-2">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Star
-              key={i}
-              className={cn(
-                "w-4 h-4",
-                i < rating ? "fill-accent text-accent" : "text-muted"
-              )}
-            />
-          ))}
+        {quote && <p className="text-muted-foreground leading-relaxed text-sm md:text-base">“{quote}”</p>}
+        <div className="mt-auto flex items-center justify-between gap-3 pt-2">
+          <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/10 text-primary text-sm font-semibold">
+            <Star className="w-4 h-4 fill-primary text-primary" />
+            {rating.toFixed(1)}
+          </div>
+          <ArrowUpRight className="w-5 h-5 text-primary opacity-80 group-hover:opacity-100 transition-opacity" />
         </div>
-        <h3 className="font-display font-semibold text-foreground text-lg">
-          {name}
-        </h3>
-        <p className="text-sm text-muted-foreground">
-          {role}, {company}
-        </p>
       </div>
     </motion.div>
   );
@@ -62,45 +62,21 @@ interface TestimonialsCarouselProps {
   testimonials: TestimonialCardProps[];
   title?: string;
   subtitle?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
 }
 
 export const TestimonialsCarousel = ({
   testimonials,
   title = "What our partners say",
   subtitle = "Hear from brands and visitors who've experienced our expos firsthand",
+  ctaLabel = "Send feedback",
+  ctaHref = "/feedback",
 }: TestimonialsCarouselProps) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-
-  const checkScroll = () => {
-    if (containerRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = containerRef.current;
-      setCanScrollLeft(scrollLeft > 0);
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
-    }
-  };
-
-  useEffect(() => {
-    checkScroll();
-    const container = containerRef.current;
-    if (container) {
-      container.addEventListener("scroll", checkScroll);
-      return () => container.removeEventListener("scroll", checkScroll);
-    }
-  }, []);
-
-  const scroll = (direction: "left" | "right") => {
-    if (containerRef.current) {
-      const scrollAmount = direction === "left" ? -340 : 340;
-      containerRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
-    }
-  };
-
   return (
     <section className="section-padding relative overflow-hidden">
       <div className="container-custom">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 md:mb-16">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 md:mb-12">
           <div>
             <span className="text-primary font-medium text-sm uppercase tracking-wider">
               Testimonials
@@ -109,40 +85,28 @@ export const TestimonialsCarousel = ({
               {title}
             </h2>
             <p className="text-muted-foreground mt-4 max-w-lg">{subtitle}</p>
-          </div>
-          <div className="flex gap-3 mt-6 md:mt-0">
-            <button
-              onClick={() => scroll("left")}
-              disabled={!canScrollLeft}
-              className={cn(
-                "w-12 h-12 rounded-full border border-border flex items-center justify-center transition-all duration-300",
-                canScrollLeft
-                  ? "hover:bg-card hover:border-primary/50 text-foreground"
-                  : "opacity-50 cursor-not-allowed text-muted-foreground"
-              )}
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => scroll("right")}
-              disabled={!canScrollRight}
-              className={cn(
-                "w-12 h-12 rounded-full border border-border flex items-center justify-center transition-all duration-300",
-                canScrollRight
-                  ? "hover:bg-card hover:border-primary/50 text-foreground"
-                  : "opacity-50 cursor-not-allowed text-muted-foreground"
-              )}
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
+            {(ctaHref || ctaLabel) && (
+              <div className="flex flex-wrap gap-3 mt-5">
+                {ctaHref && ctaLabel && (
+                  <a
+                    href={ctaHref}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border text-sm font-semibold hover:border-primary/60 hover:text-primary transition-colors"
+                  >
+                    {ctaLabel}
+                  </a>
+                )}
+                <a
+                  href="/testimonials"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
+                >
+                  View all testimonials
+                </a>
+              </div>
+            )}
           </div>
         </div>
 
-        <div
-          ref={containerRef}
-          className="flex gap-6 overflow-x-auto scrollbar-hide pb-4 -mx-4 px-4"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-        >
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {testimonials.map((testimonial, index) => (
             <TestimonialCard key={index} {...testimonial} />
           ))}

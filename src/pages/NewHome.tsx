@@ -16,6 +16,7 @@ import DualCtaSection from "@/components/DualCtaSection";
 import FoundersSpotlightSection from "@/components/FoundersSpotlightSection";
 import CoFoundersSection from "@/components/CoFoundersSection";
 import Footer, { type FooterData } from "@/components/Footer";
+import { TestimonialsCarousel } from "@/components/ui/testimonials-carousel";
 import { galleryImages, heroProducts as fallbackHero, navItems as staticNav, brandHighlights as fallbackBrands } from "@/data/expo-data";
 import { celebritySpotlights } from "@/data/celebrity-data";
 import { sellerTestimonials } from "@/data/seller-testimonials";
@@ -202,6 +203,34 @@ type DualCtaCard = {
 type DualCtaResponse = { sellers: DualCtaCard; buyers: DualCtaCard };
 type FooterResponse = FooterData;
 type LayoutSection = { id: string; label: string; enabled: boolean };
+type TeamMember = {
+  id: string;
+  name: string;
+  role: string;
+  department?: string;
+  focus?: string;
+  image: string;
+  href?: string;
+};
+type TeamsResponse = {
+  eyebrow: string;
+  title: string;
+  description: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+  team: TeamMember[];
+};
+type HomeTestimonial = {
+  image: string;
+  name: string;
+  role: string;
+  company: string;
+  rating: number;
+};
+type TestimonialsResponse = {
+  hero: { badge?: string; title?: string; intro?: string };
+  testimonials: HomeTestimonial[];
+};
 
 const NewHome = () => {
   const [heroData, setHeroData] = useState<HeroItem[]>(fallbackHero);
@@ -332,6 +361,73 @@ const NewHome = () => {
       secondary: { label: "View full program", href: "/gallery" },
     },
   });
+  const [teamData, setTeamData] = useState<TeamsResponse>({
+    eyebrow: "Team",
+    title: "The team behind ICE",
+    description: "Producers, ops, media, design, and data—meet the people keeping the circuit running.",
+    ctaLabel: "Meet the full team",
+    ctaHref: "/teams",
+    team: [
+      {
+        id: "team-1",
+        name: "Priya Menon",
+        role: "Production Lead",
+        department: "Operations",
+        focus: "Large-format builds",
+        image: "https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=600&q=80",
+      },
+      {
+        id: "team-2",
+        name: "Rahul Iyer",
+        role: "Media & Broadcast",
+        department: "Media",
+        focus: "Live stream & highlights",
+        image: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&q=80",
+      },
+      {
+        id: "team-3",
+        name: "Ayesha Khan",
+        role: "Buyer Programs",
+        department: "Growth",
+        focus: "Curation & routes",
+        image: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&q=80",
+      },
+      {
+        id: "team-4",
+        name: "Vikram Shah",
+        role: "Design Director",
+        department: "Design",
+        focus: "Staging & visual systems",
+        image: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&q=80",
+      },
+    ],
+  });
+  const [testimonialsData, setTestimonialsData] = useState<TestimonialsResponse>({
+    hero: { badge: "Testimonials", title: "What our partners say", intro: "Snapshots from brands, buyers, and founders." },
+    testimonials: [
+      {
+        image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80",
+        name: "Ananya Patel",
+        role: "Founder",
+        company: "Ignite Labs",
+        rating: 5,
+      },
+      {
+        image: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&q=80",
+        name: "Rohit Desai",
+        role: "CMO",
+        company: "Northstar",
+        rating: 5,
+      },
+      {
+        image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=600&q=80",
+        name: "Meera Joshi",
+        role: "Head of Buyer Programs",
+        company: "ICE",
+        rating: 4,
+      },
+    ],
+  });
   const [footerData, setFooterData] = useState<FooterResponse | null>(null);
   const [layout, setLayout] = useState<LayoutSection[]>([
     { id: "hero", label: "Hero", enabled: true },
@@ -340,6 +436,8 @@ const NewHome = () => {
     { id: "celebs", label: "Celebrities", enabled: true },
     { id: "sellers", label: "Sellers", enabled: true },
     { id: "buyers", label: "Buyers", enabled: true },
+    { id: "team", label: "Team", enabled: true },
+    { id: "testimonials", label: "Testimonials", enabled: true },
     { id: "timeline", label: "Timeline", enabled: true },
     { id: "arches", label: "Arches", enabled: true },
     { id: "stalls", label: "Stalls", enabled: true },
@@ -466,6 +564,44 @@ const NewHome = () => {
         });
       } catch {
         setBuyersData((prev) => prev);
+      }
+    };
+    const fetchTeam = async () => {
+      try {
+        const res = await fetch(`${base}/teams`);
+        if (!res.ok) throw new Error("Team fetch failed");
+        const data = (await res.json()) as TeamsResponse;
+        setTeamData({
+          eyebrow: data.eyebrow || "Team",
+          title: data.title || "The team behind ICE",
+          description:
+            data.description ||
+            "Producers, ops, media, design, and data—meet the people keeping the circuit running.",
+          ctaLabel: data.ctaLabel || "Meet the full team",
+          ctaHref: data.ctaHref || "/teams",
+          team: data.team?.length ? data.team : teamData.team,
+        });
+      } catch {
+        setTeamData((prev) => prev);
+      }
+    };
+    const fetchTestimonials = async () => {
+      try {
+        const res = await fetch(`${base}/testimonials`);
+        if (!res.ok) throw new Error("Testimonials fetch failed");
+        const data = (await res.json()) as TestimonialsResponse;
+        setTestimonialsData({
+          hero: {
+            badge: data.hero?.badge || "Testimonials",
+            title: data.hero?.title || "What our partners say",
+            intro:
+              data.hero?.intro ||
+              "Hear from brands, buyers, and founders who experienced ICE—from the floor to the main stage.",
+          },
+          testimonials: data.testimonials?.length ? data.testimonials : testimonialsData.testimonials,
+        });
+      } catch {
+        setTestimonialsData((prev) => prev);
       }
     };
     const fetchTimeline = async () => {
@@ -660,6 +796,8 @@ const NewHome = () => {
     fetchCelebs();
     fetchSellers();
     fetchBuyers();
+    fetchTeam();
+    fetchTestimonials();
     fetchTimeline();
     fetchArches();
     fetchStalls();
@@ -741,6 +879,72 @@ const NewHome = () => {
         description={buyersData.description}
         buyers={buyersData.buyers}
         cta={{ label: buyersData.ctaLabel || "See all buyer stories", href: buyersData.ctaHref || "/buyers" }}
+      />
+    ),
+    team: (
+      <section key="team" className="section-padding bg-muted/40 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-60 bg-[radial-gradient(circle_at_20%_20%,rgba(99,102,241,0.12),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(16,185,129,0.12),transparent_30%)]" />
+        <div className="container-custom relative">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+            <div className="max-w-2xl">
+              <span className="text-primary font-medium text-sm uppercase tracking-wider">{teamData.eyebrow || "Team"}</span>
+              <h2 className="text-3xl md:text-5xl font-bold font-display text-foreground mt-2">{teamData.title}</h2>
+              <p className="text-muted-foreground mt-4">{teamData.description}</p>
+            </div>
+            {teamData.ctaHref && (
+              <a
+                href={teamData.ctaHref}
+                className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+              >
+                {teamData.ctaLabel || "Meet the full team"}
+              </a>
+            )}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {(teamData.team || []).slice(0, 6).map((member, idx) => {
+              const CardWrapper = member.href ? "a" : "div";
+              return (
+                <CardWrapper
+                  key={member.id || idx}
+                  href={member.href}
+                  className="group relative block rounded-3xl border border-border/70 bg-gradient-to-b from-background/90 via-background/70 to-background/90 overflow-hidden shadow-[0_10px_60px_-25px_rgba(0,0,0,0.5)] transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_20px_70px_-25px_rgba(0,0,0,0.65)]"
+                >
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-primary/10 via-transparent to-emerald-200/10" />
+                  <div className="aspect-[4/3] overflow-hidden">
+                    <img
+                      src={member.image}
+                      alt={member.name}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    />
+                  </div>
+                  <div className="absolute top-4 left-4">
+                    <span className="inline-flex items-center rounded-full bg-background/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-primary shadow-sm">
+                      {member.department || "Team"}
+                    </span>
+                  </div>
+                  <div className="p-5 relative space-y-2">
+                    <h3 className="text-xl font-semibold text-foreground">{member.name}</h3>
+                    <p className="text-sm text-muted-foreground">{member.role}</p>
+                    {member.focus && <p className="text-sm text-muted-foreground">{member.focus}</p>}
+                    {member.href && (
+                      <div className="pt-2 text-sm font-medium text-primary inline-flex items-center gap-1">
+                        View profile <span aria-hidden>→</span>
+                      </div>
+                    )}
+                  </div>
+                </CardWrapper>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    ),
+    testimonials: (
+      <TestimonialsCarousel
+        key="testimonials"
+        testimonials={testimonialsData.testimonials}
+        title={testimonialsData.hero.title || "What our partners say"}
+        subtitle={testimonialsData.hero.intro}
       />
     ),
     timeline: (

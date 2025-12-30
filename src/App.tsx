@@ -89,6 +89,8 @@ import AdminProfileConfig from "./pages/AdminProfileConfig";
 import AdminUsers from "./pages/AdminUsers";
 import AdminDigests from "./pages/AdminDigests";
 import AdminHomeLayout from "./pages/AdminHomeLayout";
+import AdminTeamEditor from "./pages/AdminTeamEditor";
+import AdminTestimonialEditor from "./pages/AdminTestimonialEditor";
 import ThemeLoader from "./components/ThemeLoader";
 
 const queryClient = new QueryClient();
@@ -417,6 +419,22 @@ const App = () => (
             element={
               <AdminGuard>
                 <AdminBrandEditor />
+              </AdminGuard>
+            }
+          />
+          <Route
+            path="/admin/team-editor"
+            element={
+              <AdminGuard>
+                <AdminTeamEditor />
+              </AdminGuard>
+            }
+          />
+          <Route
+            path="/admin/testimonials-editor"
+            element={
+              <AdminGuard>
+                <AdminTestimonialEditor />
               </AdminGuard>
             }
           />
