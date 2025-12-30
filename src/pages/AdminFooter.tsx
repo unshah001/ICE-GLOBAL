@@ -8,6 +8,7 @@ const emptyFooter: FooterData = {
   ctaDescription: "",
   partnerHref: "",
   sponsorHref: "",
+  copyright: "",
   exploreLinks: [],
   partnersLinks: [],
   legalLinks: [],

@@ -201,6 +201,7 @@ type DualCtaCard = {
 };
 type DualCtaResponse = { sellers: DualCtaCard; buyers: DualCtaCard };
 type FooterResponse = FooterData;
+type LayoutSection = { id: string; label: string; enabled: boolean };
 
 const NewHome = () => {
   const [heroData, setHeroData] = useState<HeroItem[]>(fallbackHero);
@@ -332,6 +333,24 @@ const NewHome = () => {
     },
   });
   const [footerData, setFooterData] = useState<FooterResponse | null>(null);
+  const [layout, setLayout] = useState<LayoutSection[]>([
+    { id: "hero", label: "Hero", enabled: true },
+    { id: "review", label: "Review Moments", enabled: true },
+    { id: "brands", label: "Brand Highlights", enabled: true },
+    { id: "celebs", label: "Celebrities", enabled: true },
+    { id: "sellers", label: "Sellers", enabled: true },
+    { id: "buyers", label: "Buyers", enabled: true },
+    { id: "timeline", label: "Timeline", enabled: true },
+    { id: "arches", label: "Arches", enabled: true },
+    { id: "stalls", label: "Stalls", enabled: true },
+    { id: "buyerMosaic", label: "Buyer Mosaic", enabled: true },
+    { id: "vvips", label: "VVIPs", enabled: true },
+    { id: "founders", label: "Founders", enabled: true },
+    { id: "cofounders", label: "Co-Founders", enabled: true },
+    { id: "counts", label: "Counts", enabled: true },
+    { id: "dualCta", label: "Dual CTA", enabled: true },
+    { id: "footer", label: "Footer", enabled: true },
+  ]);
 
   useEffect(() => {
     const base = import.meta.env.VITE_API_BASE_URL || "";
@@ -651,13 +670,19 @@ const NewHome = () => {
     fetchCounts();
     fetchDualCta();
     fetchFooter();
+    fetch(`${base}/home-layout`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data?.sections) && data.sections.length) {
+          setLayout(data.sections as LayoutSection[]);
+        }
+      })
+      .catch(() => {});
   }, []);
 
-  return (
-    <main className="min-h-screen bg-background overflow-hidden">
-      <FloatingNavbar navItems={navItems} />
-
-      <section className="relative">
+  const sectionMap: Record<string, React.ReactNode> = {
+    hero: (
+      <section className="relative" key="hero">
         <BackgroundBeams className="z-0" />
         <HeroParallax
           products={heroData}
@@ -666,16 +691,20 @@ const NewHome = () => {
           heroSubtitle={heroContent?.description}
         />
       </section>
-
+    ),
+    review: (
       <ReviewMomentsSection
+        key="review"
         eyebrow={reviewData.eyebrow}
         title={reviewData.title}
         description={reviewData.description}
         images={reviewData.images}
         cta={{ label: reviewData.ctaLabel, href: reviewData.ctaHref }}
       />
-
+    ),
+    brands: (
       <BrandHighlightsSection
+        key="brands"
         eyebrow={brandsData.eyebrow}
         title={brandsData.title}
         description={brandsData.description}
@@ -683,32 +712,39 @@ const NewHome = () => {
         ctaHref={brandsData.ctaHref}
         brands={brandsData.brands}
       />
-
+    ),
+    celebs: (
       <CelebritySpotlightSection
+        key="celebs"
         eyebrow={celebsData.eyebrow}
         title={celebsData.title}
         description={celebsData.description}
         celebrities={celebsData.celebrities}
         cta={{ label: celebsData.ctaLabel || "See all appearances", href: celebsData.ctaHref || "/gallery" }}
       />
-
+    ),
+    sellers: (
       <SellerSignalsSection
+        key="sellers"
         eyebrow={sellersData.eyebrow}
         title={sellersData.title}
         description={sellersData.description}
         sellers={sellersData.sellers}
         cta={{ label: sellersData.ctaLabel || "See all sellers", href: sellersData.ctaHref || "/gallery" }}
       />
-
+    ),
+    buyers: (
       <BuyerVoicesSection
+        key="buyers"
         eyebrow={buyersData.eyebrow}
         title={buyersData.title}
         description={buyersData.description}
         buyers={buyersData.buyers}
         cta={{ label: buyersData.ctaLabel || "See all buyer stories", href: buyersData.ctaHref || "/buyers" }}
       />
-
-      <section className="relative">
+    ),
+    timeline: (
+      <section className="relative" key="timeline">
         <div className="container-custom py-16">
           <div className="text-center mb-8">
             <span className="text-primary font-medium text-sm uppercase tracking-wider">
@@ -724,15 +760,19 @@ const NewHome = () => {
         </div>
         <StickyScrollReveal content={timelineData.milestones.length ? timelineData.milestones : timelineContent} />
       </section>
-
+    ),
+    arches: (
       <EntranceArchesSection
+        key="arches"
         eyebrow={archesData.eyebrow}
         title={archesData.title}
         description={archesData.description}
         arches={archesData.arches}
       />
-
+    ),
+    stalls: (
       <StallsMosaicSection
+        key="stalls"
         eyebrow={stallsData.eyebrow}
         title={stallsData.title}
         description={stallsData.description}
@@ -740,8 +780,10 @@ const NewHome = () => {
         stats={stallsData.stats}
         cta={{ label: stallsData.ctaLabel || "See the full archive", href: stallsData.ctaHref || "/gallery" }}
       />
-
+    ),
+    buyerMosaic: (
       <StallsMosaicSection
+        key="buyerMosaic"
         eyebrow={buyerMosaicData.eyebrow}
         title={buyerMosaicData.title}
         description={buyerMosaicData.description}
@@ -749,39 +791,49 @@ const NewHome = () => {
         stats={buyerMosaicData.stats}
         cta={{ label: buyerMosaicData.ctaLabel || "Browse buyer moments", href: buyerMosaicData.ctaHref || "/gallery" }}
       />
-
+    ),
+    vvips: (
       <VvipSpotlightSection
+        key="vvips"
         eyebrow={vvipData.eyebrow}
         title={vvipData.title}
         description={vvipData.description}
         guests={vvipData.guests}
         cta={{ label: vvipData.ctaLabel || "See all VVIPs", href: vvipData.ctaHref || "/gallery" }}
       />
-
+    ),
+    founders: (
       <FoundersSpotlightSection
+        key="founders"
         eyebrow={foundersData.eyebrow}
         title={foundersData.title}
         description={foundersData.description}
         founders={foundersData.founders}
         cta={{ label: foundersData.ctaLabel || "See all founders", href: foundersData.ctaHref || "/founders" }}
       />
-
+    ),
+    cofounders: (
       <CoFoundersSection
+        key="cofounders"
         eyebrow={cofoundersData.eyebrow}
         title={cofoundersData.title}
         description={cofoundersData.description}
         cofounders={cofoundersData.cofounders}
         cta={{ label: cofoundersData.ctaLabel || "See all co-founders", href: cofoundersData.ctaHref || "/cofounders" }}
       />
+    ),
+    counts: <CountingSection key="counts" stats={countsData.stats} />,
+    dualCta: <DualCtaSection key="dualCta" sellers={dualCtaData.sellers} buyers={dualCtaData.buyers} />,
+    footer: <Footer key="footer" data={footerData || undefined} />,
+  };
 
-      <CountingSection stats={countsData.stats} />
+  const ordered = layout.filter((s) => s.enabled && sectionMap[s.id]);
+  const renderSections = ordered.length ? ordered.map((s) => sectionMap[s.id]) : Object.values(sectionMap);
 
-      <DualCtaSection
-        sellers={dualCtaData.sellers}
-        buyers={dualCtaData.buyers}
-      />
-
-      <Footer data={footerData || undefined} />
+  return (
+    <main className="min-h-screen bg-background overflow-hidden">
+      <FloatingNavbar navItems={navItems} />
+      {renderSections}
     </main>
   );
 };

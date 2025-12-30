@@ -9,6 +9,7 @@ export type FooterData = {
   ctaDescription: string;
   partnerHref: string;
   sponsorHref: string;
+  copyright?: string;
   exploreLinks: { name: string; href: string }[];
   partnersLinks: { name: string; href: string }[];
   legalLinks: { name: string; href: string }[];
@@ -249,7 +250,9 @@ const Footer = ({
       <div className="border-t border-border">
         <div className="container-custom py-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
-            © {currentYear} ICEGLOBAL. All rights reserved.
+            {data?.copyright?.trim()
+              ? data.copyright
+              : `© ${currentYear} ICEGLOBAL. All rights reserved.`}
           </p>
           <div className="flex items-center gap-4">
             {socialLinks.map((social) => (

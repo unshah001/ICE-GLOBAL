@@ -44,6 +44,7 @@ import analyticsRoutes from "./analytics/routes";
 import digestsRoutes from "./digests/routes";
 import digestLogsRoutes from "./digest-logs/routes";
 import activityRoutes from "./activity/routes";
+import homeLayoutRoutes from "./home-layout/routes";
 
 export default async function registerRoutes(app: FastifyInstance) {
   await app.register(healthRoutes);
@@ -91,4 +92,5 @@ export default async function registerRoutes(app: FastifyInstance) {
   await app.register(digestsRoutes);
   await app.register(digestLogsRoutes);
   await app.register(activityRoutes);
+  await app.register(homeLayoutRoutes);
 }

@@ -13,6 +13,7 @@ export type FooterData = {
   ctaDescription: string;
   partnerHref: string;
   sponsorHref: string;
+  copyright?: string;
   exploreLinks: FooterLink[];
   partnersLinks: FooterLink[];
   legalLinks: FooterLink[];
@@ -60,10 +61,11 @@ const FooterEditor = ({ data, onChange, onSave, onRestore, saving, loading }: Fo
         </p>
       </div>
       <Tabs defaultValue="footer-cta" className="w-full">
-        <TabsList className="grid grid-cols-4 md:grid-cols-4">
+        <TabsList className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
           <TabsTrigger value="footer-cta">CTA</TabsTrigger>
           <TabsTrigger value="footer-links">Links</TabsTrigger>
           <TabsTrigger value="footer-contact">Contact</TabsTrigger>
+          <TabsTrigger value="footer-meta">Meta</TabsTrigger>
           <TabsTrigger value="footer-actions">Actions</TabsTrigger>
         </TabsList>
 
@@ -107,6 +109,25 @@ const FooterEditor = ({ data, onChange, onSave, onRestore, saving, loading }: Fo
                     placeholder="/sponsor"
                   />
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="footer-meta" className="mt-4">
+          <Card className="bg-card/80 border-border/70">
+            <CardHeader>
+              <CardTitle>Meta</CardTitle>
+              <CardDescription>Copyright/footer note.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Copyright text</label>
+                <Input
+                  value={data.copyright || ""}
+                  onChange={(e) => updateField("copyright", e.target.value)}
+                  placeholder="© 2025 ICEGLOBAL. All rights reserved."
+                />
               </div>
             </CardContent>
           </Card>
