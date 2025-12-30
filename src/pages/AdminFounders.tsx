@@ -8,11 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, CheckCircle2, Plus, Save, Trash2, Search } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import MediaUploadModal, { type MediaUploadResult } from "@/components/admin/MediaUploadModal";
 
 type FounderDetail = {
   headline?: string;
   summary?: string;
   heroImage?: string;
+  heroVariants?: { key: string; path?: string; fileName?: string; format?: string; width?: number; height?: number; size?: number }[];
   highlights?: { title: string; body: string }[];
   metrics?: { label: string; value: string }[];
   pullQuote?: string;
@@ -27,6 +29,7 @@ type FounderItem = {
   era: string;
   focus: string;
   image: string;
+  variants?: { key: string; path?: string; fileName?: string; format?: string; width?: number; height?: number; size?: number }[];
   highlight: string;
   href?: string;
   social?: { linkedin?: string; twitter?: string; website?: string };
@@ -36,7 +39,7 @@ type FounderItem = {
 type FoundersResponse = {
   data: FounderItem[];
   cursor?: { next: string | null; limit: number };
-  filters?: { eras?: string[] };
+  filters?: { eras?: string[]; focuses?: string[] };
 };
 
 const PAGE_LIMIT = 24;
@@ -69,10 +72,38 @@ const AdminFounders = () => {
   const [copy, setCopy] = useState(defaultCopy);
   const [savingCopy, setSavingCopy] = useState(false);
   const [era, setEra] = useState<string>("All");
+  const [focus, setFocus] = useState<string>("All");
+  const [sort, setSort] = useState<"newest" | "oldest">("newest");
   const [search, setSearch] = useState("");
   const [eras, setEras] = useState<string[]>(["All"]);
+  const [focuses, setFocuses] = useState<string[]>(["All"]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
+  const [uploadTarget, setUploadTarget] = useState<{ idx: number; field: "image" | "hero" } | null>(null);
+  const [pendingDeletes, setPendingDeletes] = useState<string[]>([]);
+
+  const defaultVariants = [
+    { key: "main", path: "" },
+    { key: "medium", path: "" },
+    { key: "thumb", path: "" },
+  ];
+
+  const normalizeItem = (item: FounderItem): FounderItem => ({
+    ...item,
+    variants:
+      item.variants && item.variants.length
+        ? item.variants
+        : defaultVariants.map((v) => ({ ...v, path: v.key === "main" ? item.image ?? "" : "" })),
+    detail: item.detail
+      ? {
+          ...item.detail,
+          heroVariants:
+            item.detail.heroVariants && item.detail.heroVariants.length
+              ? item.detail.heroVariants
+              : defaultVariants.map((v) => ({ ...v, path: v.key === "main" ? item.detail?.heroImage ?? "" : "" })),
+        }
+      : undefined,
+  });
 
   const load = async (reset = true) => {
     const base = import.meta.env.VITE_API_BASE_URL || "";
@@ -82,18 +113,21 @@ const AdminFounders = () => {
     params.set("limit", String(PAGE_LIMIT));
     if (!reset && cursor) params.set("cursor", cursor);
     if (era !== "All") params.set("era", era);
+    if (focus !== "All") params.set("focus", focus);
+    params.set("sort", sort);
     if (search.trim()) params.set("search", search.trim());
     try {
       const res = await fetch(`${base}/founders/list?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to load founders");
       const data = (await res.json()) as FoundersResponse;
-      const next = data.data || [];
+      const next = (data.data || []).map(normalizeItem);
       if (reset) {
         setItems(next);
       } else {
         setItems((prev) => [...prev, ...next]);
       }
       setEras(["All", ...(data.filters?.eras || [])]);
+      setFocuses(["All", ...(data.filters?.focuses || [])]);
       setCursor(data.cursor?.next ?? null);
       setHasMore(Boolean(data.cursor?.next));
     } catch (err: any) {
@@ -119,7 +153,7 @@ const AdminFounders = () => {
     const debounce = setTimeout(() => load(true), 200);
     return () => clearTimeout(debounce);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [era, search]);
+  }, [era, focus, sort, search]);
 
   const updateItem = (idx: number, key: keyof FounderItem, value: any) =>
     setItems((prev) => {
@@ -130,8 +164,7 @@ const AdminFounders = () => {
 
   const addItem = () =>
     setItems((prev) => [
-      ...prev,
-      {
+      normalizeItem({
         id: createId(),
         name: "",
         title: "",
@@ -140,8 +173,9 @@ const AdminFounders = () => {
         image: "",
         highlight: "",
         href: "",
-        detail: {},
-      },
+        detail: { heroImage: "" },
+      }),
+      ...prev,
     ]);
 
   const removeItem = (idx: number) => setItems((prev) => prev.filter((_, i) => i !== idx));
@@ -337,6 +371,19 @@ const AdminFounders = () => {
         return;
       }
       for (const item of items) {
+        const cleanedVariants =
+          item.variants
+            ?.map((v) => ({ ...v, path: (v.path || v.fileName || "").trim(), fileName: (v.fileName || "").trim() }))
+            .filter((v) => v.path || v.fileName) ?? [];
+        const cleanedHeroVariants =
+          item.detail?.heroVariants
+            ?.map((v) => ({ ...v, path: (v.path || v.fileName || "").trim(), fileName: (v.fileName || "").trim() }))
+            .filter((v) => v.path || v.fileName) ?? [];
+        const payload = {
+          ...item,
+          variants: cleanedVariants,
+          detail: item.detail ? { ...item.detail, heroVariants: cleanedHeroVariants } : undefined,
+        };
         const attempt = async (authToken: string) =>
           fetch(`${base}/founders/${item.id}`, {
             method: "PUT",
@@ -344,7 +391,7 @@ const AdminFounders = () => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${authToken}`,
             },
-            body: JSON.stringify(item),
+            body: JSON.stringify(payload),
           });
         let res = await attempt(token);
         if (res.status === 401) {
@@ -356,6 +403,14 @@ const AdminFounders = () => {
           const data = await res.json().catch(() => ({}));
           throw new Error(data.message || "Save failed");
         }
+      }
+      if (pendingDeletes.length) {
+        const resDelete = await fetch(`${base}/media/delete`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ paths: Array.from(new Set(pendingDeletes)), reason: "founder-image-replace" }),
+        });
+        if (resDelete.ok) setPendingDeletes([]);
       }
       setSuccess("Founders saved");
     } catch (err: any) {
@@ -469,7 +524,7 @@ const AdminFounders = () => {
       </div>
 
       <div className="rounded-xl border border-border/60 bg-card/70 p-4 flex flex-col gap-3">
-        <div className="flex flex-col md:flex-row gap-3 items-start md:items-center">
+        <div className="flex flex-col md:flex-row md:flex-wrap gap-3 items-start md:items-center">
           <div className="relative w-full md:max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -480,7 +535,7 @@ const AdminFounders = () => {
             />
           </div>
           <Select value={era} onValueChange={(v) => setEra(v)}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full md:w-[180px]">
               <SelectValue placeholder="Era" />
             </SelectTrigger>
             <SelectContent>
@@ -489,6 +544,27 @@ const AdminFounders = () => {
                   {e}
                 </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+          <Select value={focus} onValueChange={(v) => setFocus(v)}>
+            <SelectTrigger className="w-full md:w-[200px]">
+              <SelectValue placeholder="Focus" />
+            </SelectTrigger>
+            <SelectContent>
+              {focuses.map((f) => (
+                <SelectItem key={f} value={f}>
+                  {f}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={sort} onValueChange={(v: "newest" | "oldest") => setSort(v)}>
+            <SelectTrigger className="w-full md:w-[160px]">
+              <SelectValue placeholder="Sort" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Newest first</SelectItem>
+              <SelectItem value="oldest">Oldest first</SelectItem>
             </SelectContent>
           </Select>
           <div className="flex gap-2 ml-auto">
@@ -579,8 +655,24 @@ const AdminFounders = () => {
                   </div>
                 </div>
               <div>
-                <label className="text-xs text-muted-foreground">Image URL</label>
-                <Input value={item.image} onChange={(e) => updateItem(idx, "image", e.target.value)} placeholder="https://..." />
+                <div className="flex items-center justify-between">
+                  <label className="text-xs text-muted-foreground">Image</label>
+                  <Button variant="secondary" size="sm" onClick={() => setUploadTarget({ idx, field: "image" })}>
+                    Upload
+                  </Button>
+                </div>
+                <Input value={item.image} readOnly placeholder="Upload to fill automatically" />
+                <div className="grid md:grid-cols-3 gap-2 mt-2">
+                  {(item.variants ?? []).map((variant, vIdx) => (
+                    <div key={`${variant.key}-${vIdx}`} className="space-y-1">
+                      <label className="text-xs text-muted-foreground flex items-center gap-2">
+                        <Badge variant="secondary">{variant.key}</Badge>
+                        <span>Path</span>
+                      </label>
+                      <Input value={variant.path || variant.fileName || ""} readOnly />
+                    </div>
+                  ))}
+                </div>
               </div>
               <div className="grid md:grid-cols-2 gap-3">
                 <div>
@@ -601,12 +693,24 @@ const AdminFounders = () => {
                 </div>
               </div>
               <div>
-                <label className="text-xs text-muted-foreground">Hero image</label>
-                <Input
-                  value={item.detail?.heroImage || ""}
-                  onChange={(e) => updateDetail(idx, "heroImage", e.target.value)}
-                  placeholder="https://..."
-                />
+                <div className="flex items-center justify-between">
+                  <label className="text-xs text-muted-foreground">Hero image</label>
+                  <Button variant="secondary" size="sm" onClick={() => setUploadTarget({ idx, field: "hero" })}>
+                    Upload
+                  </Button>
+                </div>
+                <Input value={item.detail?.heroImage || ""} readOnly placeholder="Upload to fill automatically" />
+                <div className="grid md:grid-cols-3 gap-2 mt-2">
+                  {(item.detail?.heroVariants ?? []).map((variant, vIdx) => (
+                    <div key={`${variant.key}-${vIdx}`} className="space-y-1">
+                      <label className="text-xs text-muted-foreground flex items-center gap-2">
+                        <Badge variant="secondary">{variant.key}</Badge>
+                        <span>Path</span>
+                      </label>
+                      <Input value={variant.path || variant.fileName || ""} readOnly />
+                    </div>
+                  ))}
+                </div>
               </div>
               <div>
                 <label className="text-xs text-muted-foreground">Pull quote</label>
@@ -696,6 +800,37 @@ const AdminFounders = () => {
           </Button>
         )}
       </div>
+
+      <MediaUploadModal
+        open={uploadTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setUploadTarget(null);
+        }}
+        onUploaded={(result: MediaUploadResult) => {
+          if (uploadTarget === null) return;
+          const { idx, field } = uploadTarget;
+          const prevVariants = field === "image" ? items[idx]?.variants || [] : items[idx]?.detail?.heroVariants || [];
+          const prevPaths = prevVariants.map((v) => v.path || v.fileName).filter(Boolean) as string[];
+          const mainVariant = result.variants.find((v) => v.key === "main") ?? result.variants[0];
+          const imagePath = mainVariant?.path || mainVariant?.fileName || items[idx]?.image;
+          if (field === "image") {
+            updateItem(idx, "image", imagePath);
+            setItems((prev) => {
+              const next = [...prev];
+              next[idx] = { ...next[idx], variants: result.variants };
+              return next;
+            });
+          } else {
+            setItems((prev) => {
+              const next = [...prev];
+              next[idx] = { ...next[idx], detail: { ...next[idx].detail, heroImage: imagePath, heroVariants: result.variants } };
+              return next;
+            });
+          }
+          setPendingDeletes((prev) => [...prev, ...prevPaths]);
+          setUploadTarget(null);
+        }}
+      />
     </AdminLayout>
   );
 };

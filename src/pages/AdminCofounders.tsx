@@ -8,11 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, CheckCircle2, Plus, Save, Trash2, Search } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import MediaUploadModal, { type MediaUploadResult } from "@/components/admin/MediaUploadModal";
 
 type CofounderDetail = {
   headline?: string;
   summary?: string;
   heroImage?: string;
+  heroVariants?: { key: string; path?: string; fileName?: string; format?: string; width?: number; height?: number; size?: number }[];
   highlights?: { title: string; body: string }[];
   metrics?: { label: string; value: string }[];
   pullQuote?: string;
@@ -27,6 +29,7 @@ type CofounderItem = {
   title: string;
   focus: string;
   image: string;
+  variants?: { key: string; path?: string; fileName?: string; format?: string; width?: number; height?: number; size?: number }[];
   highlight: string;
   href?: string;
   social?: { linkedin?: string; twitter?: string; website?: string };
@@ -73,6 +76,31 @@ const AdminCofounders = () => {
   const [tracks, setTracks] = useState<string[]>(["All"]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
+  const [uploadTarget, setUploadTarget] = useState<{ idx: number; field: "image" | "hero" } | null>(null);
+  const [pendingDeletes, setPendingDeletes] = useState<string[]>([]);
+
+  const defaultVariants = [
+    { key: "main", path: "" },
+    { key: "medium", path: "" },
+    { key: "thumb", path: "" },
+  ];
+
+  const normalizeItem = (item: CofounderItem): CofounderItem => ({
+    ...item,
+    variants:
+      item.variants && item.variants.length
+        ? item.variants
+        : defaultVariants.map((v) => ({ ...v, path: v.key === "main" ? item.image ?? "" : "" })),
+    detail: item.detail
+      ? {
+          ...item.detail,
+          heroVariants:
+            item.detail.heroVariants && item.detail.heroVariants.length
+              ? item.detail.heroVariants
+              : defaultVariants.map((v) => ({ ...v, path: v.key === "main" ? item.detail?.heroImage ?? "" : "" })),
+        }
+      : undefined,
+  });
 
   const load = async (reset = true) => {
     const base = import.meta.env.VITE_API_BASE_URL || "";
@@ -87,7 +115,7 @@ const AdminCofounders = () => {
       const res = await fetch(`${base}/cofounders/list?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to load co-founders");
       const data = (await res.json()) as CofoundersResponse;
-      const next = data.data || [];
+      const next = (data.data || []).map(normalizeItem);
       if (reset) {
         setItems(next);
       } else {
@@ -130,8 +158,7 @@ const AdminCofounders = () => {
 
   const addItem = () =>
     setItems((prev) => [
-      ...prev,
-      {
+      normalizeItem({
         id: createId(),
         name: "",
         track: "IGE",
@@ -141,7 +168,8 @@ const AdminCofounders = () => {
         highlight: "",
         href: "",
         detail: {},
-      },
+      }),
+      ...prev,
     ]);
 
   const removeItem = (idx: number) => setItems((prev) => prev.filter((_, i) => i !== idx));
@@ -337,6 +365,19 @@ const AdminCofounders = () => {
         return;
       }
       for (const item of items) {
+        const cleanedVariants =
+          item.variants
+            ?.map((v) => ({ ...v, path: (v.path || v.fileName || "").trim(), fileName: (v.fileName || "").trim() }))
+            .filter((v) => v.path || v.fileName) ?? [];
+        const cleanedHeroVariants =
+          item.detail?.heroVariants
+            ?.map((v) => ({ ...v, path: (v.path || v.fileName || "").trim(), fileName: (v.fileName || "").trim() }))
+            .filter((v) => v.path || v.fileName) ?? [];
+        const payload = {
+          ...item,
+          variants: cleanedVariants,
+          detail: item.detail ? { ...item.detail, heroVariants: cleanedHeroVariants } : undefined,
+        };
         const attempt = async (authToken: string) =>
           fetch(`${base}/cofounders/${item.id}`, {
             method: "PUT",
@@ -344,7 +385,7 @@ const AdminCofounders = () => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${authToken}`,
             },
-            body: JSON.stringify(item),
+            body: JSON.stringify(payload),
           });
         let res = await attempt(token);
         if (res.status === 401) {
@@ -356,6 +397,14 @@ const AdminCofounders = () => {
           const data = await res.json().catch(() => ({}));
           throw new Error(data.message || "Save failed");
         }
+      }
+      if (pendingDeletes.length) {
+        const resDelete = await fetch(`${base}/media/delete`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ paths: Array.from(new Set(pendingDeletes)), reason: "cofounder-image-replace" }),
+        });
+        if (resDelete.ok) setPendingDeletes([]);
       }
       setSuccess("Co-founders saved");
     } catch (err: any) {
@@ -469,7 +518,7 @@ const AdminCofounders = () => {
       </div>
 
       <div className="rounded-xl border border-border/60 bg-card/70 p-4 flex flex-col gap-3">
-        <div className="flex flex-col md:flex-row gap-3 items-start md:items-center">
+        <div className="flex flex-col md:flex-row md:flex-wrap gap-3 items-start md:items-center">
           <div className="relative w-full md:max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -480,7 +529,7 @@ const AdminCofounders = () => {
             />
           </div>
           <Select value={track} onValueChange={(v) => setTrack(v)}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-full md:w-[200px]">
               <SelectValue placeholder="Track" />
             </SelectTrigger>
             <SelectContent>
@@ -549,14 +598,34 @@ const AdminCofounders = () => {
                 </div>
               </div>
               <div>
-                <label className="text-xs text-muted-foreground">Highlight</label>
-                <Input value={item.highlight} onChange={(e) => updateItem(idx, "highlight", e.target.value)} placeholder="Signature achievement" />
+              <label className="text-xs text-muted-foreground">Highlight</label>
+              <Input value={item.highlight} onChange={(e) => updateItem(idx, "highlight", e.target.value)} placeholder="Signature achievement" />
+            </div>
+              <div>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs text-muted-foreground">Image</label>
+                  <Button variant="secondary" size="sm" onClick={() => setUploadTarget({ idx, field: "image" })}>
+                    Upload
+                  </Button>
+                </div>
+                <Input value={item.image} readOnly placeholder="Upload to fill automatically" />
+                <div className="grid md:grid-cols-3 gap-2 mt-2">
+                  {(item.variants ?? []).map((variant, vIdx) => (
+                    <div key={`${variant.key}-${vIdx}`} className="space-y-1">
+                      <label className="text-xs text-muted-foreground flex items-center gap-2">
+                        <Badge variant="secondary">{variant.key}</Badge>
+                        <span>Path</span>
+                      </label>
+                      <Input value={variant.path || variant.fileName || ""} readOnly />
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="grid md:grid-cols-3 gap-3">
-                <div>
-                  <label className="text-xs text-muted-foreground">LinkedIn</label>
-                  <Input
-                    value={item.social?.linkedin || ""}
+            <div className="grid md:grid-cols-3 gap-3">
+              <div>
+                <label className="text-xs text-muted-foreground">LinkedIn</label>
+                <Input
+                  value={item.social?.linkedin || ""}
                     onChange={(e) => updateItem(idx, "social", { ...item.social, linkedin: e.target.value })}
                     placeholder="https://linkedin.com/in/..."
                   />
@@ -599,14 +668,26 @@ const AdminCofounders = () => {
                     placeholder="Profile intro"
                   />
                 </div>
-              </div>
+            </div>
               <div>
-                <label className="text-xs text-muted-foreground">Hero image</label>
-                <Input
-                  value={item.detail?.heroImage || ""}
-                  onChange={(e) => updateDetail(idx, "heroImage", e.target.value)}
-                  placeholder="https://..."
-                />
+                <div className="flex items-center justify-between">
+                  <label className="text-xs text-muted-foreground">Hero image</label>
+                  <Button variant="secondary" size="sm" onClick={() => setUploadTarget({ idx, field: "hero" })}>
+                    Upload
+                  </Button>
+                </div>
+                <Input value={item.detail?.heroImage || ""} readOnly placeholder="Upload to fill automatically" />
+                <div className="grid md:grid-cols-3 gap-2 mt-2">
+                  {(item.detail?.heroVariants ?? []).map((variant, vIdx) => (
+                    <div key={`${variant.key}-${vIdx}`} className="space-y-1">
+                      <label className="text-xs text-muted-foreground flex items-center gap-2">
+                        <Badge variant="secondary">{variant.key}</Badge>
+                        <span>Path</span>
+                      </label>
+                      <Input value={variant.path || variant.fileName || ""} readOnly />
+                    </div>
+                  ))}
+                </div>
               </div>
               <div>
                 <label className="text-xs text-muted-foreground">Pull quote</label>
@@ -696,6 +777,37 @@ const AdminCofounders = () => {
           </Button>
         )}
       </div>
+
+      <MediaUploadModal
+        open={uploadTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setUploadTarget(null);
+        }}
+        onUploaded={(result: MediaUploadResult) => {
+          if (uploadTarget === null) return;
+          const { idx, field } = uploadTarget;
+          const prevVariants = field === "image" ? items[idx]?.variants || [] : items[idx]?.detail?.heroVariants || [];
+          const prevPaths = prevVariants.map((v) => v.path || v.fileName).filter(Boolean) as string[];
+          const mainVariant = result.variants.find((v) => v.key === "main") ?? result.variants[0];
+          const imagePath = mainVariant?.path || mainVariant?.fileName || items[idx]?.image;
+          if (field === "image") {
+            updateItem(idx, "image", imagePath);
+            setItems((prev) => {
+              const next = [...prev];
+              next[idx] = { ...next[idx], variants: result.variants };
+              return next;
+            });
+          } else {
+            setItems((prev) => {
+              const next = [...prev];
+              next[idx] = { ...next[idx], detail: { ...next[idx].detail, heroImage: imagePath, heroVariants: result.variants } };
+              return next;
+            });
+          }
+          setPendingDeletes((prev) => [...prev, ...prevPaths]);
+          setUploadTarget(null);
+        }}
+      />
     </AdminLayout>
   );
 };

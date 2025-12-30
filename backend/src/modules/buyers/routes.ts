@@ -11,13 +11,39 @@ const buyerSchema = z.object({
   quote: z.string().default(""),
   spend: z.string().default(""),
   visits: z.string().default(""),
-  image: z.string().url(),
+  image: z.string().min(1),
+  variants: z
+    .array(
+      z.object({
+        key: z.string().min(1),
+        path: z.string().min(1),
+        fileName: z.string().optional(),
+        format: z.string().optional(),
+        width: z.number().optional(),
+        height: z.number().optional(),
+        size: z.number().optional(),
+      })
+    )
+    .optional(),
   href: z.string().default(""),
   detail: z
     .object({
       headline: z.string().optional(),
       summary: z.string().optional(),
-      heroImage: z.string().url().optional(),
+      heroImage: z.string().optional(),
+      heroVariants: z
+        .array(
+          z.object({
+            key: z.string().min(1),
+            path: z.string().min(1),
+            fileName: z.string().optional(),
+            format: z.string().optional(),
+            width: z.number().optional(),
+            height: z.number().optional(),
+            size: z.number().optional(),
+          })
+        )
+        .optional(),
       highlights: z
         .array(z.object({ title: z.string(), body: z.string() }))
         .default([]),
@@ -59,6 +85,7 @@ const listQuerySchema = z.object({
   search: z.string().optional(),
   city: z.string().optional(),
   segment: z.string().optional(),
+  sort: z.enum(["newest", "oldest"]).optional(),
 });
 
 export default async function buyersRoutes(app: FastifyInstance) {
@@ -118,15 +145,16 @@ export default async function buyersRoutes(app: FastifyInstance) {
     }
     if (query.city) filter.city = query.city;
     if (query.segment) filter.segment = query.segment;
+    const sortOrder = query.sort === "oldest" ? 1 : -1;
     if (query.cursor) {
       try {
-        filter._id = { $gt: new ObjectId(query.cursor) };
+        filter._id = sortOrder === -1 ? { $lt: new ObjectId(query.cursor) } : { $gt: new ObjectId(query.cursor) };
       } catch {
         // ignore bad cursor
       }
     }
     const limit = Math.min(Math.max(query.limit ?? 24, 1), 200);
-    const data = await col.find(filter).sort({ _id: 1 }).limit(limit).toArray();
+    const data = await col.find(filter).sort({ _id: sortOrder }).limit(limit).toArray();
     const next = data.length === limit ? data[data.length - 1]._id?.toString() : null;
     const cities = await col.distinct("city");
     const segments = await col.distinct("segment");

@@ -6,13 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, CheckCircle2, Plus, Save, Trash2, Search } from "lucide-react";
+import { AlertCircle, CheckCircle2, Plus, Save, Trash2, Search, ChevronDown } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import MediaUploadModal, { type MediaUploadResult } from "@/components/admin/MediaUploadModal";
 
 type SellerDetail = {
   headline?: string;
   summary?: string;
   heroImage?: string;
+  heroVariants?: { key: string; path?: string; fileName?: string; format?: string; width?: number; height?: number; size?: number }[];
   highlights?: { title: string; body: string }[];
   metrics?: { label: string; value: string }[];
   pullQuote?: string;
@@ -28,6 +30,7 @@ type SellerItem = {
   quote: string;
   outcome: string;
   image: string;
+  variants?: { key: string; path?: string; fileName?: string; format?: string; width?: number; height?: number; size?: number }[];
   href?: string;
   detail?: SellerDetail;
 };
@@ -35,7 +38,7 @@ type SellerItem = {
 type SellersResponse = {
   data: SellerItem[];
   cursor?: { next: string | null; limit: number };
-  filters?: { companies?: string[] };
+  filters?: { companies?: string[]; roles?: string[] };
 };
 
 const PAGE_LIMIT = 24;
@@ -61,38 +64,90 @@ const AdminSellers = () => {
   const [copy, setCopy] = useState(defaultCopy);
   const [savingCopy, setSavingCopy] = useState(false);
   const [company, setCompany] = useState<string>("All");
+  const [role, setRole] = useState<string>("All");
+  const [sort, setSort] = useState<"newest" | "oldest">("newest");
+  const [pageSize, setPageSize] = useState<number>(PAGE_LIMIT);
   const [search, setSearch] = useState("");
   const [companies, setCompanies] = useState<string[]>(["All"]);
-  const [cursor, setCursor] = useState<string | null>(null);
+  const [roles, setRoles] = useState<string[]>(["All"]);
+  const [currentCursor, setCurrentCursor] = useState<string | null>(null);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [prevCursors, setPrevCursors] = useState<string[]>([]);
   const [hasMore, setHasMore] = useState(false);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [uploadTarget, setUploadTarget] = useState<{ idx: number; field: "image" | "hero" } | null>(null);
+  const [pendingDeletes, setPendingDeletes] = useState<string[]>([]);
+  const [originalMap, setOriginalMap] = useState<Record<string, string>>({});
 
-  const load = async (reset = true) => {
+  const defaultVariants = [
+    { key: "main", path: "" },
+    { key: "medium", path: "" },
+    { key: "thumb", path: "" },
+  ];
+
+  const normalizeItem = (item: SellerItem): SellerItem => ({
+    ...item,
+    variants:
+      item.variants && item.variants.length
+        ? item.variants
+        : defaultVariants.map((v) => ({ ...v, path: v.key === "main" ? item.image ?? "" : "" })),
+    detail: item.detail
+      ? {
+          ...item.detail,
+          heroVariants:
+            item.detail.heroVariants && item.detail.heroVariants.length
+              ? item.detail.heroVariants
+              : defaultVariants.map((v) => ({ ...v, path: v.key === "main" ? item.detail?.heroImage ?? "" : "" })),
+        }
+      : undefined,
+  });
+
+  const load = async (mode: "reset" | "next" | "prev" = "reset", cursorOverride?: string | null, prevStackOverride?: string[]) => {
     const base = import.meta.env.VITE_API_BASE_URL || "";
     setLoading(true);
     setError("");
     const params = new URLSearchParams();
-    params.set("limit", String(PAGE_LIMIT));
-    if (!reset && cursor) params.set("cursor", cursor);
+    params.set("limit", String(pageSize));
+    let cursorParam: string | null = null;
+    if (mode === "next") cursorParam = cursorOverride ?? nextCursor;
+    if (mode === "prev") cursorParam = cursorOverride ?? null;
+    if (cursorParam) params.set("cursor", cursorParam);
     if (company !== "All") params.set("company", company);
+    if (role !== "All") params.set("role", role);
+    params.set("sort", sort);
     if (search.trim()) params.set("search", search.trim());
     try {
       const res = await fetch(`${base}/sellers/list?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to load sellers");
       const data = (await res.json()) as SellersResponse;
-      const next = data.data || [];
-      if (reset) {
-        setItems(next);
-      } else {
-        setItems((prev) => [...prev, ...next]);
+      const next = (data.data || []).map(normalizeItem);
+      setItems(next);
+      const expandMap: Record<string, boolean> = {};
+      next.forEach((s) => {
+        expandMap[s.id] = false;
+      });
+      setExpanded(expandMap);
+      const snapshotMap: Record<string, string> = {};
+      next.forEach((s) => (snapshotMap[s.id] = JSON.stringify(s)));
+      setOriginalMap(snapshotMap);
+      if (mode === "reset") {
+        setPrevCursors([]);
+      } else if (mode === "next") {
+        setPrevCursors((prev) => [...prev, currentCursor ?? ""]);
+      } else if (mode === "prev" && prevStackOverride) {
+        setPrevCursors(prevStackOverride);
       }
+      setCurrentCursor(cursorParam ?? null);
+      setNextCursor(data.cursor?.next ?? null);
       setCompanies(["All", ...(data.filters?.companies || [])]);
-      setCursor(data.cursor?.next ?? null);
+      setRoles(["All", ...(data.filters?.roles || [])]);
       setHasMore(Boolean(data.cursor?.next));
     } catch (err: any) {
       setError(err.message || "Unable to load sellers");
-      if (reset) {
+      if (mode === "reset") {
         setItems([]);
         setCompanies(["All"]);
+        setRoles(["All"]);
       }
     } finally {
       setLoading(false);
@@ -101,17 +156,17 @@ const AdminSellers = () => {
 
   useEffect(() => {
     const run = async () => {
-      await Promise.all([loadCopy(), load(true)]);
+      await Promise.all([loadCopy(), load("reset")]);
     };
     run();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    const debounce = setTimeout(() => load(true), 200);
+    const debounce = setTimeout(() => load("reset"), 200);
     return () => clearTimeout(debounce);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [company, search]);
+  }, [company, role, sort, search, pageSize]);
 
   const updateItem = (idx: number, key: keyof SellerItem, value: any) =>
     setItems((prev) => {
@@ -121,9 +176,8 @@ const AdminSellers = () => {
     });
 
   const addItem = () =>
-    setItems((prev) => [
-      ...prev,
-      {
+    setItems((prev) => {
+      const nextItem = normalizeItem({
         id: createId(),
         name: "",
         role: "",
@@ -132,9 +186,11 @@ const AdminSellers = () => {
         outcome: "",
         image: "",
         href: "",
-        detail: {},
-      },
-    ]);
+        detail: { heroImage: "" },
+      });
+      setExpanded((prevExp) => ({ ...prevExp, [nextItem.id]: true }));
+      return [nextItem, ...prev];
+    });
 
   const removeItem = (idx: number) => setItems((prev) => prev.filter((_, i) => i !== idx));
 
@@ -152,6 +208,13 @@ const AdminSellers = () => {
       next[idx] = { ...next[idx], detail: { ...detail, highlights: [...(detail.highlights || []), { title: "", body: "" }] } };
       return next;
     });
+
+  useEffect(() => {
+    if (items.length) {
+      setExpanded((prev) => ({ ...prev, [items[0].id]: prev[items[0].id] ?? true }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items.length]);
 
   const updateHighlight = (idx: number, hIdx: number, key: "title" | "body", value: string) =>
     setItems((prev) => {
@@ -283,7 +346,31 @@ const AdminSellers = () => {
         setError("Not authenticated.");
         return;
       }
-      for (const item of items) {
+      const serialize = (item: SellerItem) => JSON.stringify(item);
+      const changedItems = items.filter((item) => {
+        const snapshot = originalMap[item.id];
+        return !snapshot || snapshot !== serialize(normalizeItem(item));
+      });
+
+      if (!changedItems.length) {
+        setSuccess("No changes to save");
+        return;
+      }
+
+      for (const item of changedItems) {
+        const cleanedVariants =
+          item.variants
+            ?.map((v) => ({ ...v, path: (v.path || v.fileName || "").trim(), fileName: (v.fileName || "").trim() }))
+            .filter((v) => v.path || v.fileName) ?? [];
+        const cleanedHeroVariants =
+          item.detail?.heroVariants
+            ?.map((v) => ({ ...v, path: (v.path || v.fileName || "").trim(), fileName: (v.fileName || "").trim() }))
+            .filter((v) => v.path || v.fileName) ?? [];
+        const payload = {
+          ...item,
+          variants: cleanedVariants,
+          detail: item.detail ? { ...item.detail, heroVariants: cleanedHeroVariants } : undefined,
+        };
         const attempt = async (authToken: string) =>
           fetch(`${base}/sellers/${item.id}`, {
             method: "PUT",
@@ -291,7 +378,7 @@ const AdminSellers = () => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${authToken}`,
             },
-            body: JSON.stringify(item),
+            body: JSON.stringify(payload),
           });
         let res = await attempt(token);
         if (res.status === 401) {
@@ -303,6 +390,24 @@ const AdminSellers = () => {
           const data = await res.json().catch(() => ({}));
           throw new Error(data.message || "Save failed");
         }
+        setOriginalMap((prev) => ({
+          ...prev,
+          [item.id]: serialize(
+            normalizeItem({
+              ...item,
+              variants: cleanedVariants,
+              detail: item.detail ? { ...item.detail, heroVariants: cleanedHeroVariants } : undefined,
+            })
+          ),
+        }));
+      }
+      if (pendingDeletes.length) {
+        const resDelete = await fetch(`${base}/media/delete`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ paths: Array.from(new Set(pendingDeletes)), reason: "seller-image-replace" }),
+        });
+        if (resDelete.ok) setPendingDeletes([]);
       }
       setSuccess("Sellers saved");
     } catch (err: any) {
@@ -390,7 +495,7 @@ const AdminSellers = () => {
       </div>
 
       <div className="rounded-xl border border-border/60 bg-card/70 p-4 flex flex-col gap-3">
-        <div className="flex flex-col md:flex-row gap-3 items-start md:items-center">
+        <div className="flex flex-col md:flex-row md:flex-wrap gap-3 items-start md:items-center">
           <div className="relative w-full md:max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -401,13 +506,46 @@ const AdminSellers = () => {
             />
           </div>
           <Select value={company} onValueChange={(v) => setCompany(v)}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-full md:w-[200px]">
               <SelectValue placeholder="Company" />
             </SelectTrigger>
             <SelectContent>
               {companies.map((c) => (
                 <SelectItem key={c} value={c}>
                   {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={role} onValueChange={(v) => setRole(v)}>
+            <SelectTrigger className="w-full md:w-[200px]">
+              <SelectValue placeholder="Role" />
+            </SelectTrigger>
+            <SelectContent>
+              {roles.map((r) => (
+                <SelectItem key={r} value={r}>
+                  {r}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={sort} onValueChange={(v: "newest" | "oldest") => setSort(v)}>
+            <SelectTrigger className="w-full md:w-[160px]">
+              <SelectValue placeholder="Sort" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Newest first</SelectItem>
+              <SelectItem value="oldest">Oldest first</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+            <SelectTrigger className="w-full md:w-[140px]">
+              <SelectValue placeholder="Page size" />
+            </SelectTrigger>
+            <SelectContent>
+              {[12, 24, 48, 96].map((size) => (
+                <SelectItem key={size} value={String(size)}>
+                  {size} / page
                 </SelectItem>
               ))}
             </SelectContent>
@@ -421,7 +559,7 @@ const AdminSellers = () => {
               <Save className="w-4 h-4 mr-2" />
               {saving ? "Saving..." : "Save"}
             </Button>
-            <Button variant="outline" onClick={() => load(true)} disabled={loading}>
+            <Button variant="outline" onClick={() => load("reset")} disabled={loading}>
               Refresh
             </Button>
           </div>
@@ -432,19 +570,30 @@ const AdminSellers = () => {
         {items.map((item, idx) => (
           <Card key={item.id} className="bg-card/80 border-border/70">
             <CardHeader className="flex flex-row items-center justify-between">
-              <div className="space-y-1">
-                <CardTitle>{item.name || "New seller"}</CardTitle>
-                <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                  {item.company && <Badge variant="secondary">{item.company}</Badge>}
-                  {item.role && <Badge variant="outline">{item.role}</Badge>}
-                  {item.outcome && <Badge>{item.outcome}</Badge>}
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setExpanded((prev) => ({ ...prev, [item.id]: !(prev[item.id] ?? false) }))}
+                  aria-label="Toggle details"
+                >
+                  <ChevronDown className={`w-4 h-4 transition-transform ${expanded[item.id] ? "rotate-180" : ""}`} />
+                </Button>
+                <div className="space-y-1">
+                  <CardTitle>{item.name || "New seller"}</CardTitle>
+                  <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                    {item.company && <Badge variant="secondary">{item.company}</Badge>}
+                    {item.role && <Badge variant="outline">{item.role}</Badge>}
+                    {item.outcome && <Badge>{item.outcome}</Badge>}
+                  </div>
                 </div>
               </div>
               <Button variant="ghost" size="icon" onClick={() => deleteItem(item.id)}>
                 <Trash2 className="w-4 h-4" />
               </Button>
             </CardHeader>
-            <CardContent className="space-y-3">
+            {expanded[item.id] && (
+              <CardContent className="space-y-3">
               <div className="grid md:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-muted-foreground">ID</label>
@@ -474,8 +623,24 @@ const AdminSellers = () => {
                 <Input value={item.quote} onChange={(e) => updateItem(idx, "quote", e.target.value)} placeholder="Lead capture and demos..." />
               </div>
               <div>
-                <label className="text-xs text-muted-foreground">Image URL</label>
-                <Input value={item.image} onChange={(e) => updateItem(idx, "image", e.target.value)} placeholder="https://..." />
+                <div className="flex items-center justify-between">
+                  <label className="text-xs text-muted-foreground">Image</label>
+                  <Button variant="secondary" size="sm" onClick={() => setUploadTarget({ idx, field: "image" })}>
+                    Upload
+                  </Button>
+                </div>
+                <Input value={item.image} readOnly placeholder="Upload to fill automatically" />
+                <div className="grid md:grid-cols-3 gap-2 mt-2">
+                  {(item.variants ?? []).map((variant, vIdx) => (
+                    <div key={`${variant.key}-${vIdx}`} className="space-y-1">
+                      <label className="text-xs text-muted-foreground flex items-center gap-2">
+                        <Badge variant="secondary">{variant.key}</Badge>
+                        <span>Path</span>
+                      </label>
+                      <Input value={variant.path || variant.fileName || ""} readOnly />
+                    </div>
+                  ))}
+                </div>
               </div>
               <div>
                 <label className="text-xs text-muted-foreground">Detail headline</label>
@@ -495,12 +660,24 @@ const AdminSellers = () => {
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground">Hero image</label>
-                  <Input
-                    value={item.detail?.heroImage || ""}
-                    onChange={(e) => updateDetail(idx, "heroImage", e.target.value)}
-                    placeholder="https://..."
-                  />
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs text-muted-foreground">Hero image</label>
+                    <Button variant="secondary" size="sm" onClick={() => setUploadTarget({ idx, field: "hero" })}>
+                      Upload
+                    </Button>
+                  </div>
+                  <Input value={item.detail?.heroImage || ""} readOnly placeholder="Upload to fill automatically" />
+                  <div className="grid md:grid-cols-3 gap-2 mt-2">
+                    {(item.detail?.heroVariants ?? []).map((variant, vIdx) => (
+                      <div key={`${variant.key}-${vIdx}`} className="space-y-1">
+                        <label className="text-xs text-muted-foreground flex items-center gap-2">
+                          <Badge variant="secondary">{variant.key}</Badge>
+                          <span>Path</span>
+                        </label>
+                        <Input value={variant.path || variant.fileName || ""} readOnly />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
               <div>
@@ -581,11 +758,59 @@ const AdminSellers = () => {
                   </div>
                 ))}
               </div>
-            </CardContent>
+              </CardContent>
+            )}
           </Card>
         ))}
         {!items.length && <p className="text-sm text-muted-foreground">No sellers yet. Add your first seller to begin.</p>}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              const prev = prevCursors[prevCursors.length - 1] ?? null;
+              if (!prevCursors.length) return;
+              load("prev", prev, prevCursors.slice(0, -1));
+            }}
+            disabled={loading || !prevCursors.length}
+          >
+            Previous
+          </Button>
+          <Button variant="outline" onClick={() => load("next")} disabled={loading || !nextCursor}>
+            Next
+          </Button>
+          {hasMore && <span className="text-xs text-muted-foreground">More pages available</span>}
+        </div>
       </div>
+
+      <MediaUploadModal
+        open={uploadTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setUploadTarget(null);
+        }}
+        onUploaded={(result: MediaUploadResult) => {
+          if (uploadTarget === null) return;
+          const { idx, field } = uploadTarget;
+          const prevVariants = field === "image" ? items[idx]?.variants || [] : items[idx]?.detail?.heroVariants || [];
+          const prevPaths = prevVariants.map((v) => v.path || v.fileName).filter(Boolean) as string[];
+          const mainVariant = result.variants.find((v) => v.key === "main") ?? result.variants[0];
+          const imagePath = mainVariant?.path || mainVariant?.fileName || items[idx]?.image;
+          if (field === "image") {
+            setItems((prev) => {
+              const next = [...prev];
+              next[idx] = { ...next[idx], image: imagePath, variants: result.variants };
+              return next;
+            });
+          } else {
+            setItems((prev) => {
+              const next = [...prev];
+              next[idx] = { ...next[idx], detail: { ...next[idx].detail, heroImage: imagePath, heroVariants: result.variants } };
+              return next;
+            });
+          }
+          setPendingDeletes((prev) => [...prev, ...prevPaths]);
+          setUploadTarget(null);
+        }}
+      />
     </AdminLayout>
   );
 };

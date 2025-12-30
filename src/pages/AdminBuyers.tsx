@@ -6,13 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, CheckCircle2, Plus, Save, Trash2, Search } from "lucide-react";
+import { AlertCircle, CheckCircle2, Plus, Save, Trash2, Search, ChevronDown } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import MediaUploadModal, { type MediaUploadResult } from "@/components/admin/MediaUploadModal";
 
 type BuyerDetail = {
   headline?: string;
   summary?: string;
   heroImage?: string;
+  heroVariants?: { key: string; path?: string; fileName?: string; format?: string; width?: number; height?: number; size?: number }[];
   highlights?: { title: string; body: string }[];
   metrics?: { label: string; value: string }[];
   pullQuote?: string;
@@ -29,6 +31,7 @@ type BuyerItem = {
   spend: string;
   visits: string;
   image: string;
+  variants?: { key: string; path?: string; fileName?: string; format?: string; width?: number; height?: number; size?: number }[];
   href?: string;
   detail?: BuyerDetail;
 };
@@ -66,36 +69,85 @@ const AdminBuyers = () => {
   const [search, setSearch] = useState("");
   const [cities, setCities] = useState<string[]>(["All"]);
   const [segments, setSegments] = useState<string[]>(["All"]);
-  const [cursor, setCursor] = useState<string | null>(null);
+  const [sort, setSort] = useState<"newest" | "oldest">("newest");
+  const [pageSize, setPageSize] = useState<number>(PAGE_LIMIT);
+  const [currentCursor, setCurrentCursor] = useState<string | null>(null);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [prevCursors, setPrevCursors] = useState<string[]>([]);
   const [hasMore, setHasMore] = useState(false);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [uploadTarget, setUploadTarget] = useState<{ idx: number; field: "image" | "hero" } | null>(null);
+  const [pendingDeletes, setPendingDeletes] = useState<string[]>([]);
+  const [originalMap, setOriginalMap] = useState<Record<string, string>>({});
 
-  const load = async (reset = true) => {
+  const defaultVariants = [
+    { key: "main", path: "" },
+    { key: "medium", path: "" },
+    { key: "thumb", path: "" },
+  ];
+
+  const normalizeItem = (item: BuyerItem): BuyerItem => ({
+    ...item,
+    variants:
+      item.variants && item.variants.length
+        ? item.variants
+        : defaultVariants.map((v) => ({ ...v, path: v.key === "main" ? item.image ?? "" : "" })),
+    detail: item.detail
+      ? {
+          ...item.detail,
+          heroVariants:
+            item.detail.heroVariants && item.detail.heroVariants.length
+              ? item.detail.heroVariants
+              : defaultVariants.map((v) => ({ ...v, path: v.key === "main" ? item.detail?.heroImage ?? "" : "" })),
+        }
+      : undefined,
+  });
+
+  const load = async (mode: "reset" | "next" | "prev" = "reset", cursorOverride?: string | null, prevStackOverride?: string[]) => {
     const base = import.meta.env.VITE_API_BASE_URL || "";
     setLoading(true);
     setError("");
     const params = new URLSearchParams();
-    params.set("limit", String(PAGE_LIMIT));
-    if (!reset && cursor) params.set("cursor", cursor);
+    params.set("limit", String(pageSize));
+    let cursorParam: string | null = null;
+    if (mode === "next") cursorParam = cursorOverride ?? nextCursor;
+    if (mode === "prev") cursorParam = cursorOverride ?? null;
+    if (cursorParam) params.set("cursor", cursorParam);
     if (city !== "All") params.set("city", city);
     if (segment !== "All") params.set("segment", segment);
+    params.set("sort", sort);
     if (search.trim()) params.set("search", search.trim());
     try {
       const res = await fetch(`${base}/buyers/list?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to load buyers");
       const data = (await res.json()) as BuyersResponse;
-      const next = data.data || [];
-      if (reset) {
-        setItems(next);
-      } else {
-        setItems((prev) => [...prev, ...next]);
+      const next = (data.data || []).map(normalizeItem);
+      setItems(next);
+      const expandMap: Record<string, boolean> = {};
+      next.forEach((b) => {
+        expandMap[b.id] = false;
+      });
+      setExpanded(expandMap);
+      const snapshotMap: Record<string, string> = {};
+      next.forEach((b) => {
+        snapshotMap[b.id] = JSON.stringify(b);
+      });
+      setOriginalMap(snapshotMap);
+      if (mode === "reset") {
+        setPrevCursors([]);
+      } else if (mode === "next") {
+        setPrevCursors((prev) => [...prev, currentCursor ?? ""]);
+      } else if (mode === "prev" && prevStackOverride) {
+        setPrevCursors(prevStackOverride);
       }
+      setCurrentCursor(cursorParam ?? null);
+      setNextCursor(data.cursor?.next ?? null);
       setCities(["All", ...(data.filters?.cities || [])]);
       setSegments(["All", ...(data.filters?.segments || [])]);
-      setCursor(data.cursor?.next ?? null);
       setHasMore(Boolean(data.cursor?.next));
     } catch (err: any) {
       setError(err.message || "Unable to load buyers");
-      if (reset) {
+      if (mode === "reset") {
         setItems([]);
         setCities(["All"]);
         setSegments(["All"]);
@@ -107,17 +159,17 @@ const AdminBuyers = () => {
 
   useEffect(() => {
     const run = async () => {
-      await Promise.all([loadHero(), load(true)]);
+      await Promise.all([loadHero(), load("reset")]);
     };
     run();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    const debounce = setTimeout(() => load(true), 200);
+    const debounce = setTimeout(() => load("reset"), 200);
     return () => clearTimeout(debounce);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [city, segment, search]);
+  }, [city, segment, sort, search, pageSize]);
 
   const updateItem = (idx: number, key: keyof BuyerItem, value: any) =>
     setItems((prev) => {
@@ -127,9 +179,8 @@ const AdminBuyers = () => {
     });
 
   const addItem = () =>
-    setItems((prev) => [
-      ...prev,
-      {
+    setItems((prev) => {
+      const nextItem = normalizeItem({
         id: createId(),
         name: "",
         city: "",
@@ -140,8 +191,10 @@ const AdminBuyers = () => {
         image: "",
         href: "",
         detail: {},
-      },
-    ]);
+      });
+      setExpanded((prevExp) => ({ ...prevExp, [nextItem.id]: true }));
+      return [nextItem, ...prev];
+    });
 
   const removeItem = (idx: number) => setItems((prev) => prev.filter((_, i) => i !== idx));
 
@@ -290,7 +343,31 @@ const AdminBuyers = () => {
         setError("Not authenticated.");
         return;
       }
-      for (const item of items) {
+      const serialize = (item: BuyerItem) => JSON.stringify(item);
+      const changedItems = items.filter((item) => {
+        const snapshot = originalMap[item.id];
+        return !snapshot || snapshot !== serialize(normalizeItem(item));
+      });
+
+      if (!changedItems.length) {
+        setSuccess("No changes to save");
+        return;
+      }
+
+      for (const item of changedItems) {
+        const cleanedVariants =
+          item.variants
+            ?.map((v) => ({ ...v, path: (v.path || v.fileName || "").trim(), fileName: (v.fileName || "").trim() }))
+            .filter((v) => v.path || v.fileName) ?? [];
+        const cleanedHeroVariants =
+          item.detail?.heroVariants
+            ?.map((v) => ({ ...v, path: (v.path || v.fileName || "").trim(), fileName: (v.fileName || "").trim() }))
+            .filter((v) => v.path || v.fileName) ?? [];
+        const payload = {
+          ...item,
+          variants: cleanedVariants,
+          detail: item.detail ? { ...item.detail, heroVariants: cleanedHeroVariants } : undefined,
+        };
         const attempt = async (authToken: string) =>
           fetch(`${base}/buyers/${item.id}`, {
             method: "PUT",
@@ -298,7 +375,7 @@ const AdminBuyers = () => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${authToken}`,
             },
-            body: JSON.stringify(item),
+            body: JSON.stringify(payload),
           });
         let res = await attempt(token);
         if (res.status === 401) {
@@ -310,6 +387,24 @@ const AdminBuyers = () => {
           const data = await res.json().catch(() => ({}));
           throw new Error(data.message || "Save failed");
         }
+        setOriginalMap((prev) => ({
+          ...prev,
+          [item.id]: serialize(
+            normalizeItem({
+              ...item,
+              variants: cleanedVariants,
+              detail: item.detail ? { ...item.detail, heroVariants: cleanedHeroVariants } : undefined,
+            })
+          ),
+        }));
+      }
+      if (pendingDeletes.length) {
+        const resDelete = await fetch(`${base}/media/delete`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ paths: Array.from(new Set(pendingDeletes)), reason: "buyer-image-replace" }),
+        });
+        if (resDelete.ok) setPendingDeletes([]);
       }
       setSuccess("Buyers saved");
     } catch (err: any) {
@@ -385,7 +480,7 @@ const AdminBuyers = () => {
       </div>
 
       <div className="rounded-xl border border-border/60 bg-card/70 p-4 flex flex-col gap-3">
-        <div className="flex flex-col md:flex-row gap-3 items-start md:items-center">
+        <div className="flex flex-col md:flex-row md:flex-wrap gap-3 items-start md:items-center">
           <div className="relative w-full md:max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -396,7 +491,7 @@ const AdminBuyers = () => {
             />
           </div>
           <Select value={city} onValueChange={(v) => setCity(v)}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full md:w-[180px]">
               <SelectValue placeholder="City" />
             </SelectTrigger>
             <SelectContent>
@@ -408,13 +503,34 @@ const AdminBuyers = () => {
             </SelectContent>
           </Select>
           <Select value={segment} onValueChange={(v) => setSegment(v)}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full md:w-[180px]">
               <SelectValue placeholder="Segment" />
             </SelectTrigger>
             <SelectContent>
               {segments.map((s) => (
                 <SelectItem key={s} value={s}>
                   {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={sort} onValueChange={(v: "newest" | "oldest") => setSort(v)}>
+            <SelectTrigger className="w-full md:w-[160px]">
+              <SelectValue placeholder="Sort" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Newest first</SelectItem>
+              <SelectItem value="oldest">Oldest first</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+            <SelectTrigger className="w-full md:w-[140px]">
+              <SelectValue placeholder="Page size" />
+            </SelectTrigger>
+            <SelectContent>
+              {[12, 24, 48, 96].map((size) => (
+                <SelectItem key={size} value={String(size)}>
+                  {size} / page
                 </SelectItem>
               ))}
             </SelectContent>
@@ -428,7 +544,7 @@ const AdminBuyers = () => {
               <Save className="w-4 h-4 mr-2" />
               {saving ? "Saving..." : "Save"}
             </Button>
-            <Button variant="outline" onClick={() => load(true)} disabled={loading}>
+            <Button variant="outline" onClick={() => load("reset")} disabled={loading}>
               Refresh
             </Button>
           </div>
@@ -439,23 +555,34 @@ const AdminBuyers = () => {
         {items.map((item, idx) => (
           <Card key={item.id} className="bg-card/80 border-border/70">
             <CardHeader className="flex flex-row items-center justify-between">
-              <div className="space-y-1">
-                <CardTitle>{item.name || "New buyer"}</CardTitle>
-                <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                  {item.city && (
-                    <Badge variant="secondary" className="flex items-center gap-1">
-                      {item.city}
-                    </Badge>
-                  )}
-                  {item.segment && <Badge variant="outline">{item.segment}</Badge>}
-                  {item.spend && <Badge>{item.spend}</Badge>}
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setExpanded((prev) => ({ ...prev, [item.id]: !(prev[item.id] ?? false) }))}
+                  aria-label="Toggle details"
+                >
+                  <ChevronDown className={`w-4 h-4 transition-transform ${expanded[item.id] ? "rotate-180" : ""}`} />
+                </Button>
+                <div className="space-y-1">
+                  <CardTitle>{item.name || "New buyer"}</CardTitle>
+                  <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                    {item.city && (
+                      <Badge variant="secondary" className="flex items-center gap-1">
+                        {item.city}
+                      </Badge>
+                    )}
+                    {item.segment && <Badge variant="outline">{item.segment}</Badge>}
+                    {item.spend && <Badge>{item.spend}</Badge>}
+                  </div>
                 </div>
               </div>
               <Button variant="ghost" size="icon" onClick={() => deleteItem(item.id)}>
                 <Trash2 className="w-4 h-4" />
               </Button>
             </CardHeader>
-            <CardContent className="space-y-3">
+            {expanded[item.id] && (
+              <CardContent className="space-y-3">
               <div className="grid md:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-muted-foreground">ID</label>
@@ -491,8 +618,24 @@ const AdminBuyers = () => {
                 </div>
               </div>
               <div>
-                <label className="text-xs text-muted-foreground">Image URL</label>
-                <Input value={item.image} onChange={(e) => updateItem(idx, "image", e.target.value)} placeholder="https://..." />
+                <div className="flex items-center justify-between">
+                  <label className="text-xs text-muted-foreground">Image</label>
+                  <Button variant="secondary" size="sm" onClick={() => setUploadTarget({ idx, field: "image" })}>
+                    Upload
+                  </Button>
+                </div>
+                <Input value={item.image} readOnly placeholder="Upload to fill automatically" />
+                <div className="grid md:grid-cols-3 gap-2 mt-2">
+                  {(item.variants ?? []).map((variant, vIdx) => (
+                    <div key={`${variant.key}-${vIdx}`} className="space-y-1">
+                      <label className="text-xs text-muted-foreground flex items-center gap-2">
+                        <Badge variant="secondary">{variant.key}</Badge>
+                        <span>Path</span>
+                      </label>
+                      <Input value={variant.path || variant.fileName || ""} readOnly />
+                    </div>
+                  ))}
+                </div>
               </div>
               <div className="grid md:grid-cols-2 gap-3">
                 <div>
@@ -513,12 +656,24 @@ const AdminBuyers = () => {
                 </div>
               </div>
               <div>
-                <label className="text-xs text-muted-foreground">Hero image</label>
-                <Input
-                  value={item.detail?.heroImage || ""}
-                  onChange={(e) => updateDetail(idx, "heroImage", e.target.value)}
-                  placeholder="https://..."
-                />
+                <div className="flex items-center justify-between">
+                  <label className="text-xs text-muted-foreground">Hero image</label>
+                  <Button variant="secondary" size="sm" onClick={() => setUploadTarget({ idx, field: "hero" })}>
+                    Upload
+                  </Button>
+                </div>
+                <Input value={item.detail?.heroImage || ""} readOnly placeholder="Upload to fill automatically" />
+                <div className="grid md:grid-cols-3 gap-2 mt-2">
+                  {(item.detail?.heroVariants ?? []).map((variant, vIdx) => (
+                    <div key={`${variant.key}-${vIdx}`} className="space-y-1">
+                      <label className="text-xs text-muted-foreground flex items-center gap-2">
+                        <Badge variant="secondary">{variant.key}</Badge>
+                        <span>Path</span>
+                      </label>
+                      <Input value={variant.path || variant.fileName || ""} readOnly />
+                    </div>
+                  ))}
+                </div>
               </div>
               <div>
                 <label className="text-xs text-muted-foreground">Pull quote</label>
@@ -598,16 +753,59 @@ const AdminBuyers = () => {
                   </div>
                 ))}
               </div>
-            </CardContent>
+              </CardContent>
+            )}
           </Card>
         ))}
         {!items.length && <p className="text-sm text-muted-foreground">No buyers yet. Add your first buyer to begin.</p>}
-        {hasMore && (
-          <Button variant="outline" onClick={() => load(false)} disabled={loading}>
-            Load more
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              const prev = prevCursors[prevCursors.length - 1] ?? null;
+              if (!prevCursors.length) return;
+              load("prev", prev, prevCursors.slice(0, -1));
+            }}
+            disabled={loading || !prevCursors.length}
+          >
+            Previous
           </Button>
-        )}
+          <Button variant="outline" onClick={() => load("next")} disabled={loading || !nextCursor}>
+            Next
+          </Button>
+          {hasMore && <span className="text-xs text-muted-foreground">More pages available</span>}
+        </div>
       </div>
+
+      <MediaUploadModal
+        open={uploadTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setUploadTarget(null);
+        }}
+        onUploaded={(result: MediaUploadResult) => {
+          if (uploadTarget === null) return;
+          const { idx, field } = uploadTarget;
+          const prevVariants = field === "image" ? items[idx]?.variants || [] : items[idx]?.detail?.heroVariants || [];
+          const prevPaths = prevVariants.map((v) => v.path || v.fileName).filter(Boolean) as string[];
+          const mainVariant = result.variants.find((v) => v.key === "main") ?? result.variants[0];
+          const imagePath = mainVariant?.path || mainVariant?.fileName || items[idx]?.image;
+          if (field === "image") {
+            setItems((prev) => {
+              const next = [...prev];
+              next[idx] = { ...next[idx], image: imagePath, variants: result.variants };
+              return next;
+            });
+          } else {
+            setItems((prev) => {
+              const next = [...prev];
+              next[idx] = { ...next[idx], detail: { ...next[idx].detail, heroImage: imagePath, heroVariants: result.variants } };
+              return next;
+            });
+          }
+          setPendingDeletes((prev) => [...prev, ...prevPaths]);
+          setUploadTarget(null);
+        }}
+      />
     </AdminLayout>
   );
 };
