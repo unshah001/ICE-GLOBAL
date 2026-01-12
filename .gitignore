@@ -35,3 +35,4 @@ backend/node_modules
 # NPM cache
 .npm
 .env.bk
+backend/storage
