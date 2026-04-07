@@ -30,12 +30,12 @@ export const brands: Brand[] = [
     logo: "TV",
     relationship: "3-Year Partner",
     category: "Technology",
-    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&auto=format&fit=crop&q=80",
+    image: "https://i.ibb.co/4Zmh1Tvk/ICE-Top-Brands-06.png",
     summary: "Spatial-first launches that felt like a blockbuster premiere.",
     detail: {
       headline: "Spatial launches that stole the show",
       summary: "Mixed reality demos scripted with light cues and live orchestra beats.",
-      heroImage: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1200&auto=format&fit=crop&q=80",
+      heroImage: "https://i.ibb.co/4Zmh1Tvk/ICE-Top-Brands-06.png",
       highlights: [
         { title: "Live spatial lab", body: "VR alleys with haptics ran 20 guided walkthroughs per hour." },
         { title: "Data-backed buzz", body: "Dwell times up 42% YoY; social mentions spiked in first 3 hours." },
@@ -53,12 +53,12 @@ export const brands: Brand[] = [
     logo: "IC",
     relationship: "Headline Sponsor",
     category: "Innovation",
-    image: "https://images.unsplash.com/photo-1464375117522-1311d6a5b81f?w=1200&auto=format&fit=crop&q=80",
+    image: "https://i.ibb.co/3YvDyJFm/ICE-Top-Brands-05.png",
     summary: "Cinematic keynote with orchestra cues and holograms.",
     detail: {
       headline: "Cinematic headline keynote",
       summary: "Story beats aligned to lighting cues with audience participation wristbands.",
-      heroImage: "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?w=1200&auto=format&fit=crop&q=80",
+      heroImage: "https://i.ibb.co/3YvDyJFm/ICE-Top-Brands-05.png",
       highlights: [
         { title: "Scripted for emotion", body: "Lighting and music synced to every reveal chord." },
         { title: "Participation moments", body: "Interactive wristbands pulsed in sync with stage lighting." },
@@ -76,12 +76,12 @@ export const brands: Brand[] = [
     logo: "FB",
     relationship: "5-Year Partner",
     category: "Branding",
-    image: "https://images.unsplash.com/photo-1500534314211-4fcbbde5f3c0?w=1200&auto=format&fit=crop&q=80",
+    image: "https://i.ibb.co/5xxf2d6Y/ICE-Top-Brands-07.png",
     summary: "Signature kinetic entrance tunnel that dominated social feeds.",
     detail: {
       headline: "Signature entry experience",
       summary: "Adaptive lighting and shareable vantage points turned arrivals into content.",
-      heroImage: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&auto=format&fit=crop&q=80",
+      heroImage: "https://i.ibb.co/5xxf2d6Y/ICE-Top-Brands-07.png",
       highlights: [
         { title: "Adaptive lighting", body: "Sensors drove gradient ripples across 3,000 LEDs." },
         { title: "Shareability by design", body: "Marked photo vantage points multiplied social reach." },
@@ -99,12 +99,12 @@ export const brands: Brand[] = [
     logo: "GT",
     relationship: "Premium Partner",
     category: "Enterprise",
-    image: "https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?w=1200&auto=format&fit=crop&q=80",
+    image: "https://i.ibb.co/jS6SBDs/ICE-Top-Brands-03.png",
     summary: "Enterprise demos turned into festival moments with hybrid streaming.",
     detail: {
       headline: "Festival-grade enterprise demos",
       summary: "Hybrid demos with lounge seating and instant media handoffs.",
-      heroImage: "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=1200&auto=format&fit=crop&q=80",
+      heroImage: "https://i.ibb.co/jS6SBDs/ICE-Top-Brands-03.png",
       highlights: [
         { title: "Hybrid lounge", body: "Tiered lounges plus remote streams balanced intimacy and reach." },
         { title: "Press-ready", body: "Editors got lower thirds and stills in minutes post-keynote." },
@@ -122,12 +122,12 @@ export const brands: Brand[] = [
     logo: "NM",
     relationship: "Launch Partner",
     category: "Automotive",
-    image: "https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?w=1200&auto=format&fit=crop&q=80",
+    image: "https://i.ibb.co/DDVMY5db/ICE-Top-Brands-027.png",
     summary: "EV concept reveal with synchronized drone swarm visuals.",
     detail: {
       headline: "EV reveal with a drone halo",
       summary: "Choreographed drones painted motion graphics above the main stage.",
-      heroImage: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1200&auto=format&fit=crop&q=80",
+      heroImage: "https://i.ibb.co/DDVMY5db/ICE-Top-Brands-027.png",
       highlights: [
         { title: "Aerial storytelling", body: "Drone swarm mirrored the on-stage 3D renders live." },
         { title: "Charging alley", body: "Interactive charging pods let guests test the UX hands-on." },
@@ -145,12 +145,12 @@ export const brands: Brand[] = [
     logo: "AH",
     relationship: "Innovation Track",
     category: "Healthcare",
-    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&auto=format&fit=crop&q=80",
+    image: "https://i.ibb.co/s9G38xvV/ICE-Top-Brands-04.png",
     summary: "Clinician-led demos with calm, clinic-inspired set design.",
     detail: {
       headline: "Human-first health tech demos",
       summary: "Set design mirrored a calm clinic, with hands-on biometric kiosks.",
-      heroImage: "https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=1200&auto=format&fit=crop&q=80",
+      heroImage: "https://i.ibb.co/s9G38xvV/ICE-Top-Brands-04.png",
       highlights: [
         { title: "Guided trials", body: "Clinicians led 1:1 demos to reduce tech intimidation." },
         { title: "Ambient calm", body: "Soft gradients and soundscapes lowered perceived wait times." },
@@ -168,12 +168,12 @@ export const brands: Brand[] = [
     logo: "HE",
     relationship: "Sustainability Partner",
     category: "Energy",
-    image: "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=1200&auto=format&fit=crop&q=80",
+    image: "https://i.ibb.co/3YvDyJFm/ICE-Top-Brands-05.png",
     summary: "Solar canopies with live yield dashboards and shaded lounges.",
     detail: {
       headline: "Solar runway with live telemetry",
       summary: "Canopies powered the lounge and streamed live yield data to guests.",
-      heroImage: "https://images.unsplash.com/photo-1464375117522-1311d6a5b81f?w=1200&auto=format&fit=crop&q=80",
+      heroImage: "https://i.ibb.co/3YvDyJFm/ICE-Top-Brands-05.png",
       highlights: [
         { title: "Live data", body: "Transparent displays showed realtime wattage and carbon offset." },
         { title: "Shaded comfort", body: "Cooling misters and seating kept dwell times high." },
@@ -191,12 +191,12 @@ export const brands: Brand[] = [
     logo: "PX",
     relationship: "Design Partner",
     category: "Creative",
-    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&auto=format&fit=crop&q=80",
+    image: "https://i.ibb.co/jS6SBDs/ICE-Top-Brands-03.png",
     summary: "Interactive art wall with motion-reactive gradients.",
     detail: {
       headline: "Reactive art wall",
       summary: "Motion sensors and projection mapping turned visitors into brush strokes.",
-      heroImage: "https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=1200&auto=format&fit=crop&q=80",
+      heroImage: "https://i.ibb.co/jS6SBDs/ICE-Top-Brands-03.png",
       highlights: [
         { title: "Visitor-powered", body: "Body tracking generated brush strokes in real time." },
         { title: "Shareable loops", body: "Auto-captured 10s clips for social sharing." },
@@ -214,12 +214,12 @@ export const brands: Brand[] = [
     logo: "SF",
     relationship: "FinTech Pavilion",
     category: "Finance",
-    image: "https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?w=1200&auto=format&fit=crop&q=80",
+    image: "https://i.ibb.co/5xxf2d6Y/ICE-Top-Brands-07.png",
     summary: "Immersive fintech pavilion with AR wealth simulations.",
     detail: {
       headline: "Fintech you can walk through",
       summary: "AR overlays walked buyers through portfolios and risk in 3D.",
-      heroImage: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1200&auto=format&fit=crop&q=80",
+      heroImage: "https://i.ibb.co/5xxf2d6Y/ICE-Top-Brands-07.png",
       highlights: [
         { title: "AR guidance", body: "Personalized overlays guided decisions in under 2 minutes." },
         { title: "Trust by design", body: "Warm lighting and concierge hosts softened complexity." },
@@ -237,12 +237,12 @@ export const brands: Brand[] = [
     logo: "VA",
     relationship: "AI Partner",
     category: "Artificial Intelligence",
-    image: "https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?w=1200&auto=format&fit=crop&q=80",
+    image: "https://i.ibb.co/DDVMY5db/ICE-Top-Brands-027.png",
     summary: "Live AI co-creation labs with guided prompts and demos.",
     detail: {
       headline: "AI co-creation labs",
       summary: "Guests tried prompt recipes on large screens with facilitators.",
-      heroImage: "https://images.unsplash.com/photo-1464375117522-1311d6a5b81f?w=1200&auto=format&fit=crop&q=80",
+      heroImage: "https://i.ibb.co/DDVMY5db/ICE-Top-Brands-027.png",
       highlights: [
         { title: "Guided prompts", body: "Facilitators helped craft prompts for design, code, and ops." },
         { title: "Responsible AI", body: "Safety patterns and guardrails explained alongside demos." },
@@ -260,12 +260,12 @@ export const brands: Brand[] = [
     logo: "HL",
     relationship: "Ops Partner",
     category: "Logistics",
-    image: "https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?w=1200&auto=format&fit=crop&q=80",
+    image: "https://i.ibb.co/4Zmh1Tvk/ICE-Top-Brands-06.png",
     summary: "Live control room for supply chain visualizations.",
     detail: {
       headline: "Ops control room on the floor",
       summary: "Digital twins and live routing screens showed same-day optimizations.",
-      heroImage: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1200&auto=format&fit=crop&q=80",
+      heroImage: "https://i.ibb.co/4Zmh1Tvk/ICE-Top-Brands-06.png",
       highlights: [
         { title: "Digital twin", body: "Realtime routes and loads displayed like a newsroom." },
         { title: "Operator Q&A", body: "Ops leads answered live questions with data on screen." },
@@ -508,23 +508,24 @@ export const brands: Brand[] = [
     },
   },
 ];
-
 const run = async () => {
   try {
     const db = await getDb();
+
+    // Seed brands collection
     const col = db.collection<Brand>("brands");
     await col.deleteMany({});
     const now = new Date();
     const normalized = brands.map((b) => {
       const detail = b.detail || {};
-      const impactDescription = detail.impactDescription || detail.summary || b.summary || "";
+      const impactDescription = (detail as any).impactDescription || detail.summary || b.summary || "";
       return {
         ...b,
         detail: {
           ...detail,
           impactDescription,
-          ctaLabel: detail.ctaLabel || "Plan a showcase with us",
-          ctaHref: detail.ctaHref || "/contact",
+          ctaLabel: (detail as any).ctaLabel || "Plan a showcase with us",
+          ctaHref: (detail as any).ctaHref || "/contact",
         },
         createdAt: now,
         updatedAt: now,
@@ -532,6 +533,28 @@ const run = async () => {
     });
     await col.insertMany(normalized);
     console.log(`Seeded ${brands.length} brands.`);
+
+    // Seed brands_highlights collection
+    const highlightsCol = db.collection("brands_highlights");
+    await highlightsCol.deleteMany({ key: "default" });
+    await highlightsCol.insertOne({
+      key: "default",
+      eyebrow: "Our Partners",
+      title: "Trusted by Industry Leaders",
+      description: "From startups to Fortune 500 companies, our expo has been the launchpad for brands that shape the future.",
+      ctaLabel: "View all partner brands",
+      ctaHref: "/brands",
+      brands: normalized.slice(0, 4).map((b) => ({
+        slug: b.slug,
+        name: b.name,
+        logo: b.logo,
+        relationship: b.relationship,
+        category: b.category,
+        image: b.image,
+      })),
+    });
+    console.log("Seeded brands_highlights with 4 brands.");
+
   } catch (err) {
     console.error(err);
     process.exit(1);
@@ -541,3 +564,5 @@ const run = async () => {
 };
 
 run();
+
+

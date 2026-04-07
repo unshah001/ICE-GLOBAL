@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowUpRight, MapPin, ShoppingBag } from "lucide-react";
+import { ArrowRight, MapPin, ShoppingBag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BuyerTestimonial } from "@/data/buyer-testimonials";
 
@@ -32,7 +32,7 @@ const BuyerCard = ({ buyer, delay }: { buyer: BuyerTestimonial; delay: number })
           <img
             src={buyer.image}
             alt={buyer.name}
-            className="w-14 h-14 rounded-2xl object-cover border border-border/70"
+            className="w-20 h-20 rounded-2xl object-cover border border-border/70"
           />
           <div>
             <p className="text-sm text-muted-foreground">{buyer.segment}</p>
@@ -49,7 +49,7 @@ const BuyerCard = ({ buyer, delay }: { buyer: BuyerTestimonial; delay: number })
             <ShoppingBag className="w-4 h-4" />
             {buyer.spend}
           </div>
-          <ArrowUpRight className="w-5 h-5 text-primary" />
+          <ArrowRight className="w-5 h-5 text-primary" />
         </div>
       </div>
     </Wrapper>
@@ -83,7 +83,7 @@ const BuyerVoicesSection = ({
               className="inline-flex items-center gap-2 justify-center text-primary font-semibold"
             >
               {cta.label}
-              <ArrowUpRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4" />
             </a>
           )}
         </div>

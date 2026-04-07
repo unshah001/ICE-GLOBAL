@@ -2,7 +2,14 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Instagram, Twitter, Linkedin, Mail, MapPin, Phone } from "lucide-react";
+import {
+  Instagram,
+  Twitter,
+  Linkedin,
+  Mail,
+  MapPin,
+  Phone,
+} from "lucide-react";
 
 export type FooterData = {
   ctaTitle: string;
@@ -17,11 +24,7 @@ export type FooterData = {
   socials: { label: string; href: string }[];
 };
 
-const Footer = ({
-  data,
-}: {
-  data?: FooterData;
-}) => {
+const Footer = ({ data }: { data?: FooterData }) => {
   const [branding, setBranding] = useState<{
     logoUrl: string;
     darkLogoUrl: string;
@@ -59,38 +62,47 @@ const Footer = ({
   const currentYear = new Date().getFullYear();
 
   const footerLinks = {
-    explore:
-      data?.exploreLinks ||
-      [
-        { name: "Gallery", href: "/gallery" },
-        { name: "About Us", href: "/about" },
-        { name: "Past Events", href: "/gallery" },
-        { name: "Testimonials", href: "/testimonials" },
-      ],
-    partners:
-      data?.partnersLinks ||
-      [
-        { name: "Become a Partner", href: "/partner" },
-        { name: "Sponsor an Event", href: "/sponsor" },
-        { name: "Brand Guidelines", href: "/brand-guidelines" },
-        { name: "Media Kit", href: "/contact" },
-      ],
-    legal:
-      data?.legalLinks ||
-      [
-        { name: "Privacy Policy", href: "/privacy" },
-        { name: "Terms of Service", href: "/terms" },
-        { name: "Cookie Policy", href: "/cookies" },
-      ],
+    explore: data?.exploreLinks || [
+      { name: "Gallery", href: "/gallery" },
+      { name: "About Us", href: "/about" },
+      { name: "Past Events", href: "/gallery" },
+      { name: "Testimonials", href: "/testimonials" },
+    ],
+    partners: data?.partnersLinks || [
+      { name: "Become a Partner", href: "/partner" },
+      { name: "Sponsor an Event", href: "/sponsor" },
+      { name: "Brand Guidelines", href: "/brand-guidelines" },
+      { name: "Media Kit", href: "/contact" },
+    ],
+    legal: data?.legalLinks || [
+      { name: "Privacy Policy", href: "/privacy" },
+      { name: "Terms of Service", href: "/terms" },
+      { name: "Cookie Policy", href: "/cookies" },
+    ],
   };
 
-  const socialLinks =
-    data?.socials?.map((s) => ({ icon: s.label === "LinkedIn" ? Linkedin : s.label === "Twitter" ? Twitter : Instagram, href: s.href, label: s.label })) ||
-    [
-      { icon: Instagram, href: "https://instagram.com/iceglobal", label: "Instagram" },
-      { icon: Twitter, href: "https://twitter.com/iceglobal", label: "Twitter" },
-      { icon: Linkedin, href: "https://linkedin.com/company/iceglobal", label: "LinkedIn" },
-    ];
+  const socialLinks = data?.socials?.map((s) => ({
+    icon:
+      s.label === "LinkedIn"
+        ? Linkedin
+        : s.label === "Twitter"
+          ? Twitter
+          : Instagram,
+    href: s.href,
+    label: s.label,
+  })) || [
+    {
+      icon: Instagram,
+      href: "https://instagram.com/iceglobal",
+      label: "Instagram",
+    },
+    { icon: Twitter, href: "https://twitter.com/iceglobal", label: "Twitter" },
+    {
+      icon: Linkedin,
+      href: "https://linkedin.com/company/iceglobal",
+      label: "LinkedIn",
+    },
+  ];
 
   return (
     <footer className="bg-card border-t border-border">
@@ -111,7 +123,8 @@ const Footer = ({
                 Let's team up
               </div>
               <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground">
-                {data?.ctaTitle || "Ready to create the next unforgettable expo moment?"}
+                {data?.ctaTitle ||
+                  "Ready to create the next unforgettable expo moment?"}
               </h2>
               <p className="text-muted-foreground max-w-2xl">
                 {data?.ctaDescription ||
@@ -119,10 +132,22 @@ const Footer = ({
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-3">
-              <Button asChild variant="hero" size="lg" className="shadow-lg hover:-translate-y-1 transition">
-                <a href={data?.partnerHref || "/partner"}>Become a Partner</a>
+              <Button
+                asChild
+                variant="hero"
+                size="lg"
+                className="shadow-lg hover:-translate-y-1 transition-all duration-1000 ease-in-out"
+              >
+                <a href={data?.partnerHref || "/partner"}>
+  Become a Par{"\u200A"}tner
+</a>
               </Button>
-              <Button asChild variant="hero-outline" size="lg" className="shadow-lg hover:-translate-y-1 transition">
+              <Button
+                asChild
+                variant="hero-outline"
+                size="lg"
+                className="shadow-lg border border-current hover:-translate-y-1 transition duration-500"
+              >
                 <a href={data?.sponsorHref || "/sponsor"}>Sponsor an Event</a>
               </Button>
             </div>

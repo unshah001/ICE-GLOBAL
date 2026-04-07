@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowRight  } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import type { Celebrity } from "@/data/celebrity-data";
@@ -38,44 +38,44 @@ const CelebritySpotlightSection = ({
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {celebrities.map((celeb, idx) => (
-            <motion.div
-              key={celeb.name + idx}
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.5, delay: idx * 0.05 }}
-              className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/70 shadow-lg shadow-primary/10"
-            >
-              <Link to={celeb.href || (cta?.href ?? "/gallery")}>
-                <div className="relative h-72">
-                <img
-                  src={celeb.image}
-                  alt={celeb.name}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-background/20 to-transparent" />
-                {celeb.badge && (
-                  <div className="absolute top-4 left-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-semibold">
-                    {celeb.badge}
-                  </div>
-                )}
-              </div>
-                <div className="relative p-5 space-y-2">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm text-muted-foreground">{celeb.title}</p>
-                      <h3 className="text-xl font-display font-semibold">{celeb.name}</h3>
-                    </div>
-                    <ArrowUpRight className="w-5 h-5 text-primary" />
-                  </div>
-                  {celeb.quote && (
-                    <p className="text-muted-foreground text-sm leading-relaxed">
-                      “{celeb.quote}”
-                    </p>
-                  )}
-                </div>
-              </Link>
-            </motion.div>
+           <motion.div
+  key={celeb.name + idx}
+  initial={{ opacity: 0, y: 24 }}
+  whileInView={{ opacity: 1, y: 0 }}
+  viewport={{ once: true, margin: "-50px" }}
+  transition={{ duration: 0.5, delay: idx * 0.05 }}
+  className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card shadow-lg shadow-primary/10 flex flex-col"
+>
+  <Link to={celeb.href || (cta?.href ?? "/gallery")} className="flex flex-col h-full">
+    <div className="relative h-72 w-full flex-shrink-0">
+      <img
+        src={celeb.image}
+        alt={celeb.name}
+      className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105 z-0"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent pointer-events-none" />
+      {celeb.badge && (
+        <div className="absolute top-4 left-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-semibold">
+          {celeb.badge}
+        </div>
+      )}
+    </div>
+    <div className="relative p-5 space-y-2 flex-grow flex flex-col justify-between">
+      <div>
+        <p className="text-sm text-muted-foreground">{celeb.title}</p>
+        <h3 className="text-xl font-display font-semibold">{celeb.name}</h3>
+      </div>
+      {celeb.quote && (
+        <p className="text-muted-foreground text-sm leading-relaxed mt-4">
+          “{celeb.quote}”
+        </p>
+      )}
+      <div className="mt-4 flex justify-end">
+        <ArrowRight className="w-5 h-5 text-primary" />
+      </div>
+    </div>
+  </Link>
+</motion.div>
           ))}
         </div>
 
@@ -83,10 +83,10 @@ const CelebritySpotlightSection = ({
           <div className="text-center">
             <Link
               to={cta.href}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-border hover:border-primary/60 transition-colors font-medium"
+              className="inline-flex items-center gap-2 px-6 py-3 text-blue-600 bg-color-600 hover:border-primary/60 transition-colors font-medium"
             >
               {cta.label}
-              <ArrowUpRight className="w-4 h-4 text-primary" />
+              <ArrowRight  className="w-4 h-4 text-primary" />
             </Link>
           </div>
         )}

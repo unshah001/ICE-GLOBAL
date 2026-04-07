@@ -70,7 +70,7 @@ const HeroEditor = ({
                 <Input
                   value={heroContent.title}
                   onChange={(e) => onHeroContentChange("title", e.target.value)}
-                  placeholder="Experience the Expo Legacy"
+                  placeholder="India’s Biggest International Consumer Exhibition"
                 />
               </div>
               <div>

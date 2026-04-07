@@ -496,7 +496,7 @@ const GalleryDetail = () => {
       <FloatingNavbar navItems={navItems} />
 
       <section className="relative pt-28 pb-12 md:pt-36 md:pb-16 overflow-hidden">
-        <BackgroundBeams className="z-0" />
+       {/* <BackgroundBeams className="z-0" /> */}
         <div className="container-custom relative z-10">
           <Link to="/gallery" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
             <ArrowLeft className="w-4 h-4" />

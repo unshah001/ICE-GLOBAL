@@ -3,7 +3,7 @@ import { HeroParallax } from "@/components/ui/hero-parallax";
 import { StickyScrollReveal } from "@/components/ui/sticky-scroll-reveal";
 import { TestimonialsCarousel } from "@/components/ui/testimonials-carousel";
 import { StatsStrip } from "@/components/ui/stats-strip";
-import { BackgroundBeams } from "@/components/ui/background-effects";
+// import { BackgroundBeams } from "@/components/ui/background-effects";
 import BrandHighlightsSection from "@/components/BrandHighlightsSection";
 import GalleryPreviewSection from "@/components/GalleryPreviewSection";
 import Footer from "@/components/Footer";
@@ -23,8 +23,15 @@ const Index = () => {
 
       {/* Hero Parallax Section */}
       <section className="relative">
-        <BackgroundBeams className="z-0" />
-        <HeroParallax products={heroProducts} />
+        {/* <BackgroundBeams className="z-0" /> */}
+        {/* <HeroParallax products={heroProducts} /> */}
+
+        <HeroParallax 
+  products={heroProducts}
+  heroTitle="Experience the India Global"
+  heroHighlight="India Global"
+  heroSubtitle="Where brands connect, innovate, and inspire. Explore our visual archive of unforgettable experiences."
+/>
       </section>
 
        <GalleryPreviewSection />

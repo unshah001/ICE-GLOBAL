@@ -5,11 +5,20 @@ import { FloatingNavbar } from "@/components/ui/floating-navbar";
 import { BackgroundBeams } from "@/components/ui/background-effects";
 import Footer from "@/components/Footer";
 import { navItems } from "@/data/expo-data";
-import { buyerTestimonials, type BuyerTestimonial } from "@/data/buyer-testimonials";
+import {
+  buyerTestimonials,
+  type BuyerTestimonial,
+} from "@/data/buyer-testimonials";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, MapPin, Search, Tags } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type BuyerDetail = BuyerTestimonial & {
   detail?: {
@@ -36,16 +45,23 @@ const PAGE_LIMIT = 24;
 const defaultHero = {
   badge: "Buyer Stories",
   title: "Buyers who keep coming back",
-  subheading: "Search and filter buyer journeys—spend, visits, and how ICE programming keeps them onsite.",
+  subheading:
+    "Search and filter buyer journeys—spend, visits, and how ICE programming keeps them onsite.",
 };
 
-const mediaBase = (import.meta.env.VITE_MEDIA_BASE_URL || "").replace(/\/$/, "");
+const mediaBase = (import.meta.env.VITE_MEDIA_BASE_URL || "").replace(
+  /\/$/,
+  "",
+);
 const resolveMedia = (path?: string) => {
   if (!path) return "";
   if (/^https?:\/\//i.test(path)) return path;
   return mediaBase ? `${mediaBase}/${path}` : path;
 };
-const pickVariant = (variants?: { key: string; path: string }[], preferred: string[] = []) => {
+const pickVariant = (
+  variants?: { key: string; path: string }[],
+  preferred: string[] = [],
+) => {
   if (!variants?.length) return undefined;
   for (const key of preferred) {
     const hit = variants.find((v) => v.key === key);
@@ -64,8 +80,14 @@ const Buyers = () => {
   const [error, setError] = useState("");
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
-  const [cities, setCities] = useState<string[]>(["All", ...new Set(buyerTestimonials.map((b) => b.city))]);
-  const [segments, setSegments] = useState<string[]>(["All", ...new Set(buyerTestimonials.map((b) => b.segment))]);
+  const [cities, setCities] = useState<string[]>([
+    "All",
+    ...new Set(buyerTestimonials.map((b) => b.city)),
+  ]);
+  const [segments, setSegments] = useState<string[]>([
+    "All",
+    ...new Set(buyerTestimonials.map((b) => b.segment)),
+  ]);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams()[0];
 
@@ -85,6 +107,7 @@ const Buyers = () => {
       setHero(defaultHero);
     }
   };
+
 
   const load = async (reset = true) => {
     setIsLoading(true);
@@ -114,7 +137,10 @@ const Buyers = () => {
       if (reset) {
         setItems(buyerTestimonials);
         setCities(["All", ...new Set(buyerTestimonials.map((b) => b.city))]);
-        setSegments(["All", ...new Set(buyerTestimonials.map((b) => b.segment))]);
+        setSegments([
+          "All",
+          ...new Set(buyerTestimonials.map((b) => b.segment)),
+        ]);
         setHasMore(false);
       }
     } finally {
@@ -147,7 +173,7 @@ const Buyers = () => {
           load(false);
         }
       },
-      { rootMargin: "200px" }
+      { rootMargin: "200px" },
     );
     if (loadMoreRef.current) observer.observe(loadMoreRef.current);
     return () => observer.disconnect();
@@ -169,7 +195,9 @@ const Buyers = () => {
 
   return (
     <main className="min-h-screen bg-background">
-      <FloatingNavbar navItems={[...navItems, { name: "Buyers", href: "/buyers" }]} />
+      <FloatingNavbar
+        navItems={[...navItems, { name: "Buyers", href: "/buyers" }]}
+      />
 
       <section className="relative pt-28 pb-16 md:pt-36 md:pb-20 overflow-hidden">
         <BackgroundBeams className="z-0" />
@@ -179,7 +207,9 @@ const Buyers = () => {
               <Tags className="w-4 h-4" />
               {hero.badge}
             </div>
-            <h1 className="text-4xl md:text-5xl font-display font-bold">{hero.title}</h1>
+            <h1 className="text-4xl md:text-5xl font-display font-bold">
+              {hero.title}
+            </h1>
             <p className="text-muted-foreground">{hero.subheading}</p>
           </div>
 
@@ -218,44 +248,64 @@ const Buyers = () => {
               </SelectContent>
             </Select>
           </div>
-          {error && <p className="mt-2 text-sm text-destructive text-center">{error}</p>}
+          {error && (
+            <p className="mt-2 text-sm text-destructive text-center">{error}</p>
+          )}
         </div>
       </section>
 
       <section className="pb-16">
         <div className="container-custom">
           {filtered.length === 0 ? (
-            <div className="text-center text-muted-foreground py-16">No buyers matched your filters.</div>
+            <div className="text-center text-muted-foreground py-16">
+              No buyers matched your filters.
+            </div>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-8 md:grid-cols-2">
               {filtered.map((buyer, idx) => (
                 <motion.div
                   key={buyer.id}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: Math.min(idx * 0.04, 0.3) }}
+                  transition={{
+                    duration: 0.4,
+                    delay: Math.min(idx * 0.04, 0.3),
+                  }}
                   viewport={{ once: true }}
                   className="group rounded-2xl border border-border/70 bg-card/80 overflow-hidden shadow-lg shadow-primary/5"
                 >
                   <Link to={`/buyers/${buyer.id}`} className="block h-full">
-                    <div className="relative h-48 overflow-hidden">
+                    <div className="relative h-[560px] overflow-hidden rounded-t-2xl">
                       <img
-                        src={resolveMedia(pickVariant(buyer.variants, ["medium", "main", "thumb"]) || buyer.image)}
+                        src={resolveMedia(
+                          pickVariant(buyer.variants, [
+                            "medium",
+                            "main",
+                            "thumb",
+                          ]) || buyer.image,
+                        )}
                         alt={buyer.name}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
                     </div>
                     <div className="p-4 space-y-2">
                       <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="flex items-center gap-1">
+                        <Badge
+                          variant="secondary"
+                          className="flex items-center gap-1"
+                        >
                           <MapPin className="w-3 h-3" />
                           {buyer.city}
                         </Badge>
                         <Badge variant="outline">{buyer.segment}</Badge>
                       </div>
-                      <h3 className="text-xl font-display font-semibold">{buyer.name}</h3>
-                      <p className="text-sm text-muted-foreground line-clamp-2">{buyer.quote}</p>
+                      <h3 className="text-xl font-display font-semibold">
+                        {buyer.name}
+                      </h3>
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {buyer.quote}
+                      </p>
                       <div className="flex items-center gap-3 text-primary text-sm font-medium">
                         <span>{buyer.spend}</span>
                         <span>•</span>
@@ -269,7 +319,11 @@ const Buyers = () => {
             </div>
           )}
           <div ref={loadMoreRef} className="mt-12 text-center">
-            {isLoading && <div className="text-sm text-muted-foreground">Loading more buyers...</div>}
+            {isLoading && (
+              <div className="text-sm text-muted-foreground">
+                Loading more buyers...
+              </div>
+            )}
           </div>
         </div>
       </section>

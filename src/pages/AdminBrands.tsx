@@ -120,9 +120,12 @@ const AdminBrands = () => {
       const normalized = (data.data || []).map(normalizeItem);
       setItems(normalized);
       const map: Record<string, string> = {};
+      // normalized.forEach((b) => {
+      //   if (b.slug) map[b.slug] = JSON.stringify(b);
+      // });
       normalized.forEach((b) => {
-        if (b.slug) map[b.slug] = JSON.stringify(b);
-      });
+  if (b.slug) map[b.slug] = JSON.stringify(normalizeItem(b));
+});
       setOriginalMap(map);
       setPage(targetPage);
       setTotalPages(data.pagination?.totalPages ?? 1);
@@ -319,17 +322,17 @@ const AdminBrands = () => {
         return;
       }
 
-      const serialize = (item: BrandItem) => JSON.stringify(item);
-      const changedItems = items.filter((item) => {
-        const snapshot = item.slug ? originalMap[item.slug] : null;
-        const normalized = normalizeItem(item);
-        return !snapshot || snapshot !== serialize(normalized);
-      });
-
-      if (!changedItems.length) {
-        setSuccess("No changes to save");
-        return;
-      }
+      // const serialize = (item: BrandItem) => JSON.stringify(item);
+      // const changedItems = items.filter((item) => {
+      //   const snapshot = item.slug ? originalMap[item.slug] : null;
+      //   const normalized = normalizeItem(item);
+      //   return !snapshot || snapshot !== serialize(normalized);
+      // });
+const changedItems = items;
+      // if (!changedItems.length) {
+      //   setSuccess("No changes to save");
+      //   return;
+      // }
 
       for (const item of changedItems) {
         const { _id, createdAt, updatedAt, ...rest } = item as any;
@@ -376,11 +379,13 @@ const AdminBrands = () => {
         }
 
         if (rest.slug) {
-          setOriginalMap((prev) => ({ ...prev, [rest.slug]: serialize(normalizeItem(rest as BrandItem)) }));
+          // setOriginalMap((prev) => ({ ...prev, [rest.slug]: serialize(normalizeItem(rest as BrandItem)) }));
+          setOriginalMap((prev) => ({ ...prev, [rest.slug]: JSON.stringify(normalizeItem(rest as BrandItem)) }));
         }
       }
 
-      if (deletedPaths.length) {
+      // if (deletedPaths.length) {
+      if (pendingDeletes.length) {
         const base = import.meta.env.VITE_API_BASE_URL || "";
         const token = await getAccessToken(base);
         const res = await fetch(`${base}/media/delete`, {
@@ -389,7 +394,8 @@ const AdminBrands = () => {
             "Content-Type": "application/json",
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
-          body: JSON.stringify({ paths: Array.from(new Set(deletedPaths)), reason: "brand-image-replace" }),
+          // body: JSON.stringify({ paths: Array.from(new Set(deletedPaths)), reason: "brand-image-replace" }),
+          body: JSON.stringify({ paths: Array.from(new Set(pendingDeletes)), reason: "brand-image-replace" }),
         });
         if (!res.ok) {
           toast.error("Some old media could not be queued for deletion");
@@ -530,7 +536,9 @@ const AdminBrands = () => {
               <Plus className="w-4 h-4 mr-2" />
               Add brand
             </Button>
-            <Button onClick={saveItems} disabled={saving || loading}>
+
+            <Button onClick={() => { console.log('SAVE CLICKED', items.length); saveItems(); }} disabled={saving || loading}>
+              
               <Save className="w-4 h-4 mr-2" />
               {saving ? "Saving..." : "Save"}
             </Button>

@@ -5,7 +5,7 @@ import { env } from "../config/env";
 export default fp(async (app) => {
   await app.register(fastifyJwt, {
     secret: env.jwtSecret,
-    sign: { expiresIn: "15m" },
+    sign: { expiresIn: "1d" },
   });
 
   const authenticateAdmin = async (request: any, reply: any) => {

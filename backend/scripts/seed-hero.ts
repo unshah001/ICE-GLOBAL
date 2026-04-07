@@ -9,10 +9,13 @@ const defaultHero = {
     { name: "Contact", href: "/contact" },
   ],
   heroContent: {
-    title: "Experience the Expo Legacy",
-    subtitle: "A decade of immersive expos, captured in over 1,000 moments.",
-    description:
-      "Where brands connect, innovate, and inspire. Explore our visual archive of unforgettable experiences.",
+    title: "India's Biggest International Consumer Exhibition",
+    subtitle: "Discover top global brands, live product demos, and exclusive expo deals all under one roof.",
+    description: "30+ Years | 1000+ Brands | Millions of Visitors",
+    ctaButtons: [
+      { label: "Visit Expo", href: "/gallery" },
+      { label: "Become Exhibitor", href: "/contact" },
+    ],
   },
   heroProducts: [
     {

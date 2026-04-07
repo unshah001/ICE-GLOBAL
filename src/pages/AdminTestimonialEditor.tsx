@@ -20,7 +20,13 @@ const AdminTestimonialEditor = () => {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${base}/testimonials`);
+      const token = localStorage.getItem("admin_access_token");
+
+const res = await fetch(`${base}/testimonials`, {
+  headers: {
+    Authorization: `Bearer ${token}`,
+  },
+});
       if (!res.ok) throw new Error("Failed to load testimonials");
       const payload = (await res.json()) as TestimonialsData;
       setData({
@@ -51,12 +57,16 @@ const AdminTestimonialEditor = () => {
     setError("");
     setSuccess("");
     try {
-      const res = await fetch(`${base}/testimonials`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-        credentials: "include",
-      });
+      const token = localStorage.getItem("admin_access_token");
+
+const res = await fetch(`${base}/testimonials`, {
+  method: "PUT",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  },
+  body: JSON.stringify(data),
+});
       if (!res.ok) throw new Error("Failed to save testimonials");
       setSuccess("Testimonials updated");
     } catch (err: any) {
@@ -71,12 +81,16 @@ const AdminTestimonialEditor = () => {
     setError("");
     setSuccess("");
     try {
-      const res = await fetch(`${base}/testimonials`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(defaultData),
-        credentials: "include",
-      });
+      const token = localStorage.getItem("admin_access_token");
+
+const res = await fetch(`${base}/testimonials`, {
+  method: "PUT",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  },
+  body: JSON.stringify(defaultData),
+});
       if (!res.ok) throw new Error("Restore failed");
       setData(defaultData);
       setSuccess("Defaults restored");

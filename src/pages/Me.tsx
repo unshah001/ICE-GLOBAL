@@ -194,8 +194,8 @@ const Me = () => {
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Step 1</p>
-                    <label className="text-sm font-medium flex items-center gap-2">
-                      <Mail className="w-4 h-4" /> Email
+                    <label className="text-sm font-medium flex items-center   gap-2">
+                      <Mail className="w-4 h-4 inline-flex items-center justify-center" /> Email
                     </label>
                     <Input
                       type="email"
@@ -209,7 +209,7 @@ const Me = () => {
                   </div>
                   <div className="space-y-2">
                     <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Step 2</p>
-                    <label className="text-sm font-medium">6-digit code</label>
+                    <label className=" inline-flex items-center justify-center text-sm font-medium ">6-digit code</label>
                     <Input
                       type="text"
                       inputMode="numeric"

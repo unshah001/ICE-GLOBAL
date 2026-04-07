@@ -1,3 +1,6 @@
+
+
+
 // @ts-nocheck
 import { randomUUID } from "crypto";
 import fs from "fs/promises";
@@ -85,6 +88,34 @@ const ensureDir = async (dir: string) => {
   await fs.mkdir(dir, { recursive: true });
 };
 
+// ─── BunnyCDN Upload Helper ───────────────────────────────────────────────────
+const uploadToBunny = async (filePath: string, publicPath: string) => {
+  const fileBuffer = await fs.readFile(filePath);
+  const zone = env.bunnyStorageZone;
+  const password = env.bunnyStoragePassword;
+  const region = env.bunnyStorageRegion;
+
+  const hostname = region
+    ? `${region}.storage.bunnycdn.com`
+    : "storage.bunnycdn.com";
+
+  const url = `https://${hostname}/${zone}/${publicPath}`;
+
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: {
+      AccessKey: password,
+      "Content-Type": "application/octet-stream",
+    },
+    body: fileBuffer,
+  });
+
+  if (!res.ok) {
+    throw new Error(`Bunny upload failed: ${res.status} ${await res.text()}`);
+  }
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
 const writeVariant = async (params: {
   buffer: Buffer;
   variant: z.infer<typeof variantInputSchema>;
@@ -95,7 +126,7 @@ const writeVariant = async (params: {
   const fileName = `${baseName}-${variant.key}.${variant.format}`;
   const targetDir = path.join(env.mediaStoragePath, datePath);
   const targetPath = path.join(targetDir, fileName);
-  const publicPath = path.posix.join(datePath, fileName);
+  const publicPath = datePath ? path.posix.join(datePath, fileName) : fileName;
 
   await ensureDir(targetDir);
 
@@ -110,6 +141,11 @@ const writeVariant = async (params: {
 
   const quality = variant.quality ?? env.mediaWebpQuality;
   const info = await pipeline.toFormat(variant.format as keyof sharp.FormatEnum, { quality }).toFile(targetPath);
+
+  // Upload to BunnyCDN if driver is set to bunny
+  if (env.mediaDriver === "bunny") {
+    await uploadToBunny(targetPath, publicPath);
+  }
 
   return {
     key: variant.key,
@@ -250,9 +286,15 @@ export default async function mediaRoutes(app: FastifyInstance) {
       const ext = path.extname(file.filename) || ".bin";
       const originalName = `${baseName}-original${ext}`;
       const targetPath = path.join(targetDir, originalName);
-      const publicPath = path.posix.join(datePath, originalName);
+      const publicPath = datePath ? path.posix.join(datePath, originalName) : originalName;
       await ensureDir(targetDir);
       await fs.writeFile(targetPath, buffer);
+
+      // Upload original to BunnyCDN if driver is bunny
+      if (env.mediaDriver === "bunny") {
+        await uploadToBunny(targetPath, publicPath);
+      }
+
       writtenVariants.push({
         key: "original",
         format: ext.replace(".", "") || file.mimetype,

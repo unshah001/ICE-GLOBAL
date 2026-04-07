@@ -83,12 +83,12 @@ const StallsMosaicSection = ({
             {cta && (
               <Link
                 to={cta.href}
-                className="inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-card border border-border hover:border-primary/50 transition-all duration-300 group"
+                className="inline-flex items-center gap-3 px-8 py-4 rounded-xl transition-all duration-300 group"
               >
-                <span className="font-display font-semibold text-foreground">
+                <span className="font-display font-semibold" style={{ color: "#2563eb" }}>
                   {cta.label}
                 </span>
-                <ArrowRight className="w-5 h-5 text-primary group-hover:translate-x-1 transition-transform" />
+             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" style={{ color: "#2563eb" }} />
               </Link>
             )}
           </motion.div>

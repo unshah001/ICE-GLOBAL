@@ -110,13 +110,18 @@ export const cachePlugin: FastifyPluginAsync = async (app) => {
     const key = buildKey(request);
     try {
       const redis = getRedis();
-      const cached = await redis.get(key);
-      if (cached) {
-        const ttl = TTL_SECONDS[path] || defaultTtl;
-        reply.header("Cache-Control", `public, max-age=${ttl}`);
-        reply.header("X-Cache", "HIT");
-        return reply.send(JSON.parse(cached));
-      }
+     const cached = await redis.get(key);
+if (cached) {
+  const parsed = JSON.parse(cached);
+  if (parsed?.statusCode >= 400 || parsed?.error || parsed?.message) {
+    await redis.del(key);
+    return;
+  }
+  const ttl = TTL_SECONDS[path] || defaultTtl;
+  reply.header("Cache-Control", `public, max-age=${ttl}`);
+  reply.header("X-Cache", "HIT");
+  return reply.send(parsed);
+}
       (request as any)._cacheKey = key;
       reply.header("X-Cache", "MISS");
     } catch {

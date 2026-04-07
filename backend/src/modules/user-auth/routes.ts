@@ -71,7 +71,7 @@ export default async function userAuthRoutes(app: FastifyInstance) {
       return reply.code(401).send({ message: "Invalid or expired code" });
     }
     otpStore.delete(email);
-    const accessToken = app.jwt.sign({ sub: email, role: "user" }, { expiresIn: env.userAccessTtl });
+    const accessToken = app.jwt.sign({ sub: email, role: "user" }, { expiresIn: env.userAccessTtl || "1d"});
     return { accessToken, user: { email } };
   });
 

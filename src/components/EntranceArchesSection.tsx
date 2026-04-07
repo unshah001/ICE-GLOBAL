@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { MapPin, ArrowUpRight } from "lucide-react";
+import { MapPin, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { EntranceArch } from "@/data/entrance-arches";
 
@@ -88,7 +88,7 @@ const EntranceArchesSection = ({
                     <MapPin className="w-4 h-4" />
                     <span className="font-semibold text-foreground">{arch.city}</span>
                   </div>
-                  <ArrowUpRight className="w-4 h-4 text-primary group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight className="w-4 h-4 text-primary group-hover:translate-x-1 transition-transform" />
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   {arch.highlight}
@@ -105,7 +105,7 @@ const EntranceArchesSection = ({
               className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors font-medium"
             >
               {ctaLabel}
-              <ArrowUpRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4" />
             </a>
           </div>
         )}

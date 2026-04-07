@@ -1,5 +1,5 @@
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { ArrowUpRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { SellerTestimonial } from "@/data/seller-testimonials";
 
@@ -53,7 +53,8 @@ const SellerCard = ({ seller, delay }: { seller: SellerTestimonial; delay: numbe
             alt={seller.name}
             className="w-14 h-14 rounded-2xl object-cover border border-border/70"
           />
-          <div>
+          <div> 
+
             <p className="text-sm text-muted-foreground">{seller.role}</p>
             <p className="font-display font-semibold text-lg">{seller.name}</p>
             <p className="text-xs uppercase tracking-wide text-primary/80">{seller.company}</p>
@@ -65,12 +66,13 @@ const SellerCard = ({ seller, delay }: { seller: SellerTestimonial; delay: numbe
             <Sparkles className="w-4 h-4" />
             {seller.outcome}
           </div>
-          <ArrowUpRight className="w-5 h-5 text-primary" />
+          <ArrowRight className="w-5 h-5 text-primary" />
         </div>
       </div>
     </Wrapper>
   );
 };
+
 
 const SellerSignalsSection = ({
   eyebrow = "Seller Signals",
@@ -83,7 +85,7 @@ const SellerSignalsSection = ({
   return (
     <section className={cn("section-padding", className)}>
       <div className="container-custom grid lg:grid-cols-3 gap-8 items-start">
-        <div className="lg:col-span-1 space-y-4">
+        <div className="lg:col-span-3 max-w-2xl mx-auto text-center space-y-4">
           {eyebrow && (
             <span className="text-primary font-medium text-sm uppercase tracking-[0.25em]">
               {eyebrow}
@@ -99,10 +101,10 @@ const SellerSignalsSection = ({
               className="inline-flex items-center gap-2 text-primary font-semibold"
             >
               {cta.label}
-              <ArrowUpRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4" />
             </a>
           )}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-20 ml-11 ">
             <span className="px-3 py-1.5 rounded-full bg-card border border-border text-xs uppercase tracking-wide text-muted-foreground">
               Momentum
             </span>
@@ -115,7 +117,7 @@ const SellerSignalsSection = ({
           </div>
         </div>
 
-        <div className="lg:col-span-2 grid sm:grid-cols-2 gap-4 md:gap-6">
+        <div className="lg:col-span-3 grid sm:grid-cols-3 gap-4 md:gap-6">
           {sellers.map((seller, idx) => (
             <SellerCard key={seller.id} seller={seller} delay={idx * 0.05} />
           ))}
@@ -126,3 +128,4 @@ const SellerSignalsSection = ({
 };
 
 export default SellerSignalsSection;
+

@@ -27,26 +27,23 @@ const GalleryPreviewSection = () => {
         </motion.div>
       </div>
 
-      <ParallaxGridScroll images={galleryImages} />
+     <div className="mt-10">
+  <ParallaxGridScroll images={galleryImages} />
+</div>
 
-      <div className="container-custom pb-16 md:pb-24">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center"
-        >
-          <Link
-            to="/gallery"
-            className="inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-card border border-border hover:border-primary/50 transition-all duration-300 group"
-          >
-            <span className="font-display font-semibold text-foreground">
-              Explore Full Gallery
-            </span>
-            <ArrowRight className="w-5 h-5 text-primary group-hover:translate-x-1 transition-transform" />
-          </Link>
-        </motion.div>
-      </div>
+  <div className="mt-10 mb-24">
+  <ParallaxGridScroll images={galleryImages} />
+</div>
+
+<div className="container-custom pb-16 md:pb-24">
+  <motion.div className="text-center  mt-16">
+    <Link to="/gallery">
+      <span className="block font-display font-semibold text-foreground text-2xl">
+        Explore Full Gallery →
+      </span>
+    </Link>
+  </motion.div>
+</div>
     </section>
   );
 };

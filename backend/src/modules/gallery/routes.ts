@@ -1,3 +1,6 @@
+
+
+
 import { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { getDb } from "../../db/mongo";
@@ -40,17 +43,25 @@ const galleryItemSchema = z.object({
   article: z.array(gallerySectionSchema).default([]),
   likes: z.number().int().nonnegative().default(0),
   comments: z.array(galleryCommentSchema).default([]),
-  tags: z.array(z.string()).default([]),
+  tags: z.preprocess(
+    (val) =>
+      typeof val === "string"
+        ? val.split(",").map((t) => t.trim()).filter(Boolean)
+        : val,
+    z.array(z.string()).default([])
+  ),
 });
 
 const bulkGallerySchema = z.object({
   items: z.array(galleryItemSchema),
 });
 
+// ✅ CHANGE 1: added image field
 const galleryHeroSchema = z.object({
   heading: z.string().default("Legacy"),
   accent: z.string().default("Gallery"),
   subheading: z.string().default("Browse curated moments from our past expos. Filter by year, category, or search for specific brands."),
+  image: z.string().optional().default(""),
 });
 
 const galleryQuerySchema = z.object({
@@ -85,7 +96,7 @@ export default async function galleryRoutes(app: FastifyInstance) {
     const { comments, ...rest } = item;
     return {
       ...rest,
-      comments: [], // comments are served via /gallery/:id/comments
+      comments: [],
       variants: item.variants ?? [],
     };
   };
@@ -97,7 +108,7 @@ export default async function galleryRoutes(app: FastifyInstance) {
       .transform((v) => Number(v))
       .catch(10)
       .optional(),
-    cursor: z.string().optional(), // base64 of { date: string; id: string }
+    cursor: z.string().optional(),
   });
 
   const adminCommentsQuerySchema = z.object({
@@ -107,11 +118,11 @@ export default async function galleryRoutes(app: FastifyInstance) {
       .transform((v) => Number(v))
       .catch(20)
       .optional(),
-    cursor: z.string().optional(), // base64 of { date: string; id: string }
+    cursor: z.string().optional(),
     itemId: z.string().optional(),
     search: z.string().optional(),
-    start: z.string().optional(), // ISO
-    end: z.string().optional(), // ISO
+    start: z.string().optional(),
+    end: z.string().optional(),
   });
 
   app.get("/gallery", async (request) => {
@@ -131,8 +142,9 @@ export default async function galleryRoutes(app: FastifyInstance) {
     if (query.year && query.year !== "All Years") {
       filter.year = query.year;
     }
+    // ✅ CHANGE 2: case-insensitive category filter
     if (query.category && query.category !== "All") {
-      filter.category = query.category;
+      filter.category = { $regex: `^${query.category}$`, $options: "i" };
     }
     if (query.tag) {
       filter.tags = { $in: [query.tag] };
@@ -155,9 +167,10 @@ export default async function galleryRoutes(app: FastifyInstance) {
       .toArray();
     const data = raw.map(sanitizeItem);
 
-    const distinctYears = await col.distinct("year");
-    const distinctCategories = await col.distinct("category");
-    const distinctTags = await col.distinct("tags");
+    // ✅ CHANGE 3: sorted distinct values
+    const distinctYears = (await col.distinct("year")).filter(Boolean).sort().reverse();
+    const distinctCategories = (await col.distinct("category")).filter(Boolean).sort();
+    const distinctTags = (await col.distinct("tags")).filter(Boolean).sort();
 
     return {
       data,
@@ -176,21 +189,30 @@ export default async function galleryRoutes(app: FastifyInstance) {
     };
   });
 
+  // ✅ CHANGE 4: image field added to hero GET
   app.get("/gallery/hero", async () => {
     const db = await getDb();
-    const col = db.collection<{ key: string; heading: string; subheading: string }>("gallery_hero");
+    const col = db.collection<{
+      key: string;
+      heading: string;
+      accent: string;
+      subheading: string;
+      image: string;
+    }>("gallery_hero");
     const stored = await col.findOne({ key: "default" });
     if (!stored) {
       return {
         heading: "Legacy",
         accent: "Gallery",
         subheading: "Browse curated moments from our past expos. Filter by year, category, or search for specific brands.",
+        image: "",
       };
     }
     return {
       heading: stored.heading,
-      accent: (stored as any).accent ?? "Gallery",
+      accent: stored.accent ?? "Gallery",
       subheading: stored.subheading,
+      image: stored.image ?? "",
     };
   });
 
@@ -240,11 +262,7 @@ export default async function galleryRoutes(app: FastifyInstance) {
     const pipeline: any[] = [
       { $match: { id } },
       { $unwind: "$comments" },
-      {
-        $addFields: {
-          "comments.dateObj": { $toDate: "$comments.date" },
-        },
-      },
+      { $addFields: { "comments.dateObj": { $toDate: "$comments.date" } } },
     ];
 
     if (cursorDate && cursorId) {
@@ -422,38 +440,12 @@ export default async function galleryRoutes(app: FastifyInstance) {
     }
   );
 
+  // ✅ Bulk route disabled — use PUT /gallery/:id instead
   app.put(
     "/gallery",
     { preHandler: [app.authenticate] },
-    async (request, reply) => {
-      const parsed = bulkGallerySchema.safeParse(request.body);
-      if (!parsed.success) {
-        request.log.warn({ issues: parsed.error.issues }, "gallery.bulk validation failed");
-        return reply.code(400).send({ message: "Invalid gallery payload" });
-      }
-
-      const ids = new Set<string>();
-      for (const item of parsed.data.items) {
-        if (ids.has(item.id)) {
-          return reply.code(400).send({ message: `Duplicate id detected: ${item.id}` });
-        }
-        ids.add(item.id);
-      }
-
-      const db = await getDb();
-      const col = db.collection<GalleryItem>("gallery");
-      await col.deleteMany({});
-      const now = new Date();
-      await col.insertMany(
-        parsed.data.items.map((item) => ({
-          ...item,
-          createdAt: now,
-          updatedAt: now,
-        }))
-      );
-
-      request.log.info("gallery.bulk replaced");
-      return { message: "Gallery items saved", count: parsed.data.items.length };
+    async (_request, reply) => {
+      return reply.code(410).send({ message: "Bulk replace disabled. Use PUT /gallery/:id instead." });
     }
   );
 
@@ -472,7 +464,6 @@ export default async function galleryRoutes(app: FastifyInstance) {
       const likedKey = `gallery:liked:${id}`;
       const bufferKey = "gallery:like-buffer";
 
-      // prevent duplicate likes in the window
       const already = await redis.sismember(likedKey, user.sub);
       if (already) {
         const bufferVal = await redis.hget(bufferKey, id);
@@ -486,7 +477,6 @@ export default async function galleryRoutes(app: FastifyInstance) {
       const bufferCount = await redis.hincrby(bufferKey, id, 1);
       let likesTotal = existing.likes + bufferCount;
 
-      // Flush to Mongo when buffer reaches threshold
       if (bufferCount >= 10) {
         await redis.hdel(bufferKey, id);
         await col.updateOne({ id }, { $inc: { likes: bufferCount } });
@@ -509,23 +499,13 @@ export default async function galleryRoutes(app: FastifyInstance) {
       const db = await getDb();
       const col = db.collection<GalleryItem>("gallery");
       const now = new Date();
-      // Ensure doc exists first (no conflicting ops on the same path).
       await col.updateOne(
         { id },
         {
           $setOnInsert: {
-            id,
-            title: id,
-            year: "",
-            category: "",
-            brand: "",
-            image: "",
-            excerpt: "",
-            article: [],
-            likes: 0,
-            tags: [],
-            comments: [],
-            createdAt: now,
+            id, title: id, year: "", category: "", brand: "",
+            image: "", excerpt: "", article: [], likes: 0,
+            tags: [], comments: [], createdAt: now,
           },
           $set: { updatedAt: now },
         },
@@ -541,6 +521,7 @@ export default async function galleryRoutes(app: FastifyInstance) {
     }
   );
 
+  // ✅ CHANGE 5: hero PUT now saves image too
   app.put(
     "/gallery/hero",
     { preHandler: [app.authenticate] },
@@ -552,7 +533,11 @@ export default async function galleryRoutes(app: FastifyInstance) {
       }
       const db = await getDb();
       const col = db.collection("gallery_hero");
-      await col.updateOne({ key: "default" }, { $set: { key: "default", ...parsed.data } }, { upsert: true });
+      await col.updateOne(
+        { key: "default" },
+        { $set: { key: "default", ...parsed.data } },
+        { upsert: true }
+      );
       request.log.info("gallery.hero updated");
       return parsed.data;
     }
@@ -568,7 +553,6 @@ export default async function galleryRoutes(app: FastifyInstance) {
         request.log.warn({ issues: parsed.error.issues }, "gallery.update validation failed");
         return reply.code(400).send({ message: "Invalid gallery item payload" });
       }
-
       const db = await getDb();
       const col = db.collection<GalleryItem>("gallery");
       const res = await col.updateOne(
@@ -576,7 +560,6 @@ export default async function galleryRoutes(app: FastifyInstance) {
         { $set: { ...parsed.data, updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
         { upsert: true }
       );
-
       request.log.info({ id, upserted: res.upsertedCount > 0 }, "gallery.update saved");
       return parsed.data;
     }

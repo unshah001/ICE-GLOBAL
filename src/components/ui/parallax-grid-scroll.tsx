@@ -36,7 +36,7 @@ export const ParallaxGridScroll = ({
     <div
       ref={gridRef}
       className={cn(
-        "h-[40rem] md:h-[60rem] items-start overflow-hidden w-full",
+        "h-[50rem] md:h-[90rem] items-start overflow-hidden w-full",
         className
       )}
     >
@@ -51,7 +51,7 @@ export const ParallaxGridScroll = ({
             >
               <img
                 src={image.src}
-                className="h-60 md:h-80 w-full object-cover object-center rounded-xl gap-4 md:gap-10 !m-0 !p-0"
+                className="h-70 md:h-90 w-full object-cover object-center rounded-xl gap-4 md:gap-10 !m-0 !p-0"
                 alt={`Expo image ${idx + 1}`}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 rounded-xl" />
@@ -68,7 +68,7 @@ export const ParallaxGridScroll = ({
             >
               <img
                 src={image.src}
-                className="h-60 md:h-80 w-full object-cover object-center rounded-xl gap-4 md:gap-10 !m-0 !p-0"
+                className="h-70 md:h-90 w-full object-cover object-center rounded-xl gap-4 md:gap-10 !m-0 !p-0"
                 alt={`Expo image ${idx + third + 1}`}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 rounded-xl" />
@@ -85,7 +85,7 @@ export const ParallaxGridScroll = ({
             >
               <img
                 src={image.src}
-                className="h-60 md:h-80 w-full object-cover object-center rounded-xl gap-4 md:gap-10 !m-0 !p-0"
+                className="h-70 md:h-90 w-full object-cover object-center rounded-xl gap-4 md:gap-10 !m-0 !p-0"
                 alt={`Expo image ${idx + 2 * third + 1}`}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 rounded-xl" />

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { FloatingNavbar } from "@/components/ui/floating-navbar";
-import { BackgroundBeams } from "@/components/ui/background-effects";
+// import { BackgroundBeams } from "@/components/ui/background-effects";
 import Footer from "@/components/Footer";
 import { navItems } from "@/data/expo-data";
 import { buyerTestimonials, type BuyerTestimonial } from "@/data/buyer-testimonials";

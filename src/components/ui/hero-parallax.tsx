@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useMemo } from "react";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -15,11 +15,17 @@ interface HeroParallaxProps {
   heroSubtitle?: string;
 }
 
+// export const HeroParallax = ({
+//   products,
+//   heroTitle,
+//   heroHighlight,
+//   heroSubtitle,
 export const HeroParallax = ({
   products,
-  heroTitle = "Experience the Expo Legacy",
-  heroHighlight = "Expo Legacy",
-  heroSubtitle = "A decade of immersive expos, captured in over 1,000 moments. Where brands connect, innovate, and inspire. Explore our visual archive of unforgettable experiences.",
+  heroTitle = "Experience the India Global",
+  heroHighlight = "India Global",
+  heroSubtitle = "Where brands connect, innovate, and inspire. Explore our visual archive of unforgettable experiences.",
+
 }: HeroParallaxProps) => {
   const firstRow = products.slice(0, 5);
   const secondRow = products.slice(5, 10);
@@ -62,7 +68,9 @@ export const HeroParallax = ({
       ref={ref}
       className="h-[250vh] md:h-[300vh] py-20 md:py-40 overflow-hidden antialiased relative flex flex-col self-auto [perspective:1000px] [transform-style:preserve-3d]"
     >
-      <Header title={heroTitle} highlighted={heroHighlight} subtitle={heroSubtitle} />
+      {heroTitle && (
+        <Header title={heroTitle} highlighted={heroHighlight} subtitle={heroSubtitle} />
+      )}
       <motion.div
         style={{
           rotateX,
@@ -113,19 +121,25 @@ export const Header = ({
   highlighted?: string;
   subtitle?: string;
 }) => {
-  const parts =
-    highlighted && title.includes(highlighted)
-      ? title.split(highlighted)
-      : [title, ""];
+  const { before, match, after } = useMemo(() => {
+    if (!highlighted || !title) return { before: title, match: "", after: "" };
+
+    const idx = title.toLowerCase().indexOf(highlighted.toLowerCase());
+    if (idx === -1) return { before: title, match: "", after: "" };
+
+    return {
+      before: title.slice(0, idx),
+      match: title.slice(idx, idx + highlighted.length),
+      after: title.slice(idx + highlighted.length),
+    };
+  }, [title, highlighted]);
 
   return (
     <div className="max-w-7xl relative mx-auto py-20 md:py-40 px-4 w-full left-0 top-0">
       <h1 className="text-3xl md:text-7xl font-bold font-display text-foreground">
-        {parts[0]}
-        {highlighted && (
-          <span className="text-gradient">{highlighted}</span>
-        )}
-        {parts[1]}
+        {before}
+        {match && <span className="text-gradient">{match}</span>}
+        {after}
       </h1>
       {subtitle && (
         <p className="max-w-2xl text-base md:text-xl mt-8 text-muted-foreground">

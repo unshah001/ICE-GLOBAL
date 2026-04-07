@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Crown, ArrowUpRight } from "lucide-react";
+import { Crown, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Vvip } from "@/data/vvip-data";
 
@@ -39,7 +39,7 @@ const VvipSpotlightSection = ({
               className="inline-flex items-center gap-2 justify-center text-primary font-semibold"
             >
               {cta.label}
-              <ArrowUpRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4" />
             </a>
           )}
         </div>
@@ -57,25 +57,30 @@ const VvipSpotlightSection = ({
               target={guest.href?.startsWith("http") ? "_blank" : undefined}
               rel={guest.href?.startsWith("http") ? "noreferrer" : undefined}
             >
-              <div className="relative h-52 md:h-60">
-                <img
-                  src={guest.image}
-                  alt={guest.name}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-background/20 to-transparent" />
-                <div className="absolute top-3 left-3 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-semibold">
-                  <Crown className="w-4 h-4" />
-                  {guest.role}
-                </div>
-              </div>
+          <div className="relative h-52 md:h-60 lg:h-72">
+  <img
+    src={guest.image}
+    alt={guest.name}
+    className={cn(
+      "w-full h-full object-cover transition-transform duration-500 group-hover:scale-105",
+      idx === 2 ? "object-top" : "object-center" // fixes the third image
+    )}
+  />
+  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent z-10" />
+  {guest.badge && (
+    <div className="absolute top-3 left-3 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-semibold z-20">
+      <Crown className="w-4 h-4" />
+      {guest.role}
+    </div>
+  )}
+</div>
               <div className="relative p-5 space-y-3">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm text-muted-foreground">{guest.title}</p>
                     <h3 className="text-xl font-display font-semibold text-foreground">{guest.name}</h3>
                   </div>
-                  <ArrowUpRight className="w-4 h-4 text-primary group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight className="w-4 h-4 text-primary group-hover:translate-x-1 transition-transform" />
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   {guest.highlight}

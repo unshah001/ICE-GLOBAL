@@ -155,7 +155,7 @@ const TestimonialsPage = () => {
                         }
                       }}
                       alt={t.name}
-                      className="h-14 w-14 rounded-full object-cover border border-border/60"
+                      className="h-24 w-24 rounded-full object-cover border-2 border-primary/30 shadow-md"
                     />
                     <div>
                       <div className="font-display font-semibold text-lg">{t.name}</div>
