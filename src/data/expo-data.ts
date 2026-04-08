@@ -193,7 +193,7 @@ export const brandStories: Record<
     headline: "Spatial-first product launches that stole the show",
     summary:
       "TechVision Labs used our expo to debut their mixed reality stack, staging synchronized demos that turned a technical feature set into an immersive story.",
-    heroImage: expoVrZone,
+    heroImage: "https://i.ibb.co/60sFxbb4/Warm-Blue-Exhibition-Poster-with-Parallelograms.png",
     highlights: [
       {
         title: "Live spatial lab",
@@ -219,7 +219,7 @@ export const brandStories: Record<
     headline: "A headline sponsor with a cinematic keynote",
     summary:
       "InnovateCorp took over the main stage with a narrative-driven keynote that blended live orchestra cues, holograms, and audience participation.",
-    heroImage: expoStage,
+    heroImage: "https://i.ibb.co/60sFxbb4/Warm-Blue-Exhibition-Poster-with-Parallelograms.png",
     highlights: [
       {
         title: "Scripted for emotion",
@@ -245,7 +245,7 @@ export const brandStories: Record<
     headline: "Building a signature entry experience",
     summary:
       "FutureBrand’s kinetic entrance tunnel became the most shared visual of the expo, turning first impressions into shareable content.",
-    heroImage: expoEntrance,
+    heroImage:"https://i.ibb.co/60sFxbb4/Warm-Blue-Exhibition-Poster-with-Parallelograms.png",
     highlights: [
       {
         title: "Adaptive lighting",
@@ -271,7 +271,7 @@ export const brandStories: Record<
     headline: "Turning enterprise demos into festival moments",
     summary:
       "GlobalTech transformed complex enterprise solutions into festival-friendly experiences with lounge seating and live guided tours.",
-    heroImage: expoAerial,
+    heroImage: "https://i.ibb.co/60sFxbb4/Warm-Blue-Exhibition-Poster-with-Parallelograms.png",
     highlights: [
       {
         title: "Guided walkthroughs",

@@ -6,7 +6,7 @@ import fastifySensible from "@fastify/sensible";
 
 export default fp(async (app) => {
   await app.register(fastifySensible);
-  await app.register(fastifyCors, { origin: "https://ice-backend-dev.onrender.com", credentials: true });
+  await app.register(fastifyCors, { origin: true, credentials: true });
   await app.register(fastifyHelmet);
   await app.register(fastifyRateLimit, {
     max: 200,

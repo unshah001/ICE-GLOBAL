@@ -21,32 +21,32 @@ const defaultHero = {
     {
       title: "Main Stage 2024",
       link: "/gallery",
-      thumbnail: "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?w=800&auto=format&fit=crop&q=80",
+      thumbnail: "https://i.ibb.co/60sFxbb4/Warm-Blue-Exhibition-Poster-with-Parallelograms.png",
     },
     {
       title: "VR Experience Zone",
       link: "/gallery",
-      thumbnail: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=800&auto=format&fit=crop&q=80",
+      thumbnail: "https://i.ibb.co/fdT04szD/Interactive-Exhibition-Poster-with-Arrow-Panels-1.png0",
     },
     {
       title: "Grand Entrance",
       link: "/gallery",
-      thumbnail: "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?w=800&auto=format&fit=crop&q=80",
+      thumbnail: "https://i.ibb.co/B20jqdnp/Modern-Promotional-Poster-for-Exhibition-4.png",
     },
     {
       title: "Innovation Booths",
       link: "/gallery",
-      thumbnail: "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?w=800&auto=format&fit=crop&q=80",
+      thumbnail: "https://i.ibb.co/5gWSK50N/Get-your-brand-to-experience-the.png",
     },
     {
       title: "Networking Lounge",
       link: "/gallery",
-      thumbnail: "https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=800&auto=format&fit=crop&q=80",
+      thumbnail: "https://i.ibb.co/LdddgPV2/iceinfog-CC4.png",
     },
     {
       title: "Night Arena",
       link: "/gallery",
-      thumbnail: "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?w=800&auto=format&fit=crop&q=80",
+      thumbnail: "https://i.ibb.co/jkM5kJzP/iceinfog-CC2.png",
     },
   ],
 };
