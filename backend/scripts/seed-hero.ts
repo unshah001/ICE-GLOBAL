@@ -26,7 +26,7 @@ const defaultHero = {
     {
       title: "VR Experience Zone",
       link: "/gallery",
-      thumbnail: "https://i.ibb.co/fdT04szD/Interactive-Exhibition-Poster-with-Arrow-Panels-1.png0",
+      thumbnail: "https://i.ibb.co/fdT04szD/Interactive-Exhibition-Poster-with-Arrow-Panels-1.png",
     },
     {
       title: "Grand Entrance",

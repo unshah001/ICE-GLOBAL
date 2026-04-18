@@ -15,19 +15,19 @@ const defaultReview = {
     },
     {
       src: "https://i.ibb.co/60sFxbb4/Warm-Blue-Exhibition-Poster-with-Parallelograms.png",
-      href: "/gallery",
+      href: "/gallery/ice-megaexpo-premium-shopping-exhibition",
     },
     {
       src: "https://i.ibb.co/fdT04szD/Interactive-Exhibition-Poster-with-Arrow-Panels-1.png",
-      href: "/gallery",
+      href: "/gallery/ice-megaexpo-international-consumer-exhibition",
     },
     {
       src: "https://i.ibb.co/B20jqdnp/Modern-Promotional-Poster-for-Exhibition-4.png",
-      href: "/gallery",
+      href: "/gallery/ice-megaexpo-shopping-exhibition-highlights",
     },
     {
       src: "https://i.ibb.co/5gWSK50N/Get-your-brand-to-experience-the.png",
-      href: "/gallery",
+      href: "/gallery/indias-biggest-shopping-exhibition",
     },
     {
       src: "https://i.ibb.co/LdddgPV2/iceinfog-CC4.png",

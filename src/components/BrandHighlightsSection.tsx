@@ -1,3 +1,201 @@
+// import { useState, useEffect } from "react";
+// import { motion } from "framer-motion";
+// import { ArrowRight } from "lucide-react";
+// import { Link } from "react-router-dom";
+// import { BentoGrid, BentoGridItem } from "@/components/ui/bento-grid";
+
+// interface Brand {
+//   slug: string;
+//   name: string;
+//   logo: string;
+//   relationship: string;
+//   category: string;
+//   image: string;
+// }
+
+// interface BrandHighlightsSectionProps {
+//   title?: string;
+//   eyebrow?: string;
+//   description?: string;
+//   ctaLabel?: string;
+//   ctaHref?: string;
+//   brands?: Brand[]; // ← added
+// }
+
+// // Generate a fallback background color from brand name
+// const colorFromString = (str: string) => {
+//   const colors = ["#1e3a5f","#065f46","#3b0764","#7c2d12","#134e4a","#1e40af","#14532d","#4c1d95","#7f1d1d","#0c4a6e"];
+//   let hash = 0;
+//   for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+//   return colors[Math.abs(hash) % colors.length];
+// };
+
+// // Component to show brand image or fallback initials
+// const BrandCardImage = ({ src, name, logo }: { src: string; name: string; logo: string }) => {
+//   const [failed, setFailed] = useState(!src);
+
+//   useEffect(() => { setFailed(!src); }, [src]);
+
+//   if (failed || !src) {
+//     return (
+//       <div
+//         className="w-full h-full flex items-center justify-center"
+//         style={{ backgroundColor: colorFromString(name) }}
+//       >
+//         <span className="font-bold text-white select-none" style={{ fontSize: "2.5rem", opacity: 0.85 }}>
+//           {logo || name?.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
+//         </span>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <img
+//       src={src}
+//       alt={name}
+//       className="w-full h-full object-cover transition-transform duration-500 group-hover/bento:scale-110"
+//       onError={() => setFailed(true)}
+//     />
+//   );
+// };
+
+// const BrandHighlightsSection = ({
+//   title: titleProp,
+//   eyebrow: eyebrowProp,
+//   description: descriptionProp,
+//   ctaLabel: ctaLabelProp,
+//   ctaHref: ctaHrefProp,
+//   brands: brandsProp, // ← added
+// }: BrandHighlightsSectionProps) => {
+//   const [brands, setBrands] = useState<Brand[]>(brandsProp ?? []);
+//   const [eyebrow, setEyebrow] = useState(eyebrowProp ?? "Our Partners");
+//   const [title, setTitle] = useState(titleProp ?? "Trusted by Industry Leaders");
+//   const [description, setDescription] = useState(descriptionProp ?? "");
+//   // const [ctaLabel, setCtaLabel] = useState(ctaLabelProp ?? "View all partner brands");
+//   // const [ctaHref, setCtaHref] = useState(ctaHrefProp ?? "/gallery");
+//   const ctaHref = ctaHrefProp ?? "/gallery";
+// const ctaLabel = ctaLabelProp ?? "View all partner brands";
+//   const [loading, setLoading] = useState(!brandsProp?.length); // ← skip loading if prop provided
+
+//   const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://192.168.1.7:8086";
+//   const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE_URL || "https://ice-global.b-cdn.net";
+
+//   useEffect(() => {
+//     // ✅ If brands passed from parent, use them directly — skip API call
+//     if (brandsProp?.length) {
+//       setBrands(brandsProp);
+//       setLoading(false);
+//       return;
+//     }
+
+//     // Fallback: fetch from API if no brands prop provided
+//     const fetchBrands = async () => {
+//       try {
+//         const res = await fetch(`${API_BASE}/brands/highlights`);
+//         const data = await res.json();
+
+//         if (data.brands?.length) {
+//           const brandsWithFullImages = data.brands.map((brand: Brand) => {
+//             let imageUrl = brand.image || "";
+//             if (imageUrl.startsWith("http")) {
+//               // Full URL, leave as-is
+//             } else {
+//               imageUrl = `${MEDIA_BASE}${imageUrl.startsWith("/") ? "" : "/"}${imageUrl}`;
+//             }
+//             return { ...brand, image: imageUrl };
+//           });
+//           setBrands(brandsWithFullImages);
+//         }
+
+//         if (data.eyebrow) setEyebrow(data.eyebrow);
+//         if (data.title) setTitle(data.title);
+//         if (data.description) setDescription(data.description);
+//         // if (data.ctaLabel) setCtaLabel(data.ctaLabel);
+//         // if (data.ctaHref) setCtaHref(data.ctaHref);
+//       } catch (err) {
+//         console.error("Failed to fetch brand highlights:", err);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+//     fetchBrands();
+//   }, [brandsProp, API_BASE, MEDIA_BASE]);
+
+//   if (loading) {
+//     return (
+//       <section className="py-8 md:py-12">
+//         <div className="container-custom flex justify-center items-center h-40">
+//           <span className="text-muted-foreground text-sm">Loading brands...</span>
+//         </div>
+//       </section>
+//     );
+//   }
+
+//   return (
+//     <section className="py-8 md:py-12">
+//       <div className="container-custom">
+//         <motion.div
+//           initial={{ opacity: 0, y: 20 }}
+//           whileInView={{ opacity: 1, y: 0 }}
+//           viewport={{ once: true }}
+//           className="text-center mb-8"
+//         >
+//           {eyebrow && (
+//             <span className="text-primary font-medium text-sm uppercase tracking-wider">{eyebrow}</span>
+//           )}
+//           <h2 className="text-3xl md:text-5xl font-bold font-display text-foreground mt-2 mb-3">{title}</h2>
+//           {description && <p className="text-muted-foreground max-w-2xl mx-auto">{description}</p>}
+//         </motion.div>
+
+//         <BentoGrid className="max-w-5xl mx-auto gap-x-6">
+//           {brands.map((brand, index) => (
+//             <Link key={brand.slug} to={`/brands/${brand.slug}`}>
+//               <BentoGridItem
+//                 className={index === 0 || index === 3 ? "md:col-span-2" : ""}
+//                 title={brand.name}
+//                 description={
+//                   <span className="flex items-center gap-2">
+//                     <span className="text-primary">{brand.relationship}</span>
+//                     <span className="text-muted-foreground">•</span>
+//                     <span>{brand.category}</span>
+//                   </span>
+//                 }
+//                 header={
+//                   <div className="relative w-full h-32 md:h-40 rounded-lg overflow-hidden">
+//                     <BrandCardImage src={brand.image} name={brand.name} logo={brand.logo} />
+//                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+//                   </div>
+//                 }
+//                 icon={
+//                   <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+//                     <ArrowRight className="w-3 h-3 text-primary" />
+//                   </div>
+//                 }
+//               />
+//             </Link>
+//           ))}
+//         </BentoGrid>
+
+//         <motion.div
+//           initial={{ opacity: 0, y: 20 }}
+//           whileInView={{ opacity: 1, y: 0 }}
+//           viewport={{ once: true }}
+//           className="text-center mt-8"
+//         >
+//           <Link
+//             to={ctaHref}
+//             className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors font-medium"
+//           >
+//             {ctaLabel}
+//             <ArrowRight className="w-4 h-4" />
+//           </Link>
+//         </motion.div>
+//       </div>
+//     </section>
+//   );
+// };
+
+// export default BrandHighlightsSection;
 
 
 import { useState, useEffect } from "react";
@@ -12,30 +210,37 @@ interface Brand {
   logo: string;
   relationship: string;
   category: string;
-  image: string; // this is the path from backend, e.g., "uploads/logo1.jpg"
+  image: string;
 }
 
-interface BrandHighlightsSectionProps {
-  title?: string;
-  eyebrow?: string;
-  description?: string;
-  ctaLabel?: string;
-  ctaHref?: string;
-}
-
-// Generate a fallback background color from brand name
+// fallback color generator
 const colorFromString = (str: string) => {
-  const colors = ["#1e3a5f","#065f46","#3b0764","#7c2d12","#134e4a","#1e40af","#14532d","#4c1d95","#7f1d1d","#0c4a6e"];
+  const colors = [
+    "#1e3a5f", "#065f46", "#3b0764", "#7c2d12", "#134e4a",
+    "#1e40af", "#14532d", "#4c1d95", "#7f1d1d", "#0c4a6e"
+  ];
   let hash = 0;
-  for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
   return colors[Math.abs(hash) % colors.length];
 };
 
-// Component to show brand image or fallback initials
-const BrandCardImage = ({ src, name, logo }: { src: string; name: string; logo: string }) => {
+// image fallback component
+const BrandCardImage = ({
+  src,
+  name,
+  logo,
+}: {
+  src: string;
+  name: string;
+  logo: string;
+}) => {
   const [failed, setFailed] = useState(!src);
 
-  useEffect(() => { setFailed(!src); }, [src]);
+  useEffect(() => {
+    setFailed(!src);
+  }, [src]);
 
   if (failed || !src) {
     return (
@@ -43,8 +248,14 @@ const BrandCardImage = ({ src, name, logo }: { src: string; name: string; logo: 
         className="w-full h-full flex items-center justify-center"
         style={{ backgroundColor: colorFromString(name) }}
       >
-        <span className="font-bold text-white select-none" style={{ fontSize: "2.5rem", opacity: 0.85 }}>
-          {logo || name?.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
+        <span className="font-bold text-white text-3xl opacity-80">
+          {logo ||
+            name
+              ?.split(" ")
+              .map((w) => w[0])
+              .join("")
+              .slice(0, 2)
+              .toUpperCase()}
         </span>
       </div>
     );
@@ -60,103 +271,150 @@ const BrandCardImage = ({ src, name, logo }: { src: string; name: string; logo: 
   );
 };
 
-const BrandHighlightsSection = ({
-  title: titleProp,
-  eyebrow: eyebrowProp,
-  description: descriptionProp,
-  ctaLabel: ctaLabelProp,
-  ctaHref: ctaHrefProp,
-}: BrandHighlightsSectionProps) => {
+const BrandHighlightsSection = () => {
   const [brands, setBrands] = useState<Brand[]>([]);
-  const [eyebrow, setEyebrow] = useState(eyebrowProp ?? "Our Partners");
-  const [title, setTitle] = useState(titleProp ?? "Trusted by Industry Leaders");
-  const [description, setDescription] = useState(descriptionProp ?? "");
-  const [ctaLabel, setCtaLabel] = useState(ctaLabelProp ?? "View all partner brands");
-  const [ctaHref, setCtaHref] = useState(ctaHrefProp ?? "/brands");
+  const [eyebrow, setEyebrow] = useState("Our Partners");
+  const [title, setTitle] = useState("Trusted by Industry Leaders");
+  const [description, setDescription] = useState("");
+  const [ctaLabel, setCtaLabel] = useState("View all partner brands");
+  const [ctaHref, setCtaHref] = useState("/sellers");
   const [loading, setLoading] = useState(true);
 
-  const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://192.168.1.7:8086";
-  const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE_URL || "https://ice-global.b-cdn.net";
+  const API_BASE =
+    import.meta.env.VITE_API_BASE_URL || "http://192.168.1.7:8086";
+  const MEDIA_BASE =
+    import.meta.env.VITE_MEDIA_BASE_URL || "https://ice-global.b-cdn.net";
 
-  useEffect(() => {
-    const fetchBrands = async () => {
-      try {
-        const res = await fetch(`${API_BASE}/brands/highlights`);
-        const data = await res.json();
-        console.log("API response:", data);
+  // useEffect(() => {
+//     const fetchBrands = async () => {
+//       try {
+//         const res = await fetch(`${API_BASE}/brandHighlights`);
+// const data = await res.json();
 
-        if (data.brands?.length) {
-          // Map backend paths to full BunnyCDN URLs
-          const brandsWithFullImages = data.brands.map((brand: Brand) => {
-            let imageUrl = brand.image || "";
-            if (imageUrl.startsWith("http")) {
-              // Full URL, leave as-is
-            } else {
-              // Relative path → prepend BunnyCDN base URL
-              imageUrl = `${MEDIA_BASE}${imageUrl.startsWith("/") ? "" : "/"}${imageUrl}`;
-            }
-            return { ...brand, image: imageUrl };
-          });
-          setBrands(brandsWithFullImages);
-        }
+// const formattedBrands = (data.data || []).map((brand: Brand) => {
+//   let imageUrl = brand.image || "";
 
-        // Optional metadata from API
-        if (data.eyebrow) setEyebrow(data.eyebrow);
-        if (data.title) setTitle(data.title);
-        if (data.description) setDescription(data.description);
-        if (data.ctaLabel) setCtaLabel(data.ctaLabel);
-        if (data.ctaHref) setCtaHref(data.ctaHref);
-      } catch (err) {
-        console.error("Failed to fetch brand highlights:", err);
-      } finally {
-        setLoading(false);
+//   if (imageUrl && !imageUrl.startsWith("http")) {
+//     imageUrl = `${MEDIA_BASE}${imageUrl.startsWith("/") ? "" : "/"}${imageUrl}`;
+//   }
+
+//   return {
+//     ...brand,
+//     image: imageUrl,
+//   };
+// });
+
+// setBrands(formattedBrands);
+
+//         setEyebrow(data.eyebrow || "Our Partners");
+//         setTitle(data.title || "Trusted by Industry Leaders");
+//         setDescription(data.description || "");
+//         setCtaLabel(data.ctaLabel || "View all partner brands");
+//         setCtaHref(data.ctaHref || "/sellers");
+//       } catch (err) {
+//         console.error("Failed to fetch brands:", err);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+
+//     fetchBrands();
+//   }, []);
+
+
+useEffect(() => {
+  const controller = new AbortController();
+
+  const fetchBrands = async () => {
+    try {
+      setLoading(true);
+
+      const res = await fetch(`${API_BASE}/brands`, {
+        signal: controller.signal,
+      });
+
+      const data = await res.json();
+
+      const list =
+        Array.isArray(data.data)
+          ? data.data
+          : [];
+
+      setBrands(list);
+    } catch (err: any) {
+      if (err.name !== "AbortError") {
+        console.error(err);
       }
-    };
-    fetchBrands();
-  }, [API_BASE, MEDIA_BASE]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchBrands();
+
+  return () => controller.abort();
+}, [API_BASE]); // ❗ better: add filters, not only API_BASE
+
+
 
   if (loading) {
     return (
-      <section className="py-8 md:py-12">
-        <div className="container-custom flex justify-center items-center h-40">
-          <span className="text-muted-foreground text-sm">Loading brands...</span>
+      <section className="py-10">
+        <div className="container-custom flex justify-center">
+          <span className="text-sm text-muted-foreground">
+            Loading brands...
+          </span>
         </div>
       </section>
     );
   }
 
   return (
-    <section className="py-8 md:py-12">
+    <section className="py-10">
       <div className="container-custom">
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-8"
+          className="text-center mb-10"
         >
-          {eyebrow && (
-            <span className="text-primary font-medium text-sm uppercase tracking-wider">{eyebrow}</span>
+          <span className="text-primary text-sm uppercase tracking-wider">
+            {eyebrow}
+          </span>
+
+          <h2 className="text-4xl font-bold mt-2 mb-3">{title}</h2>
+
+          {description && (
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              {description}
+            </p>
           )}
-          <h2 className="text-3xl md:text-5xl font-bold font-display text-foreground mt-2 mb-3">{title}</h2>
-          {description && <p className="text-muted-foreground max-w-2xl mx-auto">{description}</p>}
         </motion.div>
 
+        {/* Grid */}
         <BentoGrid className="max-w-5xl mx-auto gap-x-6">
           {brands.map((brand, index) => (
-            <Link key={brand.slug} to={`/brands/${brand.slug}`}>
+            <Link key={brand.slug} to={`/gallery/${brand.slug}`}>
               <BentoGridItem
                 className={index === 0 || index === 3 ? "md:col-span-2" : ""}
                 title={brand.name}
                 description={
                   <span className="flex items-center gap-2">
-                    <span className="text-primary">{brand.relationship}</span>
+                    <span className="text-primary">
+                      {brand.relationship}
+                    </span>
                     <span className="text-muted-foreground">•</span>
                     <span>{brand.category}</span>
                   </span>
                 }
                 header={
-                  <div className="relative w-full h-32 md:h-40 rounded-lg overflow-hidden">
-                    <BrandCardImage src={brand.image} name={brand.name} logo={brand.logo} />
+                  <div className="relative w-full h-40 rounded-lg overflow-hidden">
+                    <BrandCardImage
+                      src={brand.image}
+                      name={brand.name}
+                      logo={brand.logo}
+                    />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                   </div>
                 }
@@ -170,15 +428,16 @@ const BrandHighlightsSection = ({
           ))}
         </BentoGrid>
 
+        {/* CTA */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mt-8"
+          className="text-center mt-10"
         >
           <Link
             to={ctaHref}
-            className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors font-medium"
+            className="inline-flex items-center gap-2 text-primary font-medium hover:opacity-80"
           >
             {ctaLabel}
             <ArrowRight className="w-4 h-4" />

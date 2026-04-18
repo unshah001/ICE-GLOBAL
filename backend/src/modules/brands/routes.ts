@@ -101,31 +101,51 @@ const listQuerySchema = z.object({
 });
 
 export default async function brandsRoutes(app: FastifyInstance) {
+  // app.get("/brands/highlights", async () => {
+  //   const db = await getDb();
+  //   const col = db.collection("brands_highlights");
+  //   const stored = await col.findOne<{
+  //     eyebrow: string;
+  //     title: string;
+  //     description: string;
+  //     ctaLabel?: string;
+  //     ctaHref?: string;
+  //     brands: z.infer<typeof brandSchema>[];
+  //   }>({
+  //     key: "default",
+  //   });
+  //   if (!stored) {
+  //     return { eyebrow: "", title: "", description: "", ctaLabel: "", ctaHref: "", brands: [] };
+  //   }
+  //   return {
+  //     eyebrow: stored.eyebrow ?? "",
+  //     title: stored.title ?? "",
+  //     description: stored.description ?? "",
+  //     ctaLabel: stored.ctaLabel ?? "",
+  //     ctaHref: stored.ctaHref ?? "",
+  //     brands: stored.brands ?? [],
+  //   };
+  // });
   app.get("/brands/highlights", async () => {
-    const db = await getDb();
-    const col = db.collection("brands_highlights");
-    const stored = await col.findOne<{
-      eyebrow: string;
-      title: string;
-      description: string;
-      ctaLabel?: string;
-      ctaHref?: string;
-      brands: z.infer<typeof brandSchema>[];
-    }>({
-      key: "default",
-    });
-    if (!stored) {
-      return { eyebrow: "", title: "", description: "", ctaLabel: "", ctaHref: "", brands: [] };
-    }
-    return {
-      eyebrow: stored.eyebrow ?? "",
-      title: stored.title ?? "",
-      description: stored.description ?? "",
-      ctaLabel: stored.ctaLabel ?? "",
-      ctaHref: stored.ctaHref ?? "",
-      brands: stored.brands ?? [],
-    };
-  });
+  const db = await getDb();
+
+  const col = db.collection("brands_highlights");
+  const brandsCol = db.collection("brands");
+
+  const stored = await col.findOne({ key: "default" });
+
+  if (!stored) return { brands: [] };
+
+  // 🔥 IMPORTANT: rebuild live brands from DB
+  const liveBrands = await brandsCol
+    .find({ slug: { $in: (stored.brands || []).map((b: any) => b.slug) } })
+    .toArray();
+
+  return {
+    ...stored,
+    brands: liveBrands
+  };
+});
 
   app.get("/brands/hero", async () => {
     const db = await getDb();
@@ -243,26 +263,52 @@ export default async function brandsRoutes(app: FastifyInstance) {
       await col.updateOne(
         { slug },
         { $set: { ...parse.data, updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
-        { upsert: true }
+        // { upsert: true }
       );
       request.log.info({ slug }, "brands.item upserted");
       return parse.data;
     }
   );
 
-  app.delete(
-    "/brands/:slug",
-    { preHandler: [app.authenticate] },
-    async (request, reply) => {
-      const { slug } = request.params as { slug: string };
-      const db = await getDb();
-      const col = db.collection<z.infer<typeof brandSchema>>("brands");
-      const res = await col.deleteOne({ slug });
-      if (!res.deletedCount) return reply.code(404).send({ message: "Brand not found" });
-      request.log.info({ slug }, "brands.item deleted");
-      return { message: "Deleted", slug };
+
+
+
+app.delete(
+  "/brands/:slug",
+  { preHandler: [app.authenticate] },
+  async (request, reply) => {
+    const { slug } = request.params as { slug: string };
+
+    const db = await getDb();
+    const brandsCol = db.collection("brands");
+    const highlightsCol = db.collection("brands_highlights");
+
+    // 1. delete main
+    const result = await brandsCol.deleteOne({ slug });
+
+    if (!result.deletedCount) {
+      return reply.code(404).send({ message: "Brand not found" });
     }
-  );
+
+    // 2. ALWAYS rebuild highlights from DB (not partial update)
+    const remainingBrands = await brandsCol.find({}).toArray();
+
+    await highlightsCol.updateOne(
+      { key: "default" },
+      {
+        $set: {
+          brands: remainingBrands
+        }
+      },
+      { upsert: true }
+    );
+
+    return {
+      success: true,
+      deletedSlug: slug,
+    };
+  }
+);
 
   app.put(
     "/brands/highlights",

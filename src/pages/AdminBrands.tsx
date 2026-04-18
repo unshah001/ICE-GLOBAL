@@ -328,7 +328,7 @@ const AdminBrands = () => {
       //   const normalized = normalizeItem(item);
       //   return !snapshot || snapshot !== serialize(normalized);
       // });
-const changedItems = items;
+// const changedItems = items;
       // if (!changedItems.length) {
       //   setSuccess("No changes to save");
       //   return;
@@ -412,40 +412,59 @@ const changedItems = items;
     }
   };
 
-  const deleteItem = async (slug: string) => {
-    const base = import.meta.env.VITE_API_BASE_URL || "";
-    const token = await getAccessToken(base);
-    if (!token) {
-      setError("Not authenticated.");
-      return;
-    }
-    try {
-      const attempt = async (authToken: string | null) =>
-        fetch(`${base}/brands/${slug}`, {
-          method: "DELETE",
-          headers: {
-            ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-          },
-        });
-      let res = await attempt(token);
-      if (res && res.status === 401) {
-        const refreshed = await refreshAccessToken(base);
-        res = await attempt(refreshed);
-      }
-      if (!res || !res.ok) throw new Error("Delete failed");
-      setItems((prev) => prev.filter((item) => item.slug !== slug));
-      setOriginalMap((prev) => {
-        const next = { ...prev };
-        delete next[slug];
-        return next;
+ 
+const deleteItem = async (slug: string, idx?: number) => {
+  const base = import.meta.env.VITE_API_BASE_URL || "";
+
+  // Local-only item
+  if (!slug && idx !== undefined) {
+    setItems((prev) => prev.filter((_, i) => i !== idx));
+    return;
+  }
+
+  let token = await getAccessToken(base);
+
+  if (!token) {
+    setError("Not authenticated.");
+    return;
+  }
+
+  try {
+    const attempt = async (authToken: string) =>
+      fetch(`${base}/brands/${encodeURIComponent(slug)}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
       });
-    } catch (err: any) {
-      setError(err.message || "Unable to delete brand");
+
+    let res = await attempt(token);
+
+    // 🔥 THIS IS WHAT YOU WERE MISSING
+    if (res.status === 401) {
+      const refreshed = await refreshAccessToken(base);
+      if (!refreshed) throw new Error("Session expired. Please login again.");
+      res = await attempt(refreshed);
     }
-  };
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.message || "Delete failed");
+    }
+
+    setItems((prev) => prev.filter((b) => b.slug !== slug));
+
+    setSuccess(`Deleted ${slug}`);
+  } catch (err: any) {
+    setError(err.message || "Delete failed");
+  }
+};
 
   return (
+
+    
     <AdminLayout
+
       title="Brand Management"
       description="Manage all partner brands, categories, and their showcase content."
       navItems={navItems}
@@ -587,11 +606,24 @@ const changedItems = items;
               </div>
             </AccordionTrigger>
             <AccordionContent className="pb-4">
-              <div className="flex justify-end mb-3">
+              {/* <div className="flex justify-end mb-3">
                 <Button variant="ghost" size="icon" onClick={() => deleteItem(item.slug || "")}>
                   <Trash2 className="w-4 h-4" />
                 </Button>
-              </div>
+ 
+              </div> */}
+
+              <Button
+  variant="ghost"
+  size="icon"
+  onClick={(e) => {
+    e.stopPropagation();
+    console.log("DELETE CLICKED", item.slug, idx);
+    deleteItem(item.slug, idx);
+  }}
+>
+  <Trash2 className="w-4 h-4" />
+</Button>
               <CardContent className="space-y-3 p-0">
                 <div className="grid md:grid-cols-2 gap-3">
                   <div>
@@ -792,6 +824,7 @@ const changedItems = items;
               </CardContent>
             </AccordionContent>
           </AccordionItem>
+
         ))}
         {!items.length && <p className="text-sm text-muted-foreground">No brands yet. Add your first brand to begin.</p>}
       </Accordion>
@@ -825,9 +858,11 @@ const changedItems = items;
           setPendingDeletes((prev) => [...prev, ...prevPaths]);
           setUploadTarget(null);
         }}
+        
       />
     </AdminLayout>
   );
 };
 
 export default AdminBrands;
+

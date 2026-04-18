@@ -40,7 +40,7 @@ const AdminBrandEditor = () => {
         title: hero?.title || "",
         description: hero?.subtitle || "",
         ctaLabel: hero?.ctaLabel || "",
-        ctaHref: hero?.ctaHref || "/brands",
+        ctaHref: hero?.ctaHref || "/gallery",
         brands: payload?.data || [],
       });
     } catch {

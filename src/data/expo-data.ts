@@ -145,7 +145,7 @@ export const timelineContent = [
 
 export const brandHighlights = [
   {
-    slug: "godrej-home-solutions-ice-mega-expo",
+    slug: "/godrej-home-solutions-ice-mega-expo",
     name: "Godrej Home Solutions at ICE Mega Expo",
     logo: "TV",
     relationship: "Exhibitor",
@@ -169,13 +169,30 @@ export const brandHighlights = [
     image: "https://i.ibb.co/wFPhML2Y/ICE-Top-Brands-040.png",
   },
   {
-    slug: "usha-home-appliances-ice-mega-expo",
-    name: "USHA Home Appliances Showcase at ICE Mega Expo",
+    slug: "branded-home-appliances-sales-ice-mega-expo",
+    name: "Branded Home Appliances Sales at ICE Mega Expo",
     logo: "TV",
     relationship: "Exhibitor",
     category: "Home Appliances",
-    image: "https://i.ibb.co/TB4ZnX5y/ICE-Top-Brands-070.jpg",
+    image: "https://i.ibb.co/wFPhML2Y/ICE-Top-Brands-040.png",
   },
+  {
+    slug: "branded-home-appliances-sales-ice-mega-expo",
+    name: "Branded Home Appliances Sales at ICE Mega Expo",
+    logo: "TV",
+    relationship: "Exhibitor",
+    category: "Home Appliances",
+    image: "https://i.ibb.co/wFPhML2Y/ICE-Top-Brands-040.png",
+  },
+  {
+    slug: "branded-home-appliances-sales-ice-mega-expo",
+    name: "Branded Home Appliances Sales at ICE Mega Expo",
+    logo: "TV",
+    relationship: "Exhibitor",
+    category: "Home Appliances",
+    image: "https://i.ibb.co/wFPhML2Y/ICE-Top-Brands-040.png",
+  },
+ 
 ];
 
 export const brandStories: Record<

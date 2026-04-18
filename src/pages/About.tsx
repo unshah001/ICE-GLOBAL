@@ -109,14 +109,32 @@ const About = () => {
               <h1 className="text-4xl md:text-6xl font-display font-bold leading-tight">{about.hero.title}</h1>
               <p className="text-lg md:text-xl text-muted-foreground max-w-3xl">{about.hero.body}</p>
             </div>
-            <div className="flex flex-wrap gap-3">
-              <Button asChild variant="hero">
-                <Link to={about.hero.primaryCta.href}>{about.hero.primaryCta.label}</Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link to={about.hero.secondaryCta.href}>{about.hero.secondaryCta.label}</Link>
-              </Button>
-            </div>
+          
+
+            <div className="!transition-none !duration-0 hover:!scale-100 hover:!shadow-none">
+  
+
+ <Button
+  asChild
+  variant="hero"
+  className="!transition-none !duration-0 !shadow-none hover:!shadow-none hover:!scale-100"
+>
+  <Link to={about.hero.primaryCta.href}>
+    {about.hero.primaryCta.label}
+  </Link>
+</Button>
+
+<Button
+  asChild
+  variant="outline"
+  className="!transition-none !duration-0 !shadow-none hover:!shadow-none hover:!scale-100"
+>
+  <Link to={about.hero.secondaryCta.href}>
+    {about.hero.secondaryCta.label}
+  </Link>
+</Button>
+</div>
+
           </div>
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -155,20 +173,32 @@ const About = () => {
           </div>
           <div className="lg:col-span-2 grid md:grid-cols-3 gap-4">
             {about.pillars.map((pillar, idx) => (
-              <motion.div
-                key={pillar.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.05, duration: 0.5 }}
-                className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/70 p-5"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-secondary/10" />
-                <div className="relative space-y-2">
-                  <h3 className="text-xl font-display font-semibold">{pillar.title}</h3>
-                  <p className="text-muted-foreground text-sm">{pillar.body}</p>
-                </div>
-              </motion.div>
+              // <motion.div
+              //   key={pillar.title}
+              //   initial={{ opacity: 0, y: 20 }}
+              //   whileInView={{ opacity: 1, y: 0 }}
+              //   viewport={{ once: true }}
+              //   transition={{ delay: idx * 0.05, duration: 0.5 }}
+              //   className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/70 p-5"
+              // >
+              //   <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-secondary/10" />
+              //   <div className="relative space-y-2">
+              //     <h3 className="text-xl font-display font-semibold">{pillar.title}</h3>
+              //     <p className="text-muted-foreground text-sm">{pillar.body}</p>
+              //   </div>
+              // </motion.div>
+
+
+              <div
+  key={pillar.title}
+  className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/70 p-5"
+>
+  <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-secondary/10" />
+  <div className="relative space-y-2">
+    <h3 className="text-xl font-display font-semibold">{pillar.title}</h3>
+    <p className="text-white text-sm">{pillar.body}</p>
+  </div>
+</div>
             ))}
           </div>
         </div>
@@ -231,12 +261,25 @@ const About = () => {
             <h3 className="text-3xl md:text-4xl font-display font-bold">{about.work.title}</h3>
             <p className="text-muted-foreground">{about.work.body}</p>
             <div className="flex gap-3">
-              <Button asChild variant="hero">
-                <Link to={about.work.primaryCta.href}>{about.work.primaryCta.label}</Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link to={about.work.secondaryCta.href}>{about.work.secondaryCta.label}</Link>
-              </Button>
+              <Button
+  asChild
+  variant="hero"
+  className="!transition-none !duration-0 !shadow-none hover:!shadow-none hover:!scale-100"
+>
+  <Link to={about.hero.primaryCta.href}>
+    {about.hero.primaryCta.label}
+  </Link>
+</Button>
+
+<Button
+  asChild
+  variant="outline"
+  className="!transition-none !duration-0 !shadow-none hover:!shadow-none hover:!scale-100"
+>
+  <Link to={about.hero.secondaryCta.href}>
+    {about.hero.secondaryCta.label}
+  </Link>
+</Button>
             </div>
           </div>
           <motion.div

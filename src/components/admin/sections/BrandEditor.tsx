@@ -113,7 +113,7 @@ const BrandEditor = ({
                   <Input
                     value={data.ctaHref || ""}
                     onChange={(e) => updateField("ctaHref", e.target.value)}
-                    placeholder="/brands"
+                    placeholder="/gallery"
                   />
                 </div>
               </div>

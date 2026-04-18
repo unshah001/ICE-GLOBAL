@@ -14,8 +14,11 @@ import {
   stats,
   navItems,
 } from "@/data/expo-data";
+import { useState } from "react";
 
 const Index = () => {
+  const [heroData, setHeroData] = useState([]);
+const [heroContent, setHeroContent] = useState(null);
   return (
     <main className="min-h-screen bg-background overflow-hidden">
       {/* Floating Navbar */}
@@ -25,13 +28,23 @@ const Index = () => {
       <section className="relative">
         {/* <BackgroundBeams className="z-0" /> */}
         {/* <HeroParallax products={heroProducts} /> */}
+  {heroData?.length > 0 && heroContent && (
+  <section className="relative">
+    <HeroParallax
+      products={heroData}
+      heroTitle={heroContent.title}
+      heroHighlight={heroContent.subtitle}
+      heroSubtitle={heroContent.description}
+    />
+  </section>
+)}
 
-        <HeroParallax 
+        {/* <HeroParallax 
   products={heroProducts}
   heroTitle="Experience the India Global"
   heroHighlight="India Global"
   heroSubtitle="Where brands connect, innovate, and inspire. Explore our visual archive of unforgettable experiences."
-/>
+/> */}
       </section>
 
        <GalleryPreviewSection />

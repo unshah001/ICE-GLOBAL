@@ -233,14 +233,17 @@ type TestimonialsResponse = {
 };
 
 const NewHome = () => {
-  const [heroData, setHeroData] = useState<HeroItem[]>(fallbackHero);
+  // const [heroData, setHeroData] = useState<HeroItem[]>(fallbackHero);
+  const [heroData, setHeroData] = useState<HeroItem[] | null>(null);
+const [heroLoading, setHeroLoading] = useState(true);
   const [navItems, setNavItems] = useState(staticNav);
   // const [heroContent, setHeroContent] = useState<HeroContent | null>(null);
-  const [heroContent, setHeroContent] = useState<HeroContent>({
-  title: "India's Biggest International Consumer Exhibition",
-  subtitle: "A decade of immersive expos, captured in over 1,000 moments.",
-  description: "Where brands connect, innovate, and inspire. Explore our visual archive of unforgettable experiences.",
-});
+//   const [heroContent, setHeroContent] = useState<HeroContent>({
+//   title: "India's Biggest International Consumer Exhibition",
+//   subtitle: "A decade of immersive expos, captured in over 1,000 moments.",
+//   description: "Where brands connect, innovate, and inspire. Explore our visual archive of unforgettable experiences.",
+// });
+const [heroContent, setHeroContent] = useState<HeroContent | null>(null);
   const [reviewData, setReviewData] = useState<ReviewData>({
     eyebrow: "What is ICE Exhibitions",
     title: "Infographics & Photos",
@@ -255,7 +258,7 @@ const NewHome = () => {
     title: "Brands that trust ICE Exhibitions",
     description: "Logos and stories from partners who have built standout moments on our platform.",
     ctaLabel: "View all partner brands",
-    ctaHref: "/brands",
+    ctaHref: "/gallery",
     brands: fallbackBrands,
   });
   const [celebsData, setCelebsData] = useState<CelebResponse>({
@@ -457,45 +460,31 @@ const NewHome = () => {
 
   useEffect(() => {
     const base = import.meta.env.VITE_API_BASE_URL || "";
-    // const fetchHero = async () => {
-    //   try {
-    //     const res = await fetch(`${base}/hero`);
-    //     if (!res.ok) throw new Error("Hero fetch failed");
-    //     const data = (await res.json()) as HeroResponse;
-    //     setHeroData(data.heroProducts ?? fallbackHero);
-    //     setNavItems(data.navItems ?? staticNav);
-    //     setHeroContent(
-    //       data.heroContent ?? {
-    //         title: "India’s Biggest International Consumer Exhibition",
-
-    //         subtitle: "A decade of immersive expos, captured in over 1,000 moments.",
-    //         description:
-    //           "Where brands connect, innovate, and inspire. Explore our visual archive of unforgettable experiences.",
-    //       }
-    //     );
-    //   } catch {
-    //     setHeroData(fallbackHero);
-    //     setNavItems(staticNav);
-    //     // setHeroContent(null);
-    //   }
-    // };
 
     const fetchHero = async () => {
   try {
     const res = await fetch(`${base}/hero`);
     if (!res.ok) throw new Error("Hero fetch failed");
     const data = (await res.json()) as HeroResponse;
-    setHeroData(data.heroProducts ?? fallbackHero);
-    setNavItems(data.navItems ?? staticNav);
-    setHeroContent(data.heroContent ?? {
-      title: "India's Biggest International Consumer Exhibition",
-      subtitle: "A decade of immersive expos, captured in over 1,000 moments.",
-      description: "Where brands connect, innovate, and inspire. Explore our visual archive of unforgettable experiences.",
-    });
-  } catch {
-    setHeroData(fallbackHero);
-    setNavItems(staticNav);
-  } finally {
+    // setHeroData(data.heroProducts ?? fallbackHero);
+    // setNavItems(data.navItems ?? staticNav);
+    // setHeroContent(data.heroContent ?? {
+    //   title: "India's Biggest International Consumer Exhibition",
+    //   subtitle: "A decade of immersive expos, captured in over 1,000 moments.",
+    //   description: "Where brands connect, innovate, and inspire. Explore our visual archive of unforgettable experiences.",
+    // });
+    setHeroData(data.heroProducts ?? []);
+setNavItems(data.navItems ?? staticNav);
+setHeroContent(data.heroContent ?? null);
+  // } catch {
+  //   setHeroData(fallbackHero);
+  //   setNavItems(staticNav);
+
+  }catch {
+  setHeroData([]);
+  setHeroContent(null);
+}
+   finally {
     setHeroLoading(false);  // ← always runs
   }
 };
@@ -520,62 +509,26 @@ const NewHome = () => {
         setReviewData((prev) => prev);
       }
     };
-    // const fetchBrands = async () => {
-    //   try {
-    //     const res = await fetch(`${base}/brands/highlights`);
-    //     if (!res.ok) throw new Error("Brands fetch failed");
-    //     const data = (await res.json()) as BrandsResponse;
-    //     setBrandsData({
-    //       eyebrow: data.eyebrow || "Trustworthy Leaders",
-    //       title: data.title || "Brands that trust ICE Exhibitions",
-    //       description: data.description || "Logos and stories from partners who have built standout moments on our platform.",
-    //       ctaLabel: data.ctaLabel || "View all partner brands",
-    //       ctaHref: data.ctaHref || "/brands",
-    //       brands: data.brands?.length ? data.brands : fallbackBrands,
-    //     });
-    //   } catch {
-    //     setBrandsData((prev) => prev);
-    //   }
-    // };
+    
 
-    const fetchBrands = async () => {
+const fetchBrands = async () => {
   try {
-    const res = await fetch(`${base}/brands/highlights`);
+    const res = await fetch(`${base}/brands`);
     if (!res.ok) throw new Error("Brands fetch failed");
-    const data = (await res.json()) as BrandsResponse;
+
+    const data = await res.json();
+    console.log("Brands API response:", data);
 
     setBrandsData({
       eyebrow: data.eyebrow || "Trustworthy Leaders",
       title: data.title || "Brands that trust ICE Exhibitions",
-      description:
-        data.description ||
-        "Logos and stories from partners who have built standout moments on our platform.",
+      description: data.description || "Logos and stories...",
       ctaLabel: data.ctaLabel || "View all partner brands",
-      ctaHref: data.ctaHref || "/brands",
-      brands: (data.brands?.length ? data.brands : fallbackBrands).map((b) => {
-        let image = b.image;
-
-        // Base64 → use directly
-        if (image?.startsWith("data:image")) {
-          return { ...b, image };
-        }
-
-        // Full URL → leave as-is
-        if (/^https?:\/\//i.test(image)) {
-          return { ...b, image };
-        }
-
-        // Relative path → attach base URL
-        const mediaBase = import.meta.env.VITE_MEDIA_BASE_URL || "";
-        const fullUrl = mediaBase
-          ? `${mediaBase.replace(/\/$/, "")}/${image?.replace(/^\/+/, "")}`
-          : image;
-
-        return { ...b, image: fullUrl };
-      }),
+      ctaHref: data.ctaHref || "/sellers",
+      brands: data.data ?? [], // 👈 important change
     });
-  } catch {
-    setBrandsData((prev) => prev);
+  } catch (err) {
+    console.error(err);
   }
 };
     const fetchCelebs = async () => {
@@ -918,6 +871,8 @@ const NewHome = () => {
         brands={brandsData.brands}
       />
     ),
+
+
     celebs: (
       <CelebritySpotlightSection
         key="celebs"

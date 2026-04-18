@@ -114,7 +114,7 @@ const BuyerDetail = () => {
       <FloatingNavbar navItems={navItems} />
 
       <section className="relative min-h-[70vh] flex items-end pb-16 pt-28 md:pt-36 overflow-hidden">
-        <BackgroundBeams className="z-0" />
+        {/* <BackgroundBeams className="z-0" /> */}
         <motion.img
           src={heroImg}
           alt={buyer.name}

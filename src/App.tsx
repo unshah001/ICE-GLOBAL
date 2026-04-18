@@ -603,7 +603,8 @@ const App = () => (
           <Route path="/gallery" element={<Gallery />} />
       <Route path="/gallery/:id" element={<GalleryDetail />} />
       <Route path="/me" element={<Me />} />
-          <Route path="/brands/:slug" element={<BrandDetail />} />
+          {/* <Route path="/brands/:slug" element={<BrandDetail />} /> */}
+          <Route path="/gallery/:slug" element={<GalleryDetail />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

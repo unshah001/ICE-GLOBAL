@@ -39,6 +39,7 @@ const AdminLayout = ({
             <AdminRail sections={[]} />
             <div className="space-y-10">{children}</div>
             <AdminSidebar sections={sections} />
+           
           </div>
         </div>
       </section>

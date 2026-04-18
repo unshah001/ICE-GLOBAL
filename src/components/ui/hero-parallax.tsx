@@ -15,21 +15,26 @@ interface HeroParallaxProps {
   heroSubtitle?: string;
 }
 
-// export const HeroParallax = ({
-//   products,
-//   heroTitle,
-//   heroHighlight,
-//   heroSubtitle,
 export const HeroParallax = ({
   products,
-  heroTitle = "Experience the India Global",
-  heroHighlight = "India Global",
-  heroSubtitle = "Where brands connect, innovate, and inspire. Explore our visual archive of unforgettable experiences.",
+  heroTitle,
+  heroHighlight,
+  heroSubtitle,
+// export const HeroParallax = ({
+//   products,
+//   heroTitle = "Experience the India Global",
+//   heroHighlight = "India Global",
+//   heroSubtitle = "Where brands connect, innovate, and inspire. Explore our visual archive of unforgettable experiences.",
 
 }: HeroParallaxProps) => {
-  const firstRow = products.slice(0, 5);
-  const secondRow = products.slice(5, 10);
-  const thirdRow = products.slice(10, 15);
+  // const firstRow = products.slice(0, 5);
+  // const secondRow = products.slice(5, 10);
+  // const thirdRow = products.slice(10, 15);
+  const safeProducts = products ?? [];
+
+const firstRow = safeProducts.slice(0, 5);
+const secondRow = safeProducts.slice(5, 10);
+const thirdRow = safeProducts.slice(10, 15);
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
