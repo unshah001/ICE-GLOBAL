@@ -3,8 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { FloatingNavbar } from "@/components/ui/floating-navbar";
 import Footer from "@/components/Footer";
-import {  navItems } from "@/data/expo-data";
-// import { brandHighlights, brandStories, navItems } from "@/data/expo-data";
+import { brandHighlights, brandStories, navItems } from "@/data/expo-data";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import NotFound from "./NotFound";
@@ -26,6 +25,8 @@ const toUrl = (pathOrUrl: string) => {
   const base = mediaBase.replace(/\/$/, "");
   return `${base}/${pathOrUrl.replace(/^\/+/, "")}`;
 };
+
+const normalizeSlug = (value?: string) => (value ?? "").replace(/^\/+/, "");
 
 const resolveHero = (story?: BrandDetailStory) => {
   if (!story) return { primary: "", fallback: "" };
@@ -104,13 +105,17 @@ const BrandDetail = () => {
 
     const base = import.meta.env.VITE_API_BASE_URL || "";
     const fallbackBrand =
-      brandHighlights.find((b) => b.slug === slug) || null;
+      brandHighlights.find((b) => normalizeSlug(b.slug) === slug) || null;
     const fallbackStory = brandStories[slug] || null;
 
     const load = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`${base}/brands/${slug}`);
+        const res = await fetch(`${base}/brands/${slug}`, {
+          headers: {
+            "Cache-Control": "no-cache",
+          },
+        });
         if (!res.ok) throw new Error("Brand fetch failed");
 
         const data = (await res.json()) as BrandItem;
@@ -132,20 +137,24 @@ const BrandDetail = () => {
 
     const loadMore = async () => {
       try {
-        const res = await fetch(`${base}/brands?page=1&pageSize=50`);
+        const res = await fetch(`${base}/brands?page=1&pageSize=50`, {
+          headers: {
+            "Cache-Control": "no-cache",
+          },
+        });
         if (!res.ok) throw new Error("List fetch failed");
 
         const data = await res.json();
         setMoreBrands(
           (data.data || [])
             .map(normalizeBrand)
-            .filter((b: BrandItem) => b.slug !== slug)
+            .filter((b: BrandItem) => normalizeSlug(b.slug) !== slug)
         );
       } catch {
         setMoreBrands(
           brandHighlights
             .map(normalizeBrand)
-            .filter((b) => b.slug !== slug)
+            .filter((b) => normalizeSlug(b.slug) !== slug)
         );
       }
     };

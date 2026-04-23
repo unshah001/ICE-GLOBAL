@@ -853,6 +853,7 @@ const fetchBrands = async () => {
     review: (
       <ReviewMomentsSection
         key="review"
+        className="-mt-10 md:-mt-20"
         eyebrow={reviewData.eyebrow}
         title={reviewData.title}
         description={reviewData.description}

@@ -4,7 +4,7 @@ import { adminNavLinks } from "@/data/admin";
 import { type AdminSectionLink } from "@/components/admin/AdminSidebar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, CheckCircle2, Plus, Save, Trash2, Search, ChevronDown } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -37,6 +37,10 @@ type BrandItem = {
   };
 };
 
+type EditableBrandItem = BrandItem & {
+  originalSlug?: string;
+};
+
 type BrandsResponse = {
   data: BrandItem[];
   pagination?: { page: number; pageSize: number; total: number; totalPages: number };
@@ -56,8 +60,15 @@ const slugify = (input: string) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
 
-const normalizeItem = (item: any): BrandItem => ({
+const normalizeItem = (item: any): EditableBrandItem => ({
   ...item,
+  slug: item.slug ?? "",
+  name: item.name ?? "",
+  logo: item.logo ?? "",
+  relationship: item.relationship ?? "",
+  category: item.category ?? "",
+  image: item.image ?? "",
+  originalSlug: item.originalSlug ?? item.slug ?? "",
   variants:
     item.variants && item.variants.length
       ? item.variants
@@ -73,6 +84,24 @@ const normalizeItem = (item: any): BrandItem => ({
     : undefined,
 });
 
+const stripLocalFields = (item: EditableBrandItem): BrandItem => {
+  const normalized = normalizeItem(item);
+
+  return {
+    slug: normalized.slug,
+    name: normalized.name,
+    logo: normalized.logo,
+    relationship: normalized.relationship,
+    category: normalized.category,
+    image: normalized.image,
+    variants: normalized.variants,
+    summary: normalized.summary,
+    detail: normalized.detail,
+  };
+};
+
+const serializeItem = (item: EditableBrandItem) => JSON.stringify(stripLocalFields(item));
+
 const AdminBrands = () => {
   const navItems = adminNavLinks;
   const sections: AdminSectionLink[] = [
@@ -80,7 +109,7 @@ const AdminBrands = () => {
     { id: "brands", label: "Brands" },
   ];
 
-  const [items, setItems] = useState<BrandItem[]>([]);
+  const [items, setItems] = useState<EditableBrandItem[]>([]);
   const [heroBadge, setHeroBadge] = useState("Partner Brands");
   const [heroTitle, setHeroTitle] = useState("Brands that trust ICE Exhibitions");
   const [heroSubheading, setHeroSubheading] = useState(
@@ -120,12 +149,10 @@ const AdminBrands = () => {
       const normalized = (data.data || []).map(normalizeItem);
       setItems(normalized);
       const map: Record<string, string> = {};
-      // normalized.forEach((b) => {
-      //   if (b.slug) map[b.slug] = JSON.stringify(b);
-      // });
       normalized.forEach((b) => {
-  if (b.slug) map[b.slug] = JSON.stringify(normalizeItem(b));
-});
+        const persistedSlug = b.originalSlug || b.slug;
+        if (persistedSlug) map[persistedSlug] = serializeItem(b);
+      });
       setOriginalMap(map);
       setPage(targetPage);
       setTotalPages(data.pagination?.totalPages ?? 1);
@@ -166,8 +193,6 @@ const AdminBrands = () => {
       }),
       ...prev,
     ]);
-
-  const removeItem = (idx: number) => setItems((prev) => prev.filter((_, i) => i !== idx));
 
   const addHighlight = (idx: number) =>
     setItems((prev) => {
@@ -315,28 +340,24 @@ const AdminBrands = () => {
     setSuccess("");
     try {
       const base = import.meta.env.VITE_API_BASE_URL || "";
-      const token = await getAccessToken(base);
+      let token = await getAccessToken(base);
       if (!token) {
-        setSaving(false);
         setError("Not authenticated.");
         return;
       }
 
-      // const serialize = (item: BrandItem) => JSON.stringify(item);
-      // const changedItems = items.filter((item) => {
-      //   const snapshot = item.slug ? originalMap[item.slug] : null;
-      //   const normalized = normalizeItem(item);
-      //   return !snapshot || snapshot !== serialize(normalized);
-      // });
-// const changedItems = items;
-      // if (!changedItems.length) {
-      //   setSuccess("No changes to save");
-      //   return;
-      // }
+      const changedItems = items.flatMap((item, index) => {
+        const snapshot = item.originalSlug ? originalMap[item.originalSlug] : null;
+        return !snapshot || snapshot !== serializeItem(item) ? [{ item, index }] : [];
+      });
 
-      for (const item of changedItems) {
-        const { _id, createdAt, updatedAt, ...rest } = item as any;
+      if (!changedItems.length) {
+        setSuccess("No changes to save");
+        return;
+      }
 
+      for (const { item, index } of changedItems) {
+        const { originalSlug, ...rest } = item;
         const slug = rest.slug && rest.slug.trim().length ? rest.slug : slugify(rest.name || "");
         if (!slug) {
           throw new Error("Slug is required. Please provide a slug or name for each brand.");
@@ -351,26 +372,29 @@ const AdminBrands = () => {
             ?.map((v: Variant) => ({ ...v, path: (v.path || v.fileName || "").trim(), fileName: (v.fileName || "").trim() }))
             .filter((v: Variant) => v.path || v.fileName) ?? [];
 
-        const payload = {
+        const payload = stripLocalFields({
           ...rest,
           slug,
           variants: cleanedVariants,
           detail: rest.detail ? { ...rest.detail, heroVariants: cleanedHeroVariants } : undefined,
-        };
+        });
+        const previousSlug = originalSlug?.trim() || undefined;
 
         const attempt = async (authToken: string) =>
-          fetch(`${base}/brands/${slug}`, {
+          fetch(`${base}/brands/${encodeURIComponent(slug)}`, {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${authToken}`,
             },
-            body: JSON.stringify(payload),
+            body: JSON.stringify({ ...payload, previousSlug }),
           });
+
         let res = await attempt(token);
         if (res.status === 401) {
           const refreshed = await refreshAccessToken(base);
           if (!refreshed) throw new Error("Session expired. Please login again.");
+          token = refreshed;
           res = await attempt(refreshed);
         }
         if (!res.ok) {
@@ -378,23 +402,28 @@ const AdminBrands = () => {
           throw new Error(data.message || "Save failed");
         }
 
-        if (rest.slug) {
-          // setOriginalMap((prev) => ({ ...prev, [rest.slug]: serialize(normalizeItem(rest as BrandItem)) }));
-          setOriginalMap((prev) => ({ ...prev, [rest.slug]: JSON.stringify(normalizeItem(rest as BrandItem)) }));
-        }
+        const savedItem = normalizeItem({ ...payload, originalSlug: slug });
+
+        setItems((prev) => {
+          const next = [...prev];
+          next[index] = savedItem;
+          return next;
+        });
+        setOriginalMap((prev) => {
+          const next = { ...prev };
+          if (previousSlug && previousSlug !== slug) delete next[previousSlug];
+          next[slug] = serializeItem(savedItem);
+          return next;
+        });
       }
 
-      // if (deletedPaths.length) {
       if (pendingDeletes.length) {
-        const base = import.meta.env.VITE_API_BASE_URL || "";
-        const token = await getAccessToken(base);
         const res = await fetch(`${base}/media/delete`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
-          // body: JSON.stringify({ paths: Array.from(new Set(deletedPaths)), reason: "brand-image-replace" }),
           body: JSON.stringify({ paths: Array.from(new Set(pendingDeletes)), reason: "brand-image-replace" }),
         });
         if (!res.ok) {
@@ -412,53 +441,58 @@ const AdminBrands = () => {
     }
   };
 
- 
-const deleteItem = async (slug: string, idx?: number) => {
-  const base = import.meta.env.VITE_API_BASE_URL || "";
+  const deleteItem = async (item: EditableBrandItem, idx: number) => {
+    const base = import.meta.env.VITE_API_BASE_URL || "";
+    const persistedSlug = (item.originalSlug || item.slug || "").trim();
 
-  // Local-only item
-  if (!slug && idx !== undefined) {
-    setItems((prev) => prev.filter((_, i) => i !== idx));
-    return;
-  }
+    setError("");
+    setSuccess("");
 
-  let token = await getAccessToken(base);
+    if (!persistedSlug) {
+      setItems((prev) => prev.filter((_, i) => i !== idx));
+      return;
+    }
 
-  if (!token) {
-    setError("Not authenticated.");
-    return;
-  }
+    let token = await getAccessToken(base);
 
-  try {
-    const attempt = async (authToken: string) =>
-      fetch(`${base}/brands/${encodeURIComponent(slug)}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
+    if (!token) {
+      setError("Not authenticated.");
+      return;
+    }
+
+    try {
+      const attempt = async (authToken: string) =>
+        fetch(`${base}/brands/${encodeURIComponent(persistedSlug)}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        });
+
+      let res = await attempt(token);
+      if (res.status === 401) {
+        const refreshed = await refreshAccessToken(base);
+        if (!refreshed) throw new Error("Session expired. Please login again.");
+        token = refreshed;
+        res = await attempt(refreshed);
+      }
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || "Delete failed");
+      }
+
+      setItems((prev) => prev.filter((_, i) => i !== idx));
+      setOriginalMap((prev) => {
+        const next = { ...prev };
+        delete next[persistedSlug];
+        return next;
       });
-
-    let res = await attempt(token);
-
-    // 🔥 THIS IS WHAT YOU WERE MISSING
-    if (res.status === 401) {
-      const refreshed = await refreshAccessToken(base);
-      if (!refreshed) throw new Error("Session expired. Please login again.");
-      res = await attempt(refreshed);
+      setSuccess(`Deleted ${item.name || persistedSlug}`);
+    } catch (err: any) {
+      setError(err.message || "Delete failed");
     }
-
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      throw new Error(data.message || "Delete failed");
-    }
-
-    setItems((prev) => prev.filter((b) => b.slug !== slug));
-
-    setSuccess(`Deleted ${slug}`);
-  } catch (err: any) {
-    setError(err.message || "Delete failed");
-  }
-};
+  };
 
   return (
 
@@ -556,8 +590,7 @@ const deleteItem = async (slug: string, idx?: number) => {
               Add brand
             </Button>
 
-            <Button onClick={() => { console.log('SAVE CLICKED', items.length); saveItems(); }} disabled={saving || loading}>
-              
+            <Button onClick={saveItems} disabled={saving || loading}>
               <Save className="w-4 h-4 mr-2" />
               {saving ? "Saving..." : "Save"}
             </Button>
@@ -590,8 +623,11 @@ const deleteItem = async (slug: string, idx?: number) => {
       </div>
 
       <Accordion type="multiple" className="grid gap-4">
-        {items.map((item, idx) => (
-          <AccordionItem key={item.slug || idx} value={item.slug || `brand-${idx}`} className="rounded-xl border border-border/70 bg-card/80 px-4">
+        {items.map((item, idx) => {
+          const itemKey = item.originalSlug || item.slug || `brand-${idx}`;
+
+          return (
+            <AccordionItem key={itemKey} value={itemKey} className="rounded-xl border border-border/70 bg-card/80 px-4">
             <AccordionTrigger className="py-4 text-left">
               <div className="flex items-center gap-3">
                 <ChevronDown className="w-4 h-4 shrink-0" />
@@ -606,24 +642,21 @@ const deleteItem = async (slug: string, idx?: number) => {
               </div>
             </AccordionTrigger>
             <AccordionContent className="pb-4">
-              {/* <div className="flex justify-end mb-3">
-                <Button variant="ghost" size="icon" onClick={() => deleteItem(item.slug || "")}>
+              <div className="mb-3 flex justify-end">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Delete ${item.name || "brand"}`}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void deleteItem(item, idx);
+                  }}
+                >
                   <Trash2 className="w-4 h-4" />
                 </Button>
- 
-              </div> */}
-
-              <Button
-  variant="ghost"
-  size="icon"
-  onClick={(e) => {
-    e.stopPropagation();
-    console.log("DELETE CLICKED", item.slug, idx);
-    deleteItem(item.slug, idx);
-  }}
->
-  <Trash2 className="w-4 h-4" />
-</Button>
+              </div>
               <CardContent className="space-y-3 p-0">
                 <div className="grid md:grid-cols-2 gap-3">
                   <div>
@@ -824,8 +857,8 @@ const deleteItem = async (slug: string, idx?: number) => {
               </CardContent>
             </AccordionContent>
           </AccordionItem>
-
-        ))}
+          );
+        })}
         {!items.length && <p className="text-sm text-muted-foreground">No brands yet. Add your first brand to begin.</p>}
       </Accordion>
 

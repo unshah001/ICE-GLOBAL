@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { ParallaxGridScroll } from "@/components/ui/parallax-grid-scroll";
+import { cn } from "@/lib/utils";
 
 type Cta = {
   label: string;
@@ -14,6 +15,7 @@ interface ReviewMomentsSectionProps {
   description?: string;
   images: { src: string; href: string }[];
   cta?: Cta;
+  className?: string;
 }
 
 const ReviewMomentsSection = ({
@@ -22,6 +24,7 @@ const ReviewMomentsSection = ({
   description,
   images,
   cta,
+  className,
 }: ReviewMomentsSectionProps) => {
   const imagesWithLinks = images.map((img) => ({
     src: img.src,
@@ -29,7 +32,7 @@ const ReviewMomentsSection = ({
   }));
 
   return (
-    <section className="relative overflow-hidden ">
+    <section className={cn("relative overflow-hidden", className)}>
       <div className="container mx-auto px-4 pt-16 md:pt-24 flex justify-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -42,11 +45,11 @@ const ReviewMomentsSection = ({
               {eyebrow}
             </span>
           )}
-          <h2 className="text-3xl md:text-5xl font-bold font-display text-foreground mt-2">
+          <h2 className="text-3xl md:text-5xl font-bold font-display text-foreground mt-1">
             {title}
           </h2>
           {description && (
-            <p className="text-muted-foreground mt-4">{description}</p>
+            <p className="text-muted-foreground mt-2">{description}</p>
           )}
         </motion.div>
       </div>

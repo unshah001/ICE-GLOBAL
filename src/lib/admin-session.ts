@@ -21,8 +21,12 @@ export const installAdminFetchInterceptor = () => {
       try {
         const body = await res.clone().json();
         if (body?.code === "FST_JWT_AUTHORIZATION_TOKEN_EXPIRED") {
-          clearAdminSession();
-          window.dispatchEvent(new Event(ADMIN_SESSION_EXPIRED_EVENT));
+          // Keep the refresh token so page-level retry logic can mint a new access token.
+          localStorage.removeItem(ADMIN_ACCESS_TOKEN_KEY);
+          if (!localStorage.getItem(ADMIN_REFRESH_TOKEN_KEY)) {
+            clearAdminSession();
+            window.dispatchEvent(new Event(ADMIN_SESSION_EXPIRED_EVENT));
+          }
         }
       } catch {
         // ignore parse errors

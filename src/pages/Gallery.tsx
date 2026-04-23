@@ -238,12 +238,14 @@ const Gallery = () => {
                   transition={{ delay: index * 0.02 }}
                 >
                   <Link
-                    to={`/gallery/${item.id}`}
+                    to={`/gallery/GalleryIndividuals?id=${encodeURIComponent(item.id)}`}
+                    state={{ items, initialIndex: index }}
                     className="block border rounded-xl overflow-hidden hover:shadow-lg transition"
                   >
                     <LazyImage src={getImageUrl(item)} alt={item.title} />
                     <div className="p-4">
                       <h3 className="font-semibold text-sm">{item.title}</h3>
+                    
                       <p className="text-xs text-muted-foreground">Client: {item.brand || "Corporate"}</p>
                       <p className="text-xs text-muted-foreground">Year: {item.year}</p>
                     </div>

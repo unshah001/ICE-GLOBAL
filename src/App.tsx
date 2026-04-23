@@ -95,6 +95,10 @@ import AdminMediaConfig from "./pages/AdminMediaConfig";
 import ThemeLoader from "./components/ThemeLoader";
 import { toast } from "@/components/ui/sonner";
 import { ADMIN_SESSION_EXPIRED_EVENT } from "./lib/admin-session";
+import GalleryIndividuals from "./components/GalleryIndividuals";
+import IgenNew from "./components/IgenNew";
+import IgenWorld from "./components/IgenWorld";
+import IgenExpo from "./components/IgenExpo";
 
 const queryClient = new QueryClient();
 
@@ -600,10 +604,14 @@ const App = () => (
           <Route path="/terms" element={<Terms />} />
           <Route path="/cookies" element={<Cookies />} />
           <Route path="/test" element={<TestPage />} />
+          <Route path="/Igen News" element={<IgenNew/>}/>
+          <Route path="/Igen World" element={<IgenWorld/>}/>
+          <Route path="/Igen Expo" element={<IgenExpo/>}/>
           <Route path="/gallery" element={<Gallery />} />
+          <Route path="/gallery/GalleryIndividuals" element={<GalleryIndividuals />} />
       <Route path="/gallery/:id" element={<GalleryDetail />} />
       <Route path="/me" element={<Me />} />
-          {/* <Route path="/brands/:slug" element={<BrandDetail />} /> */}
+          <Route path="/brands/:slug" element={<BrandDetail />} />
           <Route path="/gallery/:slug" element={<GalleryDetail />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

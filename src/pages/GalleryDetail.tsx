@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useLocation } from "react-router-dom";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { FloatingNavbar } from "@/components/ui/floating-navbar";
+import { useNavigate } from "react-router-dom";
 import { BackgroundBeams } from "@/components/ui/background-effects";
 import Footer from "@/components/Footer";
 import { navItems } from "@/data/expo-data";
@@ -68,10 +69,22 @@ const sectionSlug = (text: string, fallback: string) =>
 const commentName = (c: GalleryComment) => c.author || "Community member";
 const commentInitial = (c: GalleryComment) => commentName(c).trim().charAt(0).toUpperCase() || "U";
 
-const GalleryDetail = () => {
-  const { id } = useParams();
-  const { toast } = useToast();
 
+ 
+
+
+  const GalleryDetail = () => {
+  const { id } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+   const { toast } = useToast();
+  const locationState = location.state as { returnTo?: string; returnLabel?: string } | null;
+  const viewerHref = id ? `/gallery/GalleryIndividuals?id=${encodeURIComponent(id)}` : "/gallery/GalleryIndividuals";
+  const backHref = locationState?.returnTo || viewerHref;
+  const backLabel = locationState?.returnLabel || "Back to gallery viewer";
+
+  // ✅ 1. compute here
+  
   const [item, setItem] = useState<GalleryItem | null>(null);
   const [comments, setComments] = useState<GalleryComment[]>([]);
   const [likes, setLikes] = useState(0);
@@ -113,63 +126,92 @@ const GalleryDetail = () => {
   const commentSentinelRef = useRef<HTMLDivElement | null>(null);
 
   const { scrollYProgress } = useScroll();
-  const heroScale = useTransform(scrollYProgress, [0, 0.25], [1.08, 1]);
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.4], [1, 0.85]);
   const commentsParallax = useTransform(scrollYProgress, [0, 1], [0, -60]);
 
-  useEffect(() => {
-    if (!id) return;
-    const base = import.meta.env.VITE_API_BASE_URL || "";
-    const load = async () => {
-      setIsLoading(true);
-      try {
-        const res = await fetch(`${base}/gallery/${id}`);
-        if (!res.ok) throw new Error("Gallery detail fetch failed");
-        const data = (await res.json()) as GalleryItem;
-        const normalized = normalizeItem(data);
-        setItem(normalized);
+  
+ 
+  
+useEffect(() => {
+  if (!id) return;
+  // 2. then setup API/base/config
+  const base = import.meta.env.VITE_API_BASE_URL || "";
+  const controller = new AbortController();
+  const signal = controller.signal;
+
+  setItem(null);
+  setIsLoading(true);
+  setComments([]);
+  setVisibleComments(0);
+  setCommentsCursor(null);
+  setLikes(0);
+  setIsLiked(false);
+
+  const load = async () => {
+    try {
+      const res = await fetch(`${base}/gallery/${id}`, { signal });
+      if (!res.ok) throw new Error("Gallery detail fetch failed");
+
+      const data = (await res.json()) as GalleryItem;
+      const normalized = normalizeItem(data);
+
+      setItem(normalized);
+
+      const stored = localStorage.getItem(getCommentStorageKey(normalized.id));
+      setComments([]);
+      setVisibleComments(0);
+      setCommentsCursor(null);
+
+      await loadComments(
+        normalized.id,
+        undefined,
+        stored ? sortComments(JSON.parse(stored)) : undefined
+      );
+
+      setLikes(normalized.likes ?? 0);
+    } catch (err) {
+      if (signal.aborted) return;
+
+      const fallback =
+        galleryItems.find((entry) => entry.id === id) || null;
+
+      const normalized = fallback ? normalizeItem(fallback) : null;
+
+      setItem(normalized);
+
+      if (normalized) {
         const stored = localStorage.getItem(getCommentStorageKey(normalized.id));
-        setComments([]);
-        setVisibleComments(0);
+        const sourceComments = normalized.comments || [];
+
+        setComments(
+          stored
+            ? sortComments(JSON.parse(stored))
+            : sortComments(sourceComments)
+        );
+
+        setVisibleComments(5);
         setCommentsCursor(null);
-        await loadComments(normalized.id, undefined, stored ? sortComments(JSON.parse(stored)) : undefined);
         setLikes(normalized.likes ?? 0);
-        setIsLiked(false);
-      } catch {
-        const fallback = galleryItems.find((entry) => entry.id === id) || null;
-        const normalized = fallback ? normalizeItem(fallback) : null;
-        setItem(normalized);
-        if (normalized) {
-          const stored = localStorage.getItem(getCommentStorageKey(normalized.id));
-          const sourceComments = normalized.comments || [];
-          setComments(stored ? sortComments(JSON.parse(stored)) : sortComments(sourceComments));
-          setVisibleComments(5);
-          setCommentsCursor(null);
-          setLikes(normalized.likes ?? 0);
-        } else {
-          setComments([]);
-          setVisibleComments(0);
-          setCommentsCursor(null);
-          setLikes(0);
-        }
-        setIsLiked(false);
-      } finally {
-        setIsLoading(false);
       }
-    };
-    const loadCopy = async () => {
-      try {
-        const res = await fetch(`${base}/gallery-detail/copy`);
-        if (!res.ok) throw new Error("Copy fetch failed");
-        const data = await res.json();
-        setCopy((prev) => ({ ...prev, ...(data || {}) }));
-      } catch {
-        // keep defaults
-      }
-    };
-    load();
-    loadCopy();
-  }, [id]);
+    } finally {
+      if (!signal.aborted) setIsLoading(false);
+    }
+  };
+  
+
+  const loadCopy = async () => {
+    try {
+      const res = await fetch(`${base}/gallery-detail/copy`, { signal });
+      if (!res.ok) throw new Error("Copy fetch failed");
+      const data = await res.json();
+      setCopy((prev) => ({ ...prev, ...(data || {}) }));
+    } catch {}
+  };
+
+  load();
+  loadCopy();
+
+  return () => controller.abort();
+}, [id]);
 
   useEffect(() => {
     if (!item) return;
@@ -491,6 +533,24 @@ const GalleryDetail = () => {
     }
   };
 
+  const currentIndex = galleryItems.findIndex((g) => g.id === id);
+
+const prevItem =
+  currentIndex > 0 ? galleryItems[currentIndex - 1] : null;
+
+const nextItem =
+  currentIndex >= 0 && currentIndex < galleryItems.length - 1
+    ? galleryItems[currentIndex + 1]
+    : null;
+
+const goPrev = () => {
+  if (prevItem) navigate(`/gallery/${prevItem.id}`);
+};
+
+const goNext = () => {
+  if (nextItem) navigate(`/gallery/${nextItem.id}`);
+};
+
   return (
     <main className="min-h-screen bg-background text-foreground">
       <FloatingNavbar navItems={navItems} />
@@ -498,39 +558,38 @@ const GalleryDetail = () => {
       <section className="relative pt-28 pb-12 md:pt-36 md:pb-16 overflow-hidden">
        {/* <BackgroundBeams className="z-0" /> */}
         <div className="container-custom relative z-10">
-          <Link to="/gallery" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
+          <Link to={backHref} className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
             <ArrowLeft className="w-4 h-4" />
-            {copy.backLabel}
+            {backLabel}
           </Link>
 
-          <div className="mt-8 grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+          <div className="mx-auto mt-8 max-w-6xl grid gap-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,0.88fr)] lg:gap-8 items-start">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
-              className="relative overflow-hidden rounded-3xl bg-card border border-border shadow-2xl shadow-primary/10"
+              className="overflow-hidden rounded-[1.75rem] border border-border/60 bg-card shadow-xl shadow-primary/5"
             >
-              <motion.img
-                src={resolveImage(item).primary}
-                onError={(e) => {
-                  const fallback = resolveImage(item).fallback;
-                  if (fallback && e.currentTarget.src !== fallback) {
-                    e.currentTarget.src = fallback;
-                  }
-                }}
-                alt={item.title}
-                className="w-full h-full object-cover"
-                style={{ scale: heroScale, opacity: heroOpacity }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent pointer-events-none" />
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,hsl(var(--primary)/0.15),transparent_45%),radial-gradient(circle_at_80%_80%,hsl(var(--secondary)/0.15),transparent_45%)]" />
+              <div className="flex min-h-[300px] items-center justify-center bg-white p-4 dark:bg-neutral-950 md:min-h-[360px] md:p-5">
+                <motion.img
+                  src={resolveImage(item).primary}
+                  onError={(e) => {
+                    const fallback = resolveImage(item).fallback;
+                    if (fallback && e.currentTarget.src !== fallback) {
+                      e.currentTarget.src = fallback;
+                    }
+                  }}
+                  alt={item.title}
+                  className="max-h-[500px] w-full rounded-[1.25rem] object-top md:max-h-[500px]"
+                />
+              </div>
             </motion.div>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="space-y-6"
+              className="space-y-5 rounded-[1.75rem] border border-border/60 bg-card p-5 shadow-lg shadow-primary/5 md:p-6"
             >
               <div className="flex flex-wrap items-center gap-3">
                 <Badge variant="secondary">{item.year}</Badge>
@@ -539,8 +598,8 @@ const GalleryDetail = () => {
               </div>
 
               <div>
-                <h1 className="text-4xl md:text-5xl font-display font-bold leading-tight">{item.title}</h1>
-                <p className="text-lg text-muted-foreground mt-3">{item.excerpt}</p>
+                <h1 className="text-3xl md:text-4xl font-display font-bold leading-tight">{item.title}</h1>
+                <p className="mt-3 text-base text-muted-foreground md:text-lg">{item.excerpt}</p>
               </div>
 
               <div className="flex flex-wrap gap-3">
@@ -600,6 +659,25 @@ const GalleryDetail = () => {
                     <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-semibold tracking-[0.2em] uppercase">
                       {copy.storyLabelPrefix} {idx + 1}
                     </div>
+                    <div className="flex gap-3 flex-wrap mt-4">
+  <Button
+    variant="outline"
+    onClick={goPrev}
+    disabled={!prevItem}
+    className="min-w-[140px]"
+  >
+    ← Previous
+  </Button>
+
+  <Button
+    variant="outline"
+    onClick={goNext}
+    disabled={!nextItem}
+    className="min-w-[140px]"
+  >
+    Next →
+  </Button>
+</div>
                       <div className="flex items-center gap-2">
                         <Button variant="ghost" size="sm" onClick={() => handleShare(anchor)}>
                           <Share2 className="w-4 h-4 mr-2" />
