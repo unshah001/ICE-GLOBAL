@@ -299,6 +299,8 @@ const AdminTeams = () => {
       const token = await getAccessToken(base);
       if (!token) throw new Error("Not authenticated.");
       const attempt = async (authToken: string) =>
+        console.log("Copy token:", authToken);
+        
         fetch(`${base}/teams/detail-copy`, {
           method: "PUT",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
@@ -360,6 +362,7 @@ const AdminTeams = () => {
         };
 
         const attempt = async (authToken: string) =>
+          
           fetch(`${base}/teams/${item.id}`, {
             method: "PUT",
             headers: {

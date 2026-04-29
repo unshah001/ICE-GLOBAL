@@ -358,6 +358,7 @@ export default async function brandsRoutes(app: FastifyInstance) {
     "/brands/:slug",
     { preHandler: [app.authenticate] },
     async (request, reply) => {
+      
       const { slug } = request.params as { slug: string };
       const db = await getDb();
       const brandsCol = db.collection<BrandRecord>("brands");

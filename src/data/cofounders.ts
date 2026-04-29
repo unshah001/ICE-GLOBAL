@@ -6,18 +6,19 @@ export type CoFounderProfile = {
   image: string;
   highlight: string;
   href?: string;
+
 };
 
 export const coFounders: CoFounderProfile[] = [
-  {
-    name: "Priyanshi Jha",
-    track: "IGE & IGN",
-    title: "Co-Founder, ICE 2.0",
-    focus: "Product + Program",
-    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=600&h=800&fit=crop",
-    highlight: "Bridges on-ground playbooks with digital programming for both IGE and IGN.",
-    href: "/cofounders/priyanshi-jha",
-  },
+  // {
+  //   name: "Priyanshi Jha",
+  //   track: "IGE & IGN",
+  //   title: "Co-Founder, ICE 2.0",
+  //   focus: "Product + Program",
+  //   image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=600&h=800&fit=crop",
+  //   highlight: "Bridges on-ground playbooks with digital programming for both IGE and IGN.",
+  //   href: "/cofounders/priyanshi-jha",
+  // },
   {
     name: "Sanjay Shah",
     track: "IGE & IGN",

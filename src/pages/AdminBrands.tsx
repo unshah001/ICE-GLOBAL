@@ -461,8 +461,9 @@ const AdminBrands = () => {
     }
 
     try {
+
       const attempt = async (authToken: string) =>
-        fetch(`${base}/brands/${encodeURIComponent(persistedSlug)}`, {
+        fetch(`${base}/brands/highlights/${encodeURIComponent(persistedSlug)}`, {
           method: "DELETE",
           headers: {
             Authorization: `Bearer ${authToken}`,

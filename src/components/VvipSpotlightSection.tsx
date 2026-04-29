@@ -62,7 +62,7 @@ const VvipSpotlightSection = ({
     src={guest.image}
     alt={guest.name}
     className={cn(
-      "w-full h-full object-cover transition-transform duration-500 group-hover:scale-105",
+      "w-full h-full object-buttom transition-transform duration-500 group-hover:scale-105",
       idx === 2 ? "object-top" : "object-center" // fixes the third image
     )}
   />

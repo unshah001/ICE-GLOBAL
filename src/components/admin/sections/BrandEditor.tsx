@@ -27,7 +27,7 @@ interface BrandEditorProps {
   data: BrandsData;
   onChange: (data: BrandsData) => void;
   onAddBrand: () => void;
-  onRemoveBrand: (idx: number) => void;
+onRemoveBrand: (slug: string) => Promise<void>;
   onSave: () => void;
   onRestore: () => void;
   saving: boolean;
@@ -181,7 +181,7 @@ const BrandEditor = ({
                     />
                   </div>
                   <div className="flex justify-end md:col-span-3">
-                    <Button variant="ghost" size="icon" onClick={() => onRemoveBrand(idx)}>
+                    <Button variant="ghost" size="icon" onClick={() => onRemoveBrand(brand.slug)}>
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>

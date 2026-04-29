@@ -174,7 +174,23 @@ const AdminBrandEditor = () => {
       setSaving(false);
     }
   };
-
+  const handleRemoveBrand = async (slug: string) => {
+  const token = localStorage.getItem("token");
+  console.log('Token:', token ? 'exists' : 'MISSING', token?.substring(0,20)+'...');
+  
+  try {
+    const res = await fetch(`/brands/${slug}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),  // Safe: only if token exists
+      },
+    });
+    // ... rest unchanged
+  } catch (error) {
+    console.error("Delete error:", error);
+  }
+};
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -210,9 +226,10 @@ const AdminBrandEditor = () => {
             ],
           })
         }
-        onRemoveBrand={(idx) =>
-          setData({ ...data, brands: (data.brands || []).filter((_, i) => i !== idx) })
-        }
+        // onRemoveBrand={(idx) =>
+        //   setData({ ...data, brands: (data.brands || []).filter((_, i) => i !== idx) })
+        // }
+        onRemoveBrand={handleRemoveBrand}
         onSave={handleSave}
         onRestore={() => load()}
         saving={saving}

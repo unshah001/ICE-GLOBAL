@@ -586,25 +586,25 @@ const fetchBrands = async () => {
         setBuyersData((prev) => prev);
       }
     };
-    const fetchTeam = async () => {
-      try {
-        const res = await fetch(`${base}/teams`);
-        if (!res.ok) throw new Error("Team fetch failed");
-        const data = (await res.json()) as TeamsResponse;
-        setTeamData({
-          eyebrow: data.eyebrow || "Team",
-          title: data.title || "The team behind ICE",
-          description:
-            data.description ||
-            "Producers, ops, media, design, and data—meet the people keeping the circuit running.",
-          ctaLabel: data.ctaLabel || "Meet the full team",
-          ctaHref: data.ctaHref || "/teams",
-          team: data.team?.length ? data.team : teamData.team,
-        });
-      } catch {
-        setTeamData((prev) => prev);
-      }
-    };
+    // const fetchTeam = async () => {
+    //   try {
+    //     const res = await fetch(`${base}/teams`);
+    //     if (!res.ok) throw new Error("Team fetch failed");
+    //     const data = (await res.json()) as TeamsResponse;
+    //     setTeamData({
+    //       eyebrow: data.eyebrow || "Team",
+    //       title: data.title || "The team behind ICE",
+    //       description:
+    //         data.description ||
+    //         "Producers, ops, media, design, and data—meet the people keeping the circuit running.",
+    //       ctaLabel: data.ctaLabel || "Meet the full team",
+    //       ctaHref: data.ctaHref || "/teams",
+    //       team: data.team?.length ? data.team : teamData.team,
+    //     });
+    //   } catch {
+    //     setTeamData((prev) => prev);
+    //   }
+    // };
     const fetchTestimonials = async () => {
       try {
         const res = await fetch(`${base}/testimonials`);
@@ -816,7 +816,7 @@ const fetchBrands = async () => {
     fetchCelebs();
     fetchSellers();
     fetchBuyers();
-    fetchTeam();
+    // fetchTeam();
     fetchTestimonials();
     fetchTimeline();
     fetchArches();
@@ -904,62 +904,62 @@ const fetchBrands = async () => {
         cta={{ label: buyersData.ctaLabel || "See all buyer stories", href: buyersData.ctaHref || "/buyers" }}
       />
     ),
-    team: (
-      <section key="team" className="section-padding bg-muted/40 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-60 bg-[radial-gradient(circle_at_20%_20%,rgba(99,102,241,0.12),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(16,185,129,0.12),transparent_30%)]" />
-        <div className="container-custom relative">
+//     team: (
+//       <section key="team" className="section-padding bg-muted/40 relative overflow-hidden">
+//         <div className="absolute inset-0 opacity-60 bg-[radial-gradient(circle_at_20%_20%,rgba(99,102,241,0.12),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(16,185,129,0.12),transparent_30%)]" />
+//         <div className="container-custom relative">
          
-<div className="flex flex-col items-center text-center gap-4 mb-12">
-  <div className="max-w-2xl">
-    <span className="text-primary font-medium text-sm uppercase tracking-wider">{teamData.eyebrow || "Team"}</span>
-    <h2 className="text-3xl md:text-5xl font-bold font-display text-foreground mt-2">{teamData.title}</h2>
-    <p className="text-muted-foreground mt-4">{teamData.description}</p>
-  </div>
-  {teamData.ctaHref && (
-    <a href={teamData.ctaHref} className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors">
-      {teamData.ctaLabel || "Meet the full team"}
-    </a>
-  )}
-</div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {(teamData.team || []).slice(0, 6).map((member, idx) => {
-              const CardWrapper = member.href ? "a" : "div";
-              return (
-                <CardWrapper
-                  key={member.id || idx}
-                  href={member.href}
-                  className="group relative block rounded-3xl border border-border/70 bg-gradient-to-b from-background/90 via-background/70 to-background/90 overflow-hidden shadow-[0_10px_60px_-25px_rgba(0,0,0,0.5)] transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_20px_70px_-25px_rgba(0,0,0,0.65)]"
-                >
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-primary/10 via-transparent to-emerald-200/10" />
-                  <div className="aspect-[4/3] overflow-hidden">
-                    <img
-                      src={member.image}
-                      alt={member.name}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
-                  </div>
-                  <div className="absolute top-4 left-4">
-                    <span className="inline-flex items-center rounded-full bg-background/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-primary shadow-sm">
-                      {member.department || "Team"}
-                    </span>
-                  </div>
-                  <div className="p-5 relative space-y-2">
-                    <h3 className="text-xl font-semibold text-foreground">{member.name}</h3>
-                    <p className="text-sm text-muted-foreground">{member.role}</p>
-                    {member.focus && <p className="text-sm text-muted-foreground">{member.focus}</p>}
-                    {member.href && (
-                      <div className="pt-2 text-sm font-medium text-primary inline-flex items-center gap-1">
-                        View profile <span aria-hidden>→</span>
-                      </div>
-                    )}
-                  </div>
-                </CardWrapper>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-    ),
+// <div className="flex flex-col items-center text-center gap-4 mb-12">
+//   <div className="max-w-2xl">
+//     <span className="text-primary font-medium text-sm uppercase tracking-wider">{teamData.eyebrow || "Team"}</span>
+//     <h2 className="text-3xl md:text-5xl font-bold font-display text-foreground mt-2">{teamData.title}</h2>
+//     <p className="text-muted-foreground mt-4">{teamData.description}</p>
+//   </div>
+//   {teamData.ctaHref && (
+//     <a href={teamData.ctaHref} className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors">
+//       {teamData.ctaLabel || "Meet the full team"}
+//     </a>
+//   )}
+// </div>
+//           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+//             {(teamData.team || []).slice(0, 6).map((member, idx) => {
+//               const CardWrapper = member.href ? "a" : "div";
+//               return (
+//                 <CardWrapper
+//                   key={member.id || idx}
+//                   href={member.href}
+//                   className="group relative block rounded-3xl border border-border/70 bg-gradient-to-b from-background/90 via-background/70 to-background/90 overflow-hidden shadow-[0_10px_60px_-25px_rgba(0,0,0,0.5)] transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_20px_70px_-25px_rgba(0,0,0,0.65)]"
+//                 >
+//                   <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-primary/10 via-transparent to-emerald-200/10" />
+//                   <div className="aspect-[4/3] overflow-hidden">
+//                     <img
+//                       src={member.image}
+//                       alt={member.name}
+//                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+//                     />
+//                   </div>
+//                   <div className="absolute top-4 left-4">
+//                     <span className="inline-flex items-center rounded-full bg-background/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-primary shadow-sm">
+//                       {member.department || "Team"}
+//                     </span>
+//                   </div>
+//                   <div className="p-5 relative space-y-2">
+//                     <h3 className="text-xl font-semibold text-foreground">{member.name}</h3>
+//                     <p className="text-sm text-muted-foreground">{member.role}</p>
+//                     {member.focus && <p className="text-sm text-muted-foreground">{member.focus}</p>}
+//                     {member.href && (
+//                       <div className="pt-2 text-sm font-medium text-primary inline-flex items-center gap-1">
+//                         View profile <span aria-hidden>→</span>
+//                       </div>
+//                     )}
+//                   </div>
+//                 </CardWrapper>
+//               );
+//             })}
+//           </div>
+//         </div>
+//       </section>
+//     ),
     testimonials: (
       <TestimonialsCarousel
         key="testimonials"

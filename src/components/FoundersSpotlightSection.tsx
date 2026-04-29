@@ -44,7 +44,7 @@ const FoundersSpotlightSection = ({
           )}
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {founders.map((founder, idx) => (
             <motion.a
               key={founder.name + idx}
@@ -62,7 +62,7 @@ const FoundersSpotlightSection = ({
                 <img
                   src={founder.image}
                   alt={founder.name}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  className="w-full h-full object-cover object-[center_12%] transition-transform duration-700"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-background/75 via-background/20 to-transparent" />
                 <div className="absolute top-3 left-3 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-semibold backdrop-blur-sm">

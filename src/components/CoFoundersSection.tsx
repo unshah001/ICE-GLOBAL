@@ -10,6 +10,7 @@ interface CoFoundersSectionProps {
   cofounders: CoFounderProfile[];
   cta?: { label: string; href: string };
   className?: string;
+  
 }
 
 const trackIcon = (track: CoFounderProfile["track"]) => {
@@ -53,7 +54,7 @@ const CoFoundersSection = ({
           )}
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {cofounders.map((person, idx) => (
             <motion.a
               key={person.name + idx}
@@ -71,9 +72,9 @@ const CoFoundersSection = ({
                 <img
                   src={person.image}
                   alt={person.name}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-background/20 to-transparent" />
+         className="w-full h-full  object-[center_12%] object-cover transition-transform duration-700" 
+        />
+                <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-background/20 to-transparent" />
                 <div className="absolute top-3 left-3 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-semibold">
                   {trackIcon(person.track)}
                   {person.track}
